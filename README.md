@@ -32,7 +32,8 @@ To change the output format the option ``-of`` must be given:
 
 This would write the documentation in the OPML format to the file *anOutputFile.opml*.
 
-The input format can be set by the option ``-if`` [^if]
+The input format can be set by the option ``-if``.  
+Please note that only ``sdt2`` is supported at the moment.
 
 
 	python3 sdttool.py -i anInputFile.xml -o anOutputFile.opml -of opml -if sdt2
@@ -42,7 +43,7 @@ Running the script without with the ``-h`` option or without any will present a 
 ### Input Formats
 The following input formats are supported:
 
-- SDT Version 2.0.1
+- **sdt2**: SDT Version 2.0.1
 
 ### Output Formats
 Output formats for documentation:
@@ -80,4 +81,3 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 
-[^if]: Please note that only ``sdt2`` is support at the moment.
