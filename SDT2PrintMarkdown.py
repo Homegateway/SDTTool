@@ -141,8 +141,8 @@ def printDevice(device):
 #
 
 def printDeviceInfo(deviceInfo):
-	result = '- DeviceInfo'
-	incTab()
+	incHeaderLevel()
+	result = markdownHeader('DeviceInfo')
 	if (deviceInfo.name != None):
 		result += newLine() + '- Name: ' + deviceInfo.name
 	if (deviceInfo.vendor != None):
@@ -154,7 +154,7 @@ def printDeviceInfo(deviceInfo):
 	if (deviceInfo.firmwareVersion != None):
 		result += newLine() + '- FirmwareVersion: ' + deviceInfo.firmwareVersion
 
-	decTab()
+	decHeaderLevel()
 	return result
 
 
