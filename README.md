@@ -1,5 +1,5 @@
 # SDTTool
-Version 0.1
+Version 0.2
 
 *SDTTool* is a tool to read and convert XML files that conform to the *Smart Device Template* schema definition.
 
@@ -57,6 +57,10 @@ Output formats for documentation:
 - Currently limited to read SDT version 2.0.1
 
 ## Changelog
+
+## Version 0.2
+22.08.2015
+- Improved Markdown output for DeviceInfo
 
 ### Version 0.1
 - Initial version of SDTTool.

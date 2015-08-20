@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.2
+22.08.2015
+- Improved Markdown output for DeviceInfo
+
 ## Version 0.1
 11.08.2015
 
