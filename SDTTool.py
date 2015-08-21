@@ -8,7 +8,7 @@ from SDT2Printer import *
 
 import io, sys, traceback, argparse
 
-version = '0.2'
+version = '0.3'
 description = 'SDTTool ' + version + ' - A tool to read and convert Smart Device Templates.'
 epilog = 'See https://github.com/Homegateway for further information.'
 

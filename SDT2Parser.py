@@ -175,10 +175,7 @@ class SDT2Parser:
 				if (isinstance(self.elementStack[-1], SDT2Event)):
 					event = self.elementStack[-1]
 					event.data.append(dataPoint)
-				if (isinstance(self.elementStack[-1], SDT2ModuleClass)):
-					moduleClass = self.elementStack[-1]
-					moduleClass.data.append(dataPoint)
-				if (isinstance(self.elementStack[-1], SDT2Module)):
+				if (isinstance(self.elementStack[-1], SDT2ModuleClass) or isinstance(self.elementStack[-1], SDT2Module)):
 					module = self.elementStack[-1]
 					module.data.append(dataPoint)
 				self.elementStack.append(dataPoint)
