@@ -59,7 +59,7 @@ Output formats for documentation:
 ## Changelog
 
 ## Version 0.3
-xxx
+03.09.2015
 - Fixed duplicate output of DataPoints
 
 ## Version 0.2

@@ -1,7 +1,7 @@
 # Changelog
 
 ## Version 0.3
-xx
+03.09.2015
 - Fixed duplicate output of DataPoints
 
 ## Version 0.2
