@@ -58,11 +58,11 @@ Output formats for documentation:
 
 ## Changelog
 
-## Version 0.3
+### Version 0.3
 03.09.2015
 - Fixed duplicate output of DataPoints
 
-## Version 0.2
+### Version 0.2
 22.08.2015
 - Improved Markdown output for DeviceInfo
 
