@@ -244,14 +244,4 @@ class SDT2DocCaption(SDT2DocBase):
 		self.doc.addContent('<caption>' + content + '</caption>')
 
 
-#	<img src=" url ">" "<caption>" text "</caption>" "</img>"
-
-
-
-
-
-
-
-
-
 	
