@@ -8,7 +8,7 @@ from SDT2Printer import *
 
 import io, sys, traceback, argparse
 
-version = '0.3'
+version = '0.4'
 description = 'SDTTool ' + version + ' - A tool to read and convert Smart Device Templates.'
 epilog = 'See https://github.com/Homegateway for further information.'
 
@@ -57,9 +57,6 @@ def outputResult(outFile, result):
 			if (outputFile != None):
 				outputFile.close()
 
-def help():
-	print('SDTTool.py [-i <inputfile>] [-o <outputfile>]')
-
 
 def main(argv):
 
@@ -67,7 +64,7 @@ def main(argv):
 	parser = argparse.ArgumentParser(description=description, epilog=epilog)
 	parser.add_argument('-o', '--outfile', action='store', dest='outFile', help='The output file for the result. The default is stdout')
 	parser.add_argument('-if', '--inputformat', choices=('sdt2', ''), action='store', dest='inputFormat', default='sdt2', help='The input format to read. The default is sdt2')
-	parser.add_argument('-of', '--outputformat', choices=('plain', 'opml', 'markdown'), action='store', dest='outputFormat', default='markdown', help='The output format for the result. The default is plain')
+	parser.add_argument('-of', '--outputformat', choices=('plain', 'opml', 'markdown', 'sdt3'), action='store', dest='outputFormat', default='markdown', help='The output format for the result. The default is markdown')
 	requiredNamed = parser.add_argument_group('required arguments')
 	requiredNamed.add_argument('-i', '--infile', action='store', dest='inFile', required=True, help='The SDT input file to parse')
 	
@@ -82,12 +79,15 @@ def main(argv):
 
 	if (inputFormat == 'sdt2'):
 		domain, nameSpaces = readSDT2XML(inFile)
+
 	if (outputFormat == 'plain'):
 		outputResult(outFile, printPlain(domain))
 	elif (outputFormat == 'opml'):
 		outputResult(outFile, printOPML(domain))
 	elif (outputFormat == 'markdown'):
 		outputResult(outFile, printMarkdown(domain))
+	elif (outputFormat == 'sdt3'):
+		outputResult(outFile, printSDT3(domain))
 
 
 
