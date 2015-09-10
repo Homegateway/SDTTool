@@ -6,6 +6,8 @@ from SDT2Classes import *
 
 class SDT2Parser:
 
+	# Define the element tags of the SDT3
+
 	includeTag						= 'include'
 	domainTag						= 'domain'
 	importsTag						= 'imports'
@@ -69,7 +71,7 @@ class SDT2Parser:
 				include.href = attrib['href'].strip() if 'href' in attrib else None
 				domain.includes.append(include)
 			else:
-				raise SyntaxError('<include> definition only allowed in <domain> element')
+				raise SyntaxError('<include> definition is only allowed in <domain> element')
 
 		# ModulClass, Module, Extends
 
@@ -82,7 +84,7 @@ class SDT2Parser:
 				domain.modules.append(module)
 				self.elementStack.append(module)
 			else:
-				raise SyntaxError('<ModuleClass> definition only allowed in <Domain> element')
+				raise SyntaxError('<ModuleClass> definition is only allowed in <Domain> element')
 
 		elif (ntag == SDT2Parser.moduleTag):
 			if (isinstance(self.elementStack[-1], SDT2RootDevice) or isinstance(self.elementStack[-1], SDT2Device)):
@@ -93,7 +95,7 @@ class SDT2Parser:
 				device.modules.append(module)
 				self.elementStack.append(module)
 			else:
-				raise SyntaxError('<Module> definition only allowed in <RootDevice> or <Device> element')
+				raise SyntaxError('<Module> definition is only allowed in <RootDevice> or <Device> element')
 
 		elif (ntag == SDT2Parser.extendsTag):
 			if (isinstance(self.elementStack[-1], SDT2Module) or isinstance(self.elementStack[-1], SDT2ModuleClass)):
@@ -103,7 +105,7 @@ class SDT2Parser:
 				extends.clazz = attrib['class'].strip() if 'class' in attrib else None
 				moduleClass.extends = extends
 			else:
-				raise SyntaxError('<extends> definition only allowed in <Module> or <ModuleClass> element')
+				raise SyntaxError('<extends> definition is only allowed in <Module> or <ModuleClass> element')
 
 		# RootDevice, Device
 
@@ -115,7 +117,7 @@ class SDT2Parser:
 				domain.rootDevices.append(rootDevice)
 				self.elementStack.append(rootDevice)
 			else:
-				raise SyntaxError('<RootDevice> definition only allowed in <Domain> element')
+				raise SyntaxError('<RootDevice> definition is only allowed in <Domain> element')
 
 		elif (ntag == SDT2Parser.deviceTag):
 			if (isinstance(self.elementStack[-1], SDT2RootDevice)):
@@ -125,7 +127,7 @@ class SDT2Parser:
 				rootDevice.devices.append(device)
 				self.elementStack.append(device)
 			else:
-				raise SyntaxError('<Device> definition only allowed in <RootDevice> element')
+				raise SyntaxError('<Device> definition is only allowed in <RootDevice> element')
 
 		# Action, Arg
 
@@ -138,7 +140,7 @@ class SDT2Parser:
 				moduleClass.actions.append(action)
 				self.elementStack.append(action)
 			else:
-				raise SyntaxError('<Action> definition only allowed in <Module> or <ModuleClass> element')
+				raise SyntaxError('<Action> definition is only allowed in <Module> or <ModuleClass> element')
 
 		elif (ntag == SDT2Parser.argTag):
 			if (isinstance(self.elementStack[-1], SDT2Action)):
@@ -148,7 +150,7 @@ class SDT2Parser:
 				arg.type = attrib['type'].strip() if 'type' in attrib else None
 				action.arg.append(arg)
 			else:
-				raise SyntaxError('<Arg> definition only allowed in <Action> element')
+				raise SyntaxError('<Arg> definition is only allowed in <Action> element')
 
 		# Event
 
@@ -160,7 +162,7 @@ class SDT2Parser:
 				moduleClass.events.append(event)
 				self.elementStack.append(event)
 			else:
-				raise SyntaxError('<Event> definition only allowed in <Module> or <ModuleClass> element')
+				raise SyntaxError('<Event> definition is only allowed in <Module> or <ModuleClass> element')
 
 		# DataPoint
 
@@ -181,7 +183,7 @@ class SDT2Parser:
 				self.elementStack.append(dataPoint)
 
 			else:
-				raise SyntaxError('<DataPoint> definition only allowed in <Event>, <Module> or <ModuleClass> element')
+				raise SyntaxError('<DataPoint> definition is only allowed in <Event>, <Module> or <ModuleClass> element')
 
 		# DeviceInfo & elements
 
@@ -196,7 +198,7 @@ class SDT2Parser:
 					device.deviceInfo = deviceInfo
 				self.elementStack.append(deviceInfo)
 			else:
-				raise SyntaxError('<DeviceInfo> definition only allowed in <RootDevice> or <Device> element')
+				raise SyntaxError('<DeviceInfo> definition is only allowed in <RootDevice> or <Device> element')
 
 		# Doc & elements
 
@@ -231,7 +233,8 @@ class SDT2Parser:
 				tt = SDT2DocTT()
 				tt.doc = obj.doc
 				self.elementStack.append(tt)
-# TODO Error message
+			else:
+				raise SyntaxError('<tt> definition is only allowed in <Doc> or <p> element')
 
 		elif (ntag == SDT2Parser.emTag):
 			if (isinstance(self.elementStack[-1], SDT2Doc) or isinstance(self.elementStack[-1], SDT2DocP)):
@@ -239,7 +242,8 @@ class SDT2Parser:
 				em = SDT2DocEM()
 				em.doc = obj.doc
 				self.elementStack.append(em)
-# TODO Error message
+			else:
+				raise SyntaxError('<em> definition is only allowed in <Doc> or <p> element')
 
 		elif (ntag == SDT2Parser.bTag):
 			if (isinstance(self.elementStack[-1], SDT2Doc) or isinstance(self.elementStack[-1], SDT2DocP)):
@@ -247,7 +251,8 @@ class SDT2Parser:
 				b = SDT2DocB()
 				b.doc = obj.doc
 				self.elementStack.append(b)
-# TODO Error message
+			else:
+				raise SyntaxError('<b> definition is only allowed in <Doc> or <p> element')
 
 		elif (ntag == SDT2Parser.pTag):
 			if (isinstance(self.elementStack[-1], SDT2Doc) or isinstance(self.elementStack[-1], SDT2DocP)):
@@ -256,7 +261,8 @@ class SDT2Parser:
 				p.doc = obj.doc
 				p.startParagraph()
 				self.elementStack.append(p)
-# TODO Error message
+			else:
+				raise SyntaxError('<p> definition is only allowed in <Doc> or <p> element')
 
 		elif (ntag == SDT2Parser.imgTag):
 			if (isinstance(self.elementStack[-1], SDT2Doc) or isinstance(self.elementStack[-1], SDT2DocP)):
@@ -265,6 +271,8 @@ class SDT2Parser:
 				img.doc = obj.doc
 				img.startImage(attrib['src'].strip() if 'src' in attrib else None)
 				self.elementStack.append(img)
+			else:
+				raise SyntaxError('<img> definition is only allowed in <Doc> or <p> element')
 
 		elif (ntag == SDT2Parser.imgCaptionTag):
 			if (isinstance(self.elementStack[-1], SDT2DocIMG)):
@@ -272,9 +280,8 @@ class SDT2Parser:
 				caption = SDT2DocCaption()
 				caption.doc = obj.doc
 				self.elementStack.append(caption)
-
-
-# TODO Error message
+			else:
+				raise SyntaxError('<caption> definition is only allowed in <img> element')
 
 
 		# Other tags to ignore / just containers
