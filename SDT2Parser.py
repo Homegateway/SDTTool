@@ -203,29 +203,18 @@ class SDT2Parser:
 		# Doc & elements
 
 		elif (ntag == SDT2Parser.docTag):
-			doc = SDT2Doc()
-			if (isinstance(self.elementStack[-1], SDT2RootDevice)):
-				rootDevice = self.elementStack[-1]
-				rootDevice.doc = doc
-			if (isinstance(self.elementStack[-1], SDT2Device)):
-				device = self.elementStack[-1]
-				device.doc = doc
-			if (isinstance(self.elementStack[-1], SDT2Module)):
-				module = self.elementStack[-1]
-				module.doc = doc
-			if (isinstance(self.elementStack[-1], SDT2ModuleClass)):
-				moduleClass = self.elementStack[-1]
-				moduleClass.doc = doc
-			if (isinstance(self.elementStack[-1], SDT2Action)):
-				action = self.elementStack[-1]
-				action.doc = doc
-			if (isinstance(self.elementStack[-1], SDT2DataPoint)):
-				dataPoint = self.elementStack[-1]
-				dataPoint.doc = doc
-			if (isinstance(self.elementStack[-1], SDT2Event)):
-				event = self.elementStack[-1]
-				event.doc = doc
-			self.elementStack.append(doc)
+			if (isinstance(self.elementStack[-1], SDT2RootDevice) or isinstance(self.elementStack[-1], SDT2Device) or
+				isinstance(self.elementStack[-1], SDT2Module) or isinstance(self.elementStack[-1], SDT2ModuleClass) or
+				isinstance(self.elementStack[-1], SDT2Action) or isinstance(self.elementStack[-1], SDT2DataPoint) or
+				isinstance(self.elementStack[-1], SDT2Event)
+			):
+				doc = SDT2Doc()
+				elem = self.elementStack[-1]
+				elem.doc = doc
+				self.elementStack.append(doc)
+			else:
+				raise SyntaxError('<Doc> definition is only allowed in <RootDevice>, <Device>, <Module>' +
+					'<ModuleClass>, <Action>, <DataPoint> or <Event> element')
 
 		elif (ntag == SDT2Parser.ttTag):
 			if (isinstance(self.elementStack[-1], SDT2Doc) or isinstance(self.elementStack[-1], SDT2DocP)):
