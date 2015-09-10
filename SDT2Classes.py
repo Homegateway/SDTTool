@@ -2,23 +2,8 @@
 #
 #	SDT2 Base Classes
 
-tab = 0
 class SDT2Element:
-
-	def incTab(self):
-		global tab
-		tab += 1
-	
-	def decTab(self):
-		global tab
-		tab -= 1
-
-	def newLine(self):
-		global tab
-		result = '\n'
-		for i in range(tab):
-			result += '    '
-		return result
+	pass
 
 
 #
