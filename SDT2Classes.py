@@ -12,6 +12,7 @@ class SDT2Element:
 
 class SDT2Domain(SDT2Element):
 	def __init__(self):
+		self._version = '2'
 		self.id = None
 		self.includes = []
 		self.modules = []
