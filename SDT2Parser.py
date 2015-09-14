@@ -296,7 +296,8 @@ class SDT2Parser:
 			pass
 
 		else:
-			print(tag, attrib)
+			# print(tag, attrib)
+			pass
 		
 
 	def end(self, tag):
