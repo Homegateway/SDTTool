@@ -94,7 +94,8 @@ def main(argv):
 	parser = argparse.ArgumentParser(description=description, epilog=epilog)
 	parser.add_argument('-o', '--outfile', action='store', dest='outFile', help='The output file or directory for the result. The default is stdout')
 	parser.add_argument('-if', '--inputformat', choices=('sdt2', 'sdt3', ''), action='store', dest='inputFormat', default='sdt2', help='The input format to read. The default is sdt2')
-	parser.add_argument('-of', '--outputformat', choices=('plain', 'opml', 'markdown', 'sdt3', 'osgi'), action='store', dest='outputFormat', default='markdown', help='The output format for the result. The default is markdown')
+	parser.add_argument('-of', '--outputformat', choices=('plain', 'opml', 'markdown', 'sdt3', 'java'), action='store', dest='outputFormat', default='markdown', help='The output format for the result. The default is markdown')
+	parser.add_argument('--hidedetails',  action='store_true', help='Hide the details of module classes and devices when printing documentation')
 	requiredNamed = parser.add_argument_group('required arguments')
 	requiredNamed.add_argument('-i', '--infile', action='store', dest='inFile', required=True, help='The SDT input file to parse')
 	
@@ -107,6 +108,9 @@ def main(argv):
 	outFile = results.outFile
 	inputFormat = results.inputFormat
 	outputFormat = results.outputFormat
+	
+	moreOptions = {}
+	moreOptions['hideDetails'] = results.hidedetails
 
 
 	# Read input file. Check for correct format
@@ -126,15 +130,15 @@ def main(argv):
 	# Output to destination format
 
 	if (outputFormat == 'plain'):
-		outputResult(outFile, printPlain(domain))
+		outputResult(outFile, printPlain(domain, moreOptions))
 	elif (outputFormat == 'opml'):
-		outputResult(outFile, printOPML(domain))
+		outputResult(outFile, printOPML(domain, moreOptions))
 	elif (outputFormat == 'markdown'):
-		outputResult(outFile, printMarkdown(domain))
+		outputResult(outFile, printMarkdown(domain, moreOptions))
 	elif (outputFormat == 'sdt3'):
-		outputResult(outFile, printSDT3(domain, inputFormat))
-	elif (outputFormat == 'osgi'):
-		printOSGi(domain, inputFormat, outFile)
+		outputResult(outFile, printSDT3(domain, inputFormat, moreOptions))
+	elif (outputFormat == 'java'):
+		printJava(domain, inputFormat, outFile, moreOptions)
 
 
 

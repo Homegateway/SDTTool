@@ -4,6 +4,8 @@
 
 
 
+hideDetails = False
+
 # tabulator level
 tab = 0
 
@@ -49,7 +51,10 @@ def markdownHeader(text):
 #	Print functions
 #
 
-def print2DomainMarkdown(domain):
+def print2DomainMarkdown(domain, options):
+	global hideDetails
+	hideDetails = options['hideDetails']
+
 	result = ''
 	result += markdownHeader('Domain "' + domain.id + '"')
 	
@@ -88,11 +93,12 @@ def printInclude(include):
 #
 
 def printRootDevice(rootDevice):
+	global hideDetails
 	incHeaderLevel()
 	result = markdownHeader('RootDevice "' + rootDevice.id + '"')
-	if (rootDevice.doc):
+	if (rootDevice.doc and hideDetails == False):
 		result += newLine() + printDoc(rootDevice.doc)
-	if (rootDevice.deviceInfo != None):
+	if (rootDevice.deviceInfo != None and hideDetails == False):
 		result += newLine() + printDeviceInfo(rootDevice.deviceInfo)
 
 	if (len(rootDevice.modules) > 0):
@@ -116,12 +122,13 @@ def printRootDevice(rootDevice):
 
 
 def printDevice(device):
+	global hideDetails
 	incHeaderLevel()
 	result = markdownHeader('Device "' + device.id + '"')
 
 	if (device.doc):
 		result += newLine() + printDoc(device.doc)
-	if (device.deviceInfo != None):
+	if (device.deviceInfo != None and hideDetails == False):
 		result += newLine() + printDeviceInfo(device.deviceInfo)
 
 	if (len(device.modules) > 0):
@@ -163,18 +170,18 @@ def printDeviceInfo(deviceInfo):
 #
 
 def printModule(module):
-	result = '- **' + module.name + '**'
-	result += printModuleDetails(module)
-	return result
+	return printModuleDetails(module)
 
 def printModuleClass(moduleClass):
-	result = '- **' + moduleClass.name + '**'
-	result += printModuleDetails(moduleClass)
-	return result
+	return printModuleDetails(moduleClass)
+
 
 def printModuleDetails(module):
+	global hideDetails
+	result = '- **' + module.name + '**'
+	if (hideDetails):
+		return result;
 	incTab()
-	result = ''
 	if (module.doc != None):
 		result += '  ' + newLine() + printDoc(module.doc)
 	if (module.extends != None):

@@ -2,6 +2,9 @@
 #
 #	Print SDT2 to Plain text
 
+
+hideDetails = False
+
 # tabulator level
 tab = 0
 
@@ -26,7 +29,10 @@ def newLine():
 #	Print functions
 #
 
-def print2DomainPlain(domain):
+def print2DomainPlain(domain, options):
+	global hideDetails
+	hideDetails = options['hideDetails']
+	
 	result = 'Domain [id="' + domain.id + '"]'
 	incTab()
 	for include in domain.includes:
@@ -47,11 +53,13 @@ def printInclude(include):
 #
 
 def printRootDevice(rootDevice):
+	global hideDetails
+
 	result = 'RootDevice [id="' + rootDevice.id + '"]'
 	incTab()
-	if (rootDevice.deviceInfo != None):
+	if (rootDevice.deviceInfo != None and hideDetails == False):
 		result += newLine() + printDeviceInfo(rootDevice.deviceInfo)
-	if (rootDevice.doc):
+	if (rootDevice.doc and hideDetails == False):
 		result += newLine() + printDoc(rootDevice.doc)
 	for module in rootDevice.modules:
 		result += newLine() + printModule(module)
@@ -61,11 +69,13 @@ def printRootDevice(rootDevice):
 	return result
 
 def printDevice(device):
+	global hideDetails
+
 	result = 'Device [id="' + device.id + '"]'
 	incTab()
-	if (device.deviceInfo != None):
+	if (device.deviceInfo != None and hideDetails == False):
 		result += newLine() + printDeviceInfo(device.deviceInfo)
-	if (device.doc):
+	if (device.doc and hideDetails):
 		result += newLine() + printDoc(device.doc)
 	for module in device.modules:
 		result += newLine() + printModule(module)
@@ -99,13 +109,19 @@ def printDeviceInfo(deviceInfo):
 #
 
 def printModule(module):
+	global hideDetails
+
 	result =  'Module [name="' + module.name + '"]'
-	result += printModuleDetails(module)
+	if (hideDetails == False):
+		result += printModuleDetails(module)
 	return result
 
 def printModuleClass(moduleClass):
+	global hideDetails
+
 	result =  'ModuleClass [name="' + moduleClass.name + '"]'
-	result += printModuleDetails(moduleClass)
+	if (hideDetails == False):
+		result += printModuleDetails(moduleClass)
 	return result
 
 def printModuleDetails(module):

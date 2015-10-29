@@ -27,7 +27,7 @@ def newLine():
 #	Print functions
 #
 
-def print2DomainSDT3(domain):
+def print2DomainSDT3(domain, options):
 	result  = printXMLHeader(domain)
 	incTab()
 	if (len(domain.includes) > 0):
@@ -68,11 +68,24 @@ def printIncludes(includes):
 
 #
 #	Simple Data Type
-#	Others are not needed for the conversion from SDT version 2 to 3
 #
 
 def printSimpleType(type):
 	return '<SimpleType type="' + type + '" />'
+
+
+#
+#	Normal Data Type
+#	Print the data type as a normal data type.
+#	Only SimpleType, arrays and structs are not needed for the conversion from SDT version 2 to 3
+#
+def printDataType(type):
+	result = '<DataType>'
+	incTab()
+	result += newLine() + printSimpleType(type)
+	decTab()
+	result += newLine() + '</DataType>'
+	return result
 
 
 #
@@ -129,45 +142,40 @@ def printDevice(device):
 #
 
 def printDeviceInfo(deviceInfo):
-	result  = '<DeviceInfos>'
+	result  = '<Properties>'
 	incTab()
 	if (deviceInfo.name != None):
-		result += newLine() + '<DeviceInfo name="Name">'
+		result += newLine() + '<Property name="Name" value="'+ deviceInfo.name + '">'
 		incTab()
-		result += newLine() + '<Doc>Original value: ' + deviceInfo.name + '</Doc>'
 		result += newLine() + printSimpleType('string')
 		decTab()
-		result += newLine() + '</DeviceInfo>'
+		result += newLine() + '</Property>'
 	if (deviceInfo.vendor != None):
-		result += newLine() + '<DeviceInfo name="Vendor">'
+		result += newLine() + '<Property name="Vendor" value="'+ deviceInfo.vendor + '">'
 		incTab()
-		result += newLine() + '<Doc>Original value: ' + deviceInfo.vendor + '</Doc>'
 		result += newLine() + printSimpleType('string')
 		decTab()
-		result += newLine() + '</DeviceInfo>'
+		result += newLine() + '</Property>'
 	if (deviceInfo.serialNumber != None):
-		result += newLine() + '<DeviceInfo name="SerialNumber">'
+		result += newLine() + '<Property name="SerialNumber" value="'+ deviceInfo.serialNumber + '">'
 		incTab()
-		result += newLine() + '<Doc>Original value: ' + deviceInfo.serialNumber + '</Doc>'
 		result += newLine() + printSimpleType('string')
 		decTab()
-		result += newLine() + '</DeviceInfo>'
+		result += newLine() + '</Property>'
 	if (deviceInfo.vendorURL != None):
-		result += newLine() + '<DeviceInfo name="VendorURL">'
+		result += newLine() + '<Property name="VendorURL" value="'+ deviceInfo.vendorURL + '">'
 		incTab()
-		result += newLine() + '<Doc>Original value: ' + deviceInfo.vendorURL + '</Doc>'
 		result += newLine() + printSimpleType('uri')
 		decTab()
-		result += newLine() + '</DeviceInfo>'
+		result += newLine() + '</Property>'
 	if (deviceInfo.firmwareVersion != None):
-		result += newLine() + '<DeviceInfo name="FirmwareVersion">'
+		result += newLine() + '<Property name="FirmwareVersion" value="'+ deviceInfo.firmwareVersion + '">'
 		incTab()
-		result += newLine() + '<Doc>Original value: ' + deviceInfo.firmwareVersion + '</Doc>'
 		result += newLine() + printSimpleType('string')
 		decTab()
-		result += newLine() + '</DeviceInfo>'
+		result += newLine() + '</Property>'
 	decTab()
-	result += newLine() + '</DeviceInfos>'
+	result += newLine() + '</Properties>'
 	return result
 
 
@@ -228,7 +236,7 @@ def printAction(action):
 	if (action.doc != None): 
 		result += '  ' + newLine() + printDoc(action.doc)
 	if (action.type != None):
-		result += newLine() + printSimpleType(action.type)
+		result += newLine() + printDataType(action.type)
 	if (len(action.arg) > 0):
 		result += newLine() + '<Args>'
 		incTab()
@@ -244,7 +252,7 @@ def printArgument(action):
 	result  = newLine() + '<Arg name="' + action.name + '">'
 	incTab();
 	if (action.type):
-		result += newLine() + printSimpleType(action.type)
+		result += newLine() + printDataType(action.type)
 	decTab()
 	result += newLine() + '</Arg>'
 	return result
@@ -289,7 +297,7 @@ def printDataPoint(datapoint):
 	if (datapoint.doc != None):
 		result += newLine() + printDoc(datapoint.doc)
 	if (datapoint.type != None):
-		result += newLine() + printSimpleType(datapoint.type)
+		result += newLine() + printDataType(datapoint.type)
 	decTab()
 	result += newLine() + '</DataPoint>'
 	return result

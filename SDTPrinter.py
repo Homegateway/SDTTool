@@ -12,42 +12,41 @@ from SDT3PrintPlain import print3DomainPlain
 from SDT3PrintJava import print3JavaClasses
 
 
-def printPlain(domain):
+def printPlain(domain, options):
 	if (domain == None):
 		return
 	if (domain._version == '2'):
-		return print2DomainPlain(domain)
+		return print2DomainPlain(domain, options)
 	elif (domain._version == '3'):
-		return print3DomainPlain(domain)
+		return print3DomainPlain(domain, options)
 
-def printOPML(domain):
+def printOPML(domain, options):
 	if (domain == None):
 		return
 	if (domain._version == '2'):
-		return print2DomainOPML(domain)
+		return print2DomainOPML(domain, options)
 	elif (domain._version == '3'):
 		return 'NOT SUPPORTED YET'
 	# TODO SDT3 OPML
 
-def printMarkdown(domain):
+def printMarkdown(domain, options):
 	if (domain == None):
 		return
 	if (domain._version == '2'):
-		return print2DomainMarkdown(domain)
+		return print2DomainMarkdown(domain, options)
 	elif (domain._version == '3'):
 		return 'NOT SUPPORTED YET'
 	# TODO SDT3 Markdown
 
-def printSDT3(domain, inputFormat):
+def printSDT3(domain, inputFormat, options):
 	if (domain == None):
 		return
 	if (domain._version == '2' and inputFormat == 'sdt2'):
-		return print2DomainSDT3(domain)
+		return print2DomainSDT3(domain, options)
 	else:
 		print('Conversion is not supported')
 
-
-def printOSGi(domain, inputFormat, directory):
+def printJava(domain, inputFormat, directory, options):
 	if (inputFormat != 'sdt3'):
 		print('Only the input format "sdt3" is supported yet')
 		return
@@ -61,7 +60,7 @@ def printOSGi(domain, inputFormat, directory):
 		# ignore existing directory for now
 		pass
 
-	print3JavaClasses(domain, directory)
+	print3JavaClasses(domain, directory, options)
 
 
 

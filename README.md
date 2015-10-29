@@ -1,5 +1,5 @@
 # SDTTool
-Version 0.3
+Version 0.4
 
 *SDTTool* is a tool to read and convert XML files that conform to the *Smart Device Template* schema definition.
 
@@ -11,7 +11,7 @@ The [Smart Device Template](https://github.com/Homegateway/RWD050-public) (SDT) 
 
 ## Installation
 ### Prerequisites
-An installation of [Python 3](https://www.python.org/downloads/) (version 3.2 or higher) is required.
+An installation of [Python 3](https://www.python.org/downloads/) (version 3.5 or higher) is required. For an earlier version of Python (3.2 or higher) ``pathlib`` must be installed separately (see also [https://pypi.python.org/pypi/pathlib/](https://pypi.python.org/pypi/pathlib/)
 
 ### Copying
 Download the latest release of *SDTTool* and copy them into a directory of your choice.
@@ -59,8 +59,10 @@ Output formats for documentation:
 ## Changelog
 
 ### Version 0.4
-xx.xx.2015
+29.10.2015
 - Added support for converting SDT2 to SDT3 format
+- Added first support for generating Java classes (from SDT3 format only)
+- Added --hidedetails option to hide detailed information when generating documentation 
 
 ### Version 0.3
 03.09.2015

@@ -4,6 +4,8 @@
 
 import cgi
 
+hideDetails = False
+
 # tabulator level
 tab = 0
 
@@ -28,7 +30,10 @@ def newLine():
 #	Print functions
 #
 
-def print2DomainOPML(domain):
+def print2DomainOPML(domain, options):
+	global hideDetails
+	hideDetails = options['hideDetails']
+
 	result  = '<?xml version="1.0" encoding="ISO-8859-1"?>\n'
 	result += '<opml version="1.0">\n'
 	result += '<head>\n'
@@ -76,12 +81,14 @@ def printInclude(include):
 #
 
 def printRootDevice(rootDevice):
+	global hideDetails
+
 	result = '<outline text="RootDevice [id=&quot;' + rootDevice.id + '&quot;]" >'
 	incTab()
 
-	if (rootDevice.deviceInfo != None):
+	if (rootDevice.deviceInfo != None and hideDetails == False):
 		result += newLine() + printDeviceInfo(rootDevice.deviceInfo)
-	if (rootDevice.doc):
+	if (rootDevice.doc and hideDetails == False):
 		result += newLine() + printDoc(rootDevice.doc)
 
 	if (len(rootDevice.modules) > 0):
@@ -106,12 +113,14 @@ def printRootDevice(rootDevice):
 
 
 def printDevice(device):
+	global hideDetails
+
 	result = '<outline text="Device [id=&quot;' + device.id + '&quot;]">'
 	incTab()
 
-	if (device.deviceInfo != None):
+	if (device.deviceInfo != None and hideDetails == False):
 		result += newLine() + printDeviceInfo(device.deviceInfo)
-	if (device.doc):
+	if (device.doc and hideDetails == False):
 		result += newLine() + printDoc(device.doc)
 	if (len(device.modules) > 0):
 		result += newLine() + '<outline text="Modules">'
@@ -157,15 +166,21 @@ def printDeviceInfo(deviceInfo):
 #
 
 def printModule(module):
+	global hideDetails
+
 	result =  '<outline text="Module [name=&quot;' + module.name + '&quot;">'
-	result += printModuleDetails(module)
+	if (hideDetails == False):
+		result += printModuleDetails(module)
 	result += newLine() + '</outline>'
 	return result
 
 
 def printModuleClass(moduleClass):
+	global hideDetails
+
 	result =  '<outline text="ModuleClass [name=&quot;' + moduleClass.name + '&quot;]">'
-	result += printModuleDetails(moduleClass)
+	if (hideDetails == False):
+		result += printModuleDetails(moduleClass)
 	result += newLine() + '</outline>'
 	return result
 

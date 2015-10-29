@@ -14,7 +14,7 @@ class SDT3Domain(SDT3Element):
 	def __init__(self):
 		self._version = '3'
 		self.id = None
-		self.doc = None						# TODO Check whether this is part of SDT3
+		self.doc = None
 		self.includes = []
 		self.modules = []
 		self.devices = []
@@ -35,7 +35,7 @@ class SDT3Device(SDT3Element):
 		self.doc = None
 		self.modules = []
 		self.subDevices = []
-		self.deviceInfos = []
+		self.properties = []
 
 
 #
@@ -47,18 +47,19 @@ class SDT3SubDevice(SDT3Element):
 		self.id = None
 		self.doc = None
 		self.modules = []
-		self.deviceInfos = []
+		self.properties = []
 
 #
-#	DeviceInfo
+#	Properties
 #
 
-class SDT3DeviceInfo(SDT3Element):
+class SDT3Properties(SDT3Element):
 	def __init__(self):
 		self.name = None
 		self.optional = None
 		self.doc = None
-		self.dataType = None
+		self.type = None
+		self.value = None
 
 #
 #	Module
@@ -75,6 +76,8 @@ class SDT3Module(SDT3Element):
 		self.actions = []
 		self.data = []
 		self.events = []
+		self.properties = []
+
 
 
 class SDT3ModuleClass(SDT3Module):
@@ -126,9 +129,9 @@ class SDT3DataPoint(SDT3Element):
 		self.name = None
 		self.optional = None
 		self.type = None
-		self.writable = None
-		self.readable = None
-		self.eventable = None
+		self.writable = 'true'
+		self.readable = 'true'
+		self.eventable = 'false'
 		self.doc = None
 
 
@@ -136,32 +139,36 @@ class SDT3DataPoint(SDT3Element):
 #	DataTypes
 #
 
-class SDT3DataTypeBase(SDT3Element):
+class SDT3DataType(SDT3Element):
 	def __init__(self):
 		self.name = None
-		self.unitIfMeasure = None
+		self.unitOfMeasure = None
 		self.constraints = []
+		self.type = None
+		self.doc = None
 
-class SDT3SimpleType(SDT3DataTypeBase):
+class SDT3SimpleType(SDT3Element):
 	def __init__(self):
 		self.type = None
 
-class SDT3StructType(SDT3DataTypeBase):
+class SDT3StructType(SDT3Element):
 	def __init__(self):
 		self.structElements = []
 
-class SDT3ArrayType(SDT3DataTypeBase):
+class SDT3ArrayType(SDT3Element):
 	def __init__(self):
 		self.arrayType = None
+
 
 class SDT3Constraint(SDT3Element):
 	def __init__(self):
 		self.name = None
 		self.type = None
+		self.value = None
 		self.doc = None
 
 #
-#	Doc, tt
+#	Doc
 #
 
 class SDT3DocBase(SDT3Element):

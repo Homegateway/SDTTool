@@ -4,6 +4,8 @@
 
 from SDT3Classes import *
 
+hideDetails = False
+
 # tabulator level
 tab = 0
 
@@ -28,15 +30,16 @@ def newLine():
 #	Print functions
 #
 
-def print3DomainPlain(domain):
+def print3DomainPlain(domain, options):
+	global hideDetails
+	hideDetails = options['hideDetails']
+	
 	result = 'Domain [id="' + domain.id + '"]'
 	incTab()
-	
+	if (domain.doc != None):
+		result += newLine() + printDoc(domain.doc)
 	for include in domain.includes:
 		result += newLine() + printInclude(include)
-
-	# TODO print doc maybe
-	
 	for module in domain.modules:
 		result += newLine() + printModuleClass(module)
 	for device in domain.devices:
@@ -53,12 +56,15 @@ def printInclude(include):
 #
 
 def printDevice(device):
+	global hideDetails
+
 	result = 'Device [id="' + device.id + '"]'
 	incTab()
-	if (device.doc):
+	if (device.doc != None and hideDetails == False):
 		result += newLine() + printDoc(device.doc)
-	for deviceInfo in device.deviceInfos:
-		result += newLine() + printDeviceInfo(deviceInfo)
+	if (hideDetails == False):
+		for prop in device.properties:
+			result += newLine() + printProperty(prop)
 	for module in device.modules:
 		result += newLine() + printModule(module)
 	for subDevice in device.subDevices:
@@ -68,12 +74,15 @@ def printDevice(device):
 
 
 def printSubDevice(subDevice):
+	global hideDetails
+
 	result = 'SubDevice [id="' + subDevice.id + '"]'
 	incTab()
-	if (subDevice.doc):
+	if (subDevice.doc != None and hideDetails == False):
 		result += newLine() + printDoc(subDevice.doc)
-	for deviceInfo in subDevice.deviceInfos:
-		result += newLine() + printDeviceInfo(deviceInfo)
+	if (hideDetails == False):
+		for prop in subDevice.properties:
+			result += newLine() + printProperty(prop)
 	for module in subDevice.modules:
 		result += newLine() + printModule(module)
 	decTab()
@@ -81,21 +90,23 @@ def printSubDevice(subDevice):
 
 
 #
-#	DeviceInfos
+#	Property
 #
 
-def printDeviceInfo(deviceInfo):
-	result = 'DeviceInfo ['
+def printProperty(prop):
+	result = 'Property ['
 	incTab()
-	if (deviceInfo.name != None):
-		result += 'name="' + deviceInfo.name + '"'
-	if (deviceInfo.optional != None):
-		result += ' optional="' + deviceInfo.optional + '"'
+	if (prop.name != None):
+		result += 'name="' + prop.name + '"'
+	if (prop.optional != None):
+		result += ' optional="' + prop.optional + '"'
+	if (prop.value != None):
+		result += ' value="' + prop.value + '"'
 	result += ']'
-	if (deviceInfo.doc):
-		result += newLine() + printDoc(deviceInfo.doc)
-	if (deviceInfo.type):
-		result += newLine() + printDataType(deviceInfo.type)
+	if (prop.doc):
+		result += newLine() + printDoc(prop.doc)
+	if (prop.type):
+		result += newLine() + printSimpleTypeProperty(prop.type)
 	decTab()
 	return result
 
@@ -106,21 +117,26 @@ def printDeviceInfo(deviceInfo):
 
 def printModule(module):
 	result =  'Module [name="' + module.name + '"]'
-	result += printModuleDetails(module)
+	if (hideDetails == False):
+		result += printModuleDetails(module)
 	return result
 
 def printModuleClass(moduleClass):
 	result =  'ModuleClass [name="' + moduleClass.name + '"]'
-	result += printModuleDetails(moduleClass)
+	if (hideDetails == False):
+		result += printModuleDetails(moduleClass)
 	return result
 
 def printModuleDetails(module):
 	incTab()
 	result = ''
-	if (module.extends != None):
-		result += newLine() + printExtends(module.extends)
 	if (module.doc != None):
 		result += newLine() + printDoc(module.doc)
+	if (module.extends != None):
+		result += newLine() + printExtends(module.extends)
+	if (hideDetails == False):
+		for prop in module.properties:
+			result += newLine() + printProperty(prop)
 	for action in module.actions:
 		result += newLine() + printAction(action)
 	for data in module.data:
@@ -213,42 +229,80 @@ def printDataPoint(datapoint):
 #	DataTypes
 #
 
-# TODO Doc
 
 def printDataType(dataType):
-	if (isinstance(dataType, SDT3SimpleType)):
+	if (isinstance(dataType.type, SDT3SimpleType)):
 		result = printSimpleType(dataType)
-	elif (isinstance(dataType, SDT3StructType)):
+	elif (isinstance(dataType.type, SDT3StructType)):
 		result = printStructType(dataType)
-	elif (isinstance(dataType, SDT3ArrayType)):
+	elif (isinstance(dataType.type, SDT3ArrayType)):
 		result = printArrayType(dataType)
 	return result
 
 
 def printSimpleType(dataType):
+	simpleType = dataType.type
 	result = 'SimpleType'
-	result += printTypeAttributes(dataType)
+	result += printDataTypeAttributes(dataType)
+	if (len(result) > 0):
+		result += ' '
+	result += '[type="' + simpleType.type + '"]'
+	if (dataType.doc != None):
+		incTab()
+		result += newLine() + printDoc(dataType.doc)
+		decTab()
+	incTab()
+	for constraint in dataType.constraints:
+		result += newLine() + printConstraint(constraint)
+	decTab()
 	return result
+
+
+def printSimpleTypeProperty(simpleType):
+	result = 'SimpleType'
+	if (len(result) > 0):
+		result += ' '
+	result += '[type="' + simpleType.type + '"]'
+	return result
+
 
 def printStructType(dataType):
 	result = 'Struct'
-	result += printTypeAttributes(dataType)
+	result += printDataTypeAttributes(dataType)
 	incTab()
-	for element in dataType.structElements:
+	for element in dataType.type.structElements:
 		result += newLine() + printDataType(element)
+	decTab()
+	if (dataType.doc != None):
+		incTab()
+		result += newLine() + printDoc(dataType.doc)
+		decTab()
+		incTab()
+	for constraint in dataType.constraints:
+		result += newLine() + printConstraint(constraint)
 	decTab()
 	return result
 
 def printArrayType(dataType):
+	arrayType = dataType.type
 	result = 'Array'
-	if (dataType.arrayType != None):
+	result += printDataTypeAttributes(dataType)
+	if (arrayType.arrayType != None):
 		incTab()
-		result += newLine() + printDataType(dataType.arrayType)
+		result += newLine() + printDataType(arrayType.arrayType)
 		decTab()
+	if (dataType.doc != None):
+		incTab()
+		result += newLine() + printDoc(dataType.doc)
+		decTab()
+	incTab()
+	for constraint in dataType.constraints:
+		result += newLine() + printConstraint(constraint)
+	decTab()
 	return result
 
 
-def printTypeAttributes(dataType):
+def printDataTypeAttributes(dataType):
 	result = ''
 	if (dataType.name != None):
 		result += 'name="' + dataType.name + '"'
@@ -256,17 +310,40 @@ def printTypeAttributes(dataType):
 		if (len(result) > 0):
 			result += ' '
 		result += 'unitOfMeasure="' + dataType.unitOfMeasure + '"'
-	if (hasattr(dataType, "type") and dataType.type != None):
-		if (len(result) > 0):
-			result += ' '
-		result += 'type="' + dataType.type + '"'
-
-# TODO Constraints
-
-
 	if (len(result) > 0):
 		result = ' [' + result + ']'
 	return result
+
+
+def printConstraint(constraint):
+	result = 'Constraint'
+	attr   = ''
+	if (constraint.name != None):
+		attr += 'name="' + constraint.name + '"'
+	if (constraint.type != None):
+		if (len(attr) > 0):
+			attr += ' '
+		attr += 'type="' + constraint.type + '"'
+	if (constraint.value != None):
+		if (len(attr) > 0):
+			attr += ' '
+		attr += 'value="' + constraint.value + '"'
+	if (len(attr) > 0):
+		result += ' [' + attr + ']'
+	if (constraint.doc != None):
+		incTab()
+		result += newLine() + printDoc(constraint.doc)
+		decTab()
+	return result
+
+
+
+class SDT3Constraint(SDT3Element):
+	def __init__(self):
+		self.name = None
+		self.type = None
+		self.value = None
+		self.doc = None
 
 
 #
@@ -275,6 +352,6 @@ def printTypeAttributes(dataType):
 
 def printDoc(doc):
 	incTab()
-	result = 'Doc' + newLine() + doc.content.strip()
+	result = 'Doc: ' +	 doc.content.strip()
 	decTab()
 	return result
