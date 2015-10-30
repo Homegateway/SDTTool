@@ -4,7 +4,7 @@ Version 0.4
 *SDTTool* is a tool to read and convert XML files that conform to the *Smart Device Template* schema definition.
 
 ## Introduction
-The [Smart Device Template](https://github.com/Homegateway/RWD050-public) (SDT) schema defined by the Home Gateway Initiative (HGI) is a format to describe concrete and abstract devices as well as capabilities, data models and functions of those devices. See [SDT Components](https://github.com/Homegateway/RWD050-public/blob/master/SDT2.0.1/docs/SDT_Components.md) for an introduction to the SDT.
+The [Smart Device Template](https://github.com/Homegateway/SmartDeviceTemplate) (SDT) schema defined by the Home Gateway Initiative (HGI) is a format to describe concrete and abstract devices as well as capabilities, data models and functions of those devices. See [SDT Components](https://github.com/Homegateway/SmartDeviceTemplate/blob/master/SDT2.0.1/docs/SDT_Components.md) for an introduction to the SDT.
 
 *SDTtool* is a Python 3 script that reads SDT files and generates output in various formats. It can be used to produce documentation for the Devices and ModuleClasses of an SDT as well as to convert between different versions of the SDT.
 
@@ -22,7 +22,7 @@ Download the latest release of *SDTTool* and copy them into a directory of your 
 
 	python3 sdttool.py -i anInputFile.xml 
 
-This will read in the SDT definitions from the file *anInputFile.xml* and writes the documentation in markdown format to standard out. Writing the output to a new file can be done like this:
+This will read in the SDT version 2 definitions from the file *anInputFile.xml* and writes the documentation in markdown format to standard out. Writing the output to a new file can be done like this:
 
 	python3 sdttool.py -i anInputFile.xml -o anOutputFile.md
 
@@ -41,20 +41,29 @@ Please note that only ``sdt2`` is supported at the moment.
 Running the script without with the ``-h`` option or without any will present a an overview about all possible command line parameters.
 
 ### Input Formats
-The following input formats are supported:
+The following input formats are supported for the ``-if`` or ``--inputformat`` command line argument:
 
-- **sdt2**: SDT Version 2.0.1
+- **sdt2**: SDT Version 2.0.1, the default
+- **sdt3**: SDT Version 3.0
 
 ### Output Formats
-Output formats for documentation:
+Output formats for documentation for the ``-of`` or ``--outputformat`` command line argument:
 
 - **plain**: This produces a plain text representation, with indentations, of the components of the input file.
 - **markdown**: Markdown is a markup language with plain text formatting syntax designed so that it can be converted to many formats. GitHub natively supports markdown as its documentation format.
 - **opml**: OPML (Outline Processor Markup Language) is a simple XML format for outlines, which can be imported in various mind mapping applications.
+- **sdt3**: This output format is only valid when the input format is **sdt2**. It is used to convert SDT definitions from version 2 to version 3.
+- **java**: This output format is only valid for the input format **sdt3**. It generates Java interfaces and classes for the input definition. For this output format the argument ``-o`` refers to an output directory, not a single file.
+
+### Other Arguments
+- ``-i INFILE``, ``--infile INFILE``: Required argument. Specify the input file for the conversion.
+- ``-o OUTFILE``, ``--outfile OUTFILE``: The output file or directory for the result. The default is stdout.
+- ``--hidedetails``: Hide the details of module classes and devices when generating the documentation.
+
 
 ## Limitations
 - *SDTTool* does not validate the input XML. It is assumed that the input XML conforms to the SDT schema.
-- Currently limited to read SDT version 2.0.1
+- Not all output formats are supported yet for SDT 3.
 
 ## Changelog
 
