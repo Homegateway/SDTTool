@@ -192,14 +192,14 @@ class SDT3Parser:
 
 		# Property & elements
 
-		elif (ntag == SDT3Parser.propertiesTag):
+		elif (ntag == SDT3Parser.propertyTag):
 			if (isinstance(lastElem, SDT3Device) or isinstance(lastElem, SDT3SubDevice)
 				or isinstance(lastElem, SDT3Module) or isinstance(lastElem, SDT3ModuleClass)):
 				prop = SDT3Property()
 				prop.name = attrib['name'].strip() if 'name' in attrib else None
 				prop.optional = attrib['optional'].strip() if 'optional' in attrib else None
 				prop.value = attrib['value'].strip() if 'value' in attrib else None
-				lastElem.property.append(prop)
+				lastElem.properties.append(prop)
 				self.elementStack.append(prop)
 			else:
 				raise SyntaxError('<Property> definition is only allowed in <Device>, <SubDevice>, <Module> or <ModuleClass> element')

@@ -53,7 +53,7 @@ class SDT3SubDevice(SDT3Element):
 #	Properties
 #
 
-class SDT3Properties(SDT3Element):
+class SDT3Property(SDT3Element):
 	def __init__(self):
 		self.name = None
 		self.optional = None
@@ -77,8 +77,6 @@ class SDT3Module(SDT3Element):
 		self.data = []
 		self.events = []
 		self.properties = []
-
-
 
 class SDT3ModuleClass(SDT3Module):
 	def __init__(self):

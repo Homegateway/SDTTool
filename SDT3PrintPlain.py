@@ -98,10 +98,10 @@ def printProperty(prop):
 	incTab()
 	if (prop.name != None):
 		result += 'name="' + prop.name + '"'
-	if (prop.optional != None):
-		result += ' optional="' + prop.optional + '"'
 	if (prop.value != None):
 		result += ' value="' + prop.value + '"'
+	if (prop.optional != None):
+		result += ' optional="' + prop.optional + '"'
 	result += ']'
 	if (prop.doc):
 		result += newLine() + printDoc(prop.doc)
@@ -116,13 +116,19 @@ def printProperty(prop):
 #
 
 def printModule(module):
-	result =  'Module [name="' + module.name + '"]'
+	result =  'Module [name="' + module.name
+	if (module.optional != None):
+		result += ' optional="' + module.optional + '"'
+	result += ']'
 	if (hideDetails == False):
 		result += printModuleDetails(module)
 	return result
 
 def printModuleClass(moduleClass):
-	result =  'ModuleClass [name="' + moduleClass.name + '"]'
+	result =  'ModuleClass [name="' + moduleClass.name
+	if (moduleClass.optional != None):
+		result += ' optional="' + moduleClass.optional + '"'
+	result += ']'
 	if (hideDetails == False):
 		result += printModuleDetails(moduleClass)
 	return result
@@ -335,15 +341,6 @@ def printConstraint(constraint):
 		result += newLine() + printDoc(constraint.doc)
 		decTab()
 	return result
-
-
-
-class SDT3Constraint(SDT3Element):
-	def __init__(self):
-		self.name = None
-		self.type = None
-		self.value = None
-		self.doc = None
 
 
 #
