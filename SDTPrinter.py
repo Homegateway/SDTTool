@@ -9,6 +9,7 @@ from SDT2PrintOPML import print2DomainOPML
 from SDT2PrintPlain import print2DomainPlain
 from SDT2PrintSDT3 import print2DomainSDT3
 from SDT3PrintMarkdown import print3DomainMarkdown
+from SDT3PrintOPML import print3DomainOPML
 from SDT3PrintPlain import print3DomainPlain
 from SDT3PrintJava import print3JavaClasses
 
@@ -27,8 +28,7 @@ def printOPML(domain, options):
 	if (domain._version == '2'):
 		return print2DomainOPML(domain, options)
 	elif (domain._version == '3'):
-		return 'NOT SUPPORTED YET'
-	# TODO SDT3 OPML
+		return print3DomainOPML(domain, options)
 
 def printMarkdown(domain, options):
 	if (domain == None):
@@ -46,6 +46,7 @@ def printSDT3(domain, inputFormat, options):
 		return print2DomainSDT3(domain, options)
 	else:
 		print('Conversion is not supported')
+		return ''
 
 
 def printJava(domain, inputFormat, directory, options):

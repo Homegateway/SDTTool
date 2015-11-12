@@ -214,7 +214,6 @@ class SDT3Parser:
 				dataType = SDT3DataType()
 				dataType.name = attrib['name'].strip() if 'name' in attrib else None
 				dataType.unitOfMeasure = attrib['unitOfMeasure'].strip() if 'unitOfMeasure' in attrib else None
-				# TODO Constraints
 				if (isinstance(lastElem, SDT3ArrayType)):
 					lastElem.arrayType = dataType
 				elif (isinstance(lastElem, SDT3StructType)):
