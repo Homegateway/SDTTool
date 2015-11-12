@@ -1,10 +1,10 @@
 # SDTTool
-Version 0.4
+Version 0.5
 
 *SDTTool* is a tool to read and convert XML files that conform to the *Smart Device Template* schema definition.
 
 ## Introduction
-The [Smart Device Template](https://github.com/Homegateway/SmartDeviceTemplate) (SDT) schema defined by the Home Gateway Initiative (HGI) is a format to describe concrete and abstract devices as well as capabilities, data models and functions of those devices. See [SDT Components](https://github.com/Homegateway/SmartDeviceTemplate/blob/master/SDT2.0.1/docs/SDT_Components.md) for an introduction to the SDT.
+The [Smart Device Template](https://github.com/Homegateway/SmartDeviceTemplate) (SDT) schema defined by the Home Gateway Initiative (HGI) is a format to describe concrete and abstract devices as well as capabilities, data models and functions of those devices. See [SDT Introduction](https://github.com/Homegateway/SmartDeviceTemplate/blob/master/SDT/schema3.0/docs/Introduction.md) and [SDT Components](https://github.com/Homegateway/SmartDeviceTemplate/blob/master/SDT3.0/docs/SDT_Components.md) for an introduction to the SDT.
 
 *SDTtool* is a Python 3 script that reads SDT files and generates output in various formats. It can be used to produce documentation for the Devices and ModuleClasses of an SDT as well as to convert between different versions of the SDT.
 
@@ -59,13 +59,19 @@ Output formats for documentation for the ``-of`` or ``--outputformat`` command l
 - ``-i INFILE``, ``--infile INFILE``: Required argument. Specify the input file for the conversion.
 - ``-o OUTFILE``, ``--outfile OUTFILE``: The output file or directory for the result. The default is stdout.
 - ``--hidedetails``: Hide the details of module classes and devices when generating the documentation.
+- ``--markdowntables``: Generate tables instead of the usual list output style for markdown.
 
 
 ## Limitations
 - *SDTTool* does not validate the input XML. It is assumed that the input XML conforms to the SDT schema.
-- Not all output formats are supported yet for SDT 3.
 
 ## Changelog
+
+### Version 0.5
+xx.xx.2015
+- Added markdown export for SDT3
+- Added OPML export for SDT3
+- Added support to export SDT3 structure as markdown tables
 
 ### Version 0.4
 29.10.2015
