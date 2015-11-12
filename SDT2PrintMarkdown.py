@@ -5,6 +5,7 @@
 
 
 hideDetails = False
+tables = False
 
 # tabulator level
 tab = 0
@@ -54,6 +55,11 @@ def markdownHeader(text):
 def print2DomainMarkdown(domain, options):
 	global hideDetails
 	hideDetails = options['hideDetails']
+	tables = options['tables']
+
+	if tables:
+		print('Tables are not supported for input format "sdt2"')
+		return ''
 
 	result = ''
 	result += markdownHeader('Domain "' + domain.id + '"')
