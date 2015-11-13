@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.5
+13.11.2015
+- Added markdown export for SDT3
+- Added OPML export for SDT3
+- Added support to export SDT3 structure as markdown tables
+
 ## Version 0.4
 29.10.2015
 - Added support for converting SDT2 to SDT3 format
