@@ -2,6 +2,9 @@
 #
 #	Print SDT2 to Plain text
 
+
+hideDetails = False
+
 # tabulator level
 tab = 0
 
@@ -26,22 +29,18 @@ def newLine():
 #	Print functions
 #
 
-def print2DomainPlain(domain):
+def print2DomainPlain(domain, options):
+	global hideDetails
+	hideDetails = options['hideDetails']
+	
 	result = 'Domain [id="' + domain.id + '"]'
 	incTab()
-	
-	if (len(domain.includes) > 0):
-		for include in domain.includes:
-			result += newLine() + printInclude(include)
-	
-	if (len(domain.modules) > 0):
-		for module in domain.modules:
-			result += newLine() + printModuleClass(module)
-
-	if (len(domain.rootDevices) > 0):
-		for rootDevice in domain.rootDevices:
-			result += newLine() + printRootDevice(rootDevice)
-
+	for include in domain.includes:
+		result += newLine() + printInclude(include)	
+	for module in domain.modules:
+		result += newLine() + printModuleClass(module)
+	for rootDevice in domain.rootDevices:
+		result += newLine() + printRootDevice(rootDevice)
 	decTab()
 	return result
 
@@ -49,47 +48,39 @@ def printInclude(include):
 	return 'Include [parse="' + include.parse + '" href="' + include.href + '"]'
 
 
-
 #
 #	RootDevice, Device
 #
 
 def printRootDevice(rootDevice):
+	global hideDetails
+
 	result = 'RootDevice [id="' + rootDevice.id + '"]'
 	incTab()
-
-	if (rootDevice.deviceInfo != None):
+	if (rootDevice.deviceInfo != None and hideDetails == False):
 		result += newLine() + printDeviceInfo(rootDevice.deviceInfo)
-	if (rootDevice.doc):
+	if (rootDevice.doc and hideDetails == False):
 		result += newLine() + printDoc(rootDevice.doc)
-
-	if (len(rootDevice.modules) > 0):
-		for module in rootDevice.modules:
-			result += newLine() + printModule(module)
-	
-	if (len(rootDevice.devices) > 0):
-		for device in rootDevice.devices:
-			result += newLine() + printDevice(device)
-
+	for module in rootDevice.modules:
+		result += newLine() + printModule(module)
+	for device in rootDevice.devices:
+		result += newLine() + printDevice(device)
 	decTab()
 	return result
-
 
 def printDevice(device):
+	global hideDetails
+
 	result = 'Device [id="' + device.id + '"]'
 	incTab()
-
-	if (device.deviceInfo != None):
+	if (device.deviceInfo != None and hideDetails == False):
 		result += newLine() + printDeviceInfo(device.deviceInfo)
-	if (device.doc):
+	if (device.doc and hideDetails):
 		result += newLine() + printDoc(device.doc)
-	if (len(device.modules) > 0):
-		for module in device.modules:
-			result += newLine() + printModule(module)
-
+	for module in device.modules:
+		result += newLine() + printModule(module)
 	decTab()
 	return result
-
 
 
 #
@@ -113,19 +104,24 @@ def printDeviceInfo(deviceInfo):
 	return result
 
 
-
 #
 #	Print Module, ModuleClass
 #
 
 def printModule(module):
+	global hideDetails
+
 	result =  'Module [name="' + module.name + '"]'
-	result += printModuleDetails(module)
+	if (hideDetails == False):
+		result += printModuleDetails(module)
 	return result
 
 def printModuleClass(moduleClass):
+	global hideDetails
+
 	result =  'ModuleClass [name="' + moduleClass.name + '"]'
-	result += printModuleDetails(moduleClass)
+	if (hideDetails == False):
+		result += printModuleDetails(moduleClass)
 	return result
 
 def printModuleDetails(module):
@@ -135,22 +131,14 @@ def printModuleDetails(module):
 		result += newLine() + printExtends(module.extends)
 	if (module.doc != None):
 		result += newLine() + printDoc(module.doc)
-
-	if (len(module.actions) > 0):
-		for action in module.actions:
-			result += newLine() + printAction(action)
-
-	if (len(module.data) > 0):
-		for data in module.data:
-			result += newLine() + printDataPoint(data)
-
-	if (len(module.events) > 0):
-		for event in module.events:
-			result += newLine() + printEvent(event)
-
+	for action in module.actions:
+		result += newLine() + printAction(action)
+	for data in module.data:
+		result += newLine() + printDataPoint(data)
+	for event in module.events:
+		result += newLine() + printEvent(event)
 	decTab()
 	return result
-
 
 def printExtends(extends):
 	return 'Extends [domain="' + extends.domain + '" class="' + extends.clazz + '"]'
@@ -165,18 +153,13 @@ def printAction(action):
 	if (action.type != None):
 		result += ' type="' + action.type + '"'
 	result += ']'
-
 	incTab()
 	if (action.doc != None): 
 		result += newLine() + printDoc(action.doc)
-
-	if (len(action.arg) > 0):
-		for argument in action.arg:
-			result += newLine() + printArgument(argument)
-
+	for argument in action.arg:
+		result += newLine() + printArgument(argument)
 	decTab()
 	return result
-
 
 def printArgument(action):
 	result = 'Arg ['
@@ -197,11 +180,8 @@ def printEvent(event):
 	incTab()
 	if (event.doc != None):
 		result += newLine() + printDoc(event.doc)
-	
-	if (len(event.data) > 0):
-		for dataPoint in event.data:
-			result += newLine() + printDataPoint(dataPoint)
-
+	for dataPoint in event.data:
+		result += newLine() + printDataPoint(dataPoint)
 	decTab()
 	return result
 
@@ -222,12 +202,10 @@ def printDataPoint(datapoint):
 	if (datapoint.eventable != None):
 		result += ' eventable="' + datapoint.eventable + '"'
 	result += ']'
-
 	if (datapoint.doc != None):
 		incTab()
 		result += newLine() + printDoc(datapoint.doc)
 		decTab()
-
 	return result
 
 

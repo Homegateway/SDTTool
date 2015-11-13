@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.4
+29.10.2015
+- Added support for converting SDT2 to SDT3 format
+- Added first support for generating Java classes (from SDT3 format only)
+- Added --hidedetails option to hide detailed information when generating documentation 
+
 ## Version 0.3
 03.09.2015
 - Fixed duplicate output of DataPoints
