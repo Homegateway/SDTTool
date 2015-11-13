@@ -67,6 +67,10 @@ Output formats for documentation for the ``-of`` or ``--outputformat`` command l
 
 ## Changelog
 
+# Version 0.6
+xx.xx.2015
+- Improved Java export: output documentation when available, generate static variables for property names, added getter for event payload data points
+
 ### Version 0.5
 13.11.2015
 - Added markdown export for SDT3

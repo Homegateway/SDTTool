@@ -2,14 +2,13 @@
 #
 #	Generate Java clasess from SDT3 
 
-# TODO Add header to the java file. at least describe SDT equivalent (device, moduleclass, type, event, ...)
 # TODO export properties
 
 import datetime, os, pathlib, string
 from SDT3Classes import *
 
 # Dictionary to temporarly store the found structs.
-# TODO: export for each ModuleClass (as done yet) or only once. Check for duplicates?
+# TODO: export for each ModuleClass (as done yet) or only once? Check for duplicates?
 structs = {}
 
 # Dictionary to temporarly store necessary imports
@@ -128,7 +127,6 @@ def exportDevice(device, package, path):
 		for subdevice in device.subDevices:
 			exportDevice(subdevice, package, path)
 
-	# TODO deviceinfo
 
 
 # Get the ModuleClass text
@@ -142,13 +140,17 @@ def getModuleClassInterface(module, package, name):
 	result += newLine() + 'public interface ' + sanitizeName(name, True) + extends + ' {'
 	incTab()
 
+	# Properties
+
+	result += getPropertyNames(module.properties)
+
 	# Actions
 
 	hasActions = False
 	for action in module.actions:
 		if (hasActions == False):
 			hasActions = True
-			result += newLine() + newLine() + '// Actions' + newLine()
+			result += newLine() + newLine() + newLine() + '// Actions'
 
 		if action.doc:
 			result += newLine() + newLine() + getActionHeader(action.doc)
@@ -167,7 +169,7 @@ def getModuleClassInterface(module, package, name):
 		result += newLine() + default + returnType + ' ' + sanitizeName(action.name, False) + '(' + args + ')' + defaultBody + ';'
 
 	# DataPoints getters/setters
-	result += getDatePointSettersGetters(module.data)
+	result += getDataPointSettersGetters(module.data, False)
 
 	decTab()
 	result += newLine() + '}'
@@ -204,7 +206,11 @@ def getDeviceInterface(device, package, name):
 	result += zw + ' {'
 	incTab()
 
-	# TODO DeviceInfo. Map? Hash
+	# Properties
+
+	result += getPropertyNames(device.properties)
+
+
 	decTab()
 	result += newLine() + '}'
 	return printPackage(package) + printImports() + result
@@ -217,7 +223,7 @@ def getJavaEvents(event, package, name):
 	incTab()
 
 	# DataPoints getters/setters
-	result += getDatePointSettersGetters(event.data)
+	result += getDataPointSettersGetters(event.data, True)
 
 	decTab()
 	result += newLine() + '}'
@@ -340,20 +346,20 @@ def getActionArguments(args):
 	return result
 
 
-def getDatePointSettersGetters(dataPoints):
+def getDataPointSettersGetters(dataPoints, isEvent):
 	result = ''
 	hasDataPoints = False
 	for dataPoint in dataPoints:
 		if (hasDataPoints == False):
 			hasDataPoints = True
-			result += newLine() + newLine() + '// DataPoints - getters/setters' + newLine() 
+			result += newLine() + newLine() + newLine() +  '// DataPoints - getters/setters'
 
 		if dataPoint.doc:
 			result += newLine() + newLine() + getDataPointHeader(dataPoint.doc)
 
 		args = ''
 		defaultBody = ''
-		if (dataPoint.writable == 'true'):
+		if (dataPoint.writable == 'true' and isEvent == False):
 			args = getType(dataPoint.type) + ' ' + sanitizeName(dataPoint.name, False)
 			if (dataPoint.optional == 'true'):
 				defaultBody = '{}'
@@ -364,6 +370,16 @@ def getDatePointSettersGetters(dataPoints):
 				default = 'default '
 				defaultBody = ' ' + getOptionalActionBody(dataPoint.type.type)
 			result += newLine() + default + getType(dataPoint.type) + ' _get' + sanitizeName(dataPoint.name, True) + '()' + defaultBody + ';'
+	return result
+
+
+def getPropertyNames(properties):
+	result = ''
+	if properties != None and len(properties) > 0:
+		result += newLine() + newLine() + newLine() + '// Properties' + newLine()
+		for prop in properties:
+			result += newLine() + getPropertyHeader(prop.doc)
+			result += newLine() + 'static final String PROP_' + sanitizeName(prop.name, False) + ' = "' + prop.name + '";'
 	return result
 
 #
@@ -391,6 +407,8 @@ Created: {date}
 commentTemplateAction = '/* {doc} */'
 
 commentTemplateDataPoint = '/* {doc} */'
+
+commentTemplateProperty = '/* {doc} */'
 
 
 def getHeader(aName, documentation, ty):
@@ -420,11 +438,21 @@ def getDeviceHeader(aName, documentation):
 
 def getActionHeader(documentation):
 	global commentTemplateAction
-	return commentTemplateAction.format(doc=documentation.doc.content.strip())
+	if documentation:
+		return commentTemplateAction.format(doc=documentation.doc.content.strip())
+	return ''
 
 def getDataPointHeader(documentation):
 	global commentTemplateDataPoint
-	return commentTemplateDataPoint.format(doc=documentation.doc.content.strip())
+	if documentation:
+		return commentTemplateDataPoint.format(doc=documentation.doc.content.strip())
+	return ''
+
+def getPropertyHeader(documentation):
+	global commentTemplateProperty
+	if documentation:
+		return commentTemplateProperty.format(doc=documentation.doc.content.strip())
+	return ''
 
 
 #
