@@ -5,7 +5,7 @@
 # TODO Add header to the java file. at least describe SDT equivalent (device, moduleclass, type, event, ...)
 # TODO export properties
 
-import os, pathlib, string
+import datetime, os, pathlib, string
 from SDT3Classes import *
 
 # Dictionary to temporarly store the found structs.
@@ -50,6 +50,7 @@ def exportModuleClass(module, package, path):
 	outputFile = None
 	try:
 		outputFile = open(fileName, 'w')
+		outputFile.write(getModuleClassHeader(name, module.doc))
 		outputFile.write(getModuleClassInterface(module, package, name))
 	except IOError as err:
 		print(err)
@@ -65,6 +66,7 @@ def exportModuleClass(module, package, path):
 		outputFile = None
 		try:
 			outputFile = open(fileName, 'w')
+			outputFile.write(getEventHeader(eventName, event.doc))
 			outputFile.write(getJavaEvents(event, package, eventName))
 		except IOError as err:
 			print(err)
@@ -80,6 +82,7 @@ def exportModuleClass(module, package, path):
 		outputFile = None
 		try:
 			outputFile = open(fileName, 'w')
+			outputFile.write(getStructHeader(structName, ty.doc))
 			outputFile.write(getStruct(ty, package, name))
 		except IOError as err:
 			print(err)
@@ -106,6 +109,7 @@ def exportDevice(device, package, path):
 	outputFile = None
 	try:
 		outputFile = open(fileName, 'w')
+		outputFile.write(getDeviceHeader(name, device.doc))
 		outputFile.write(getDeviceInterface(device, package, name))
 	except IOError as err:
 		print(err)
@@ -146,16 +150,19 @@ def getModuleClassInterface(module, package, name):
 			hasActions = True
 			result += newLine() + newLine() + '// Actions' + newLine()
 
+		if action.doc:
+			result += newLine() + newLine() + getActionHeader(action.doc)
+
 		returnType = 'void'
-		if (action.type != None):
+		if action.type != None:
 			returnType = getType(action.type)
 		default = ''
 		defaultBody = ''
-		if (action.optional != None and action.optional):
+		if action.optional != None and action.optional:
 			default = 'default '
 			defaultBody = ' ' + getOptionalActionBody(action.type.type)
 		args = ''
-		if (action.args != None):
+		if action.args != None:
 			args = getActionArguments(action.args)
 		result += newLine() + default + returnType + ' ' + sanitizeName(action.name, False) + '(' + args + ')' + defaultBody + ';'
 
@@ -254,11 +261,12 @@ def getDataPoint(dataPoint):
 	return getType(dataPoint.type) + ' ' + dataPoint.name + ';'
 
 
-def getType(ty):
+def getType(datatype):
 	global structs, imports
 
 	# Simple type
-	if (isinstance(ty, SDT3SimpleType)):
+	if (isinstance(datatype.type, SDT3SimpleType)):
+		ty = datatype.type
 		if (ty.type == 'boolean'):
 			return 'Boolean'
 		elif (ty.type == 'integer'):
@@ -284,33 +292,44 @@ def getType(ty):
 			return 'xx_' + ty.type
 
 	# Array
-	elif (isinstance(ty, SDT3ArrayType)):
-		if (isinstance(ty.arrayType, SDT3SimpleType)):
-			return getType(ty.arrayType) + '[]'
+	elif (isinstance(datatype.type, SDT3ArrayType)):
+		arrayType = datatype.type
+		if arrayType.arrayType != None:
+			return getType(arrayType.arrayType) + '[]'
 		else:
-			return sanitizeName(ty.name) + '[]'
+			return sanitizeName(arrayType.name, True) + '[]'
 
 	# Struct
-	elif (isinstance(ty, SDT3StructType)):
-		name = sanitizeName(ty.name, True)
-		structs[name] = ty
+	elif (isinstance(datatype.type, SDT3StructType)):
+		name = sanitizeName(datatype.name, True)
+		structs[name] = datatype.type
 		return name
 	return 'Object'
 
 
-def getOptionalActionBody(ty):
-	if (ty == 'void'):
+def getOptionalActionBody(datatype):
+	if (datatype.type == 'void'):
 		return '{ }'
-	elif (ty.lower() == 'boolean'):
+	elif (datatype.type.lower() == 'boolean'):
 		return '{ return false; }'
-	elif (ty.lower() == 'integer'):
+	elif (datatype.type.lower() == 'integer'):
 		return '{ return 0; }'
-	elif (ty.lower() == 'float'):
+	elif (datatype.type.lower() == 'float'):
 		return '{ return 0.0; }'
-	elif (ty.lower() == 'string'):
+	elif (datatype.type.lower() == 'string'):
+		return '{ return null; }'
+	elif (datatype.type.lower() == 'datetime'):
+		return '{ return null; }'
+	elif (datatype.type.lower() == 'date'):
+		return '{ return null; }'
+	elif (datatype.type.lower() == 'time'):
+		return '{ return null; }'
+	elif (datatype.type.lower() == 'enum'):
+		return '{ return null; }'
+	elif (datatype.type.lower() == 'array'):
 		return '{ return null; }'
 	else:
-		return '/* TODO ' + ty + ' */'
+		return '/* TODO ' + datatype.type + ' */ ;'
 
 def getActionArguments(args):
 	result = ''
@@ -327,7 +346,10 @@ def getDatePointSettersGetters(dataPoints):
 	for dataPoint in dataPoints:
 		if (hasDataPoints == False):
 			hasDataPoints = True
-			result += newLine() + newLine() + '// DataPoint getters/setters' + newLine() 
+			result += newLine() + newLine() + '// DataPoints - getters/setters' + newLine() 
+
+		if dataPoint.doc:
+			result += newLine() + newLine() + getDataPointHeader(dataPoint.doc)
 
 		args = ''
 		defaultBody = ''
@@ -345,14 +367,75 @@ def getDatePointSettersGetters(dataPoints):
 	return result
 
 #
+#	Headers
+#
+
+commentTemplate = '''/*
+{type} : {name}
+
+{doc}
+
+Created: {date}
+*/
+
+'''
+
+commentTemplateNoDoc = '''/*
+{type} : {name}
+
+Created: {date}
+*/
+
+'''
+
+commentTemplateAction = '/* {doc} */'
+
+commentTemplateDataPoint = '/* {doc} */'
+
+
+def getHeader(aName, documentation, ty):
+	global commentTemplate, commentTemplateNoDoc
+	if documentation:
+		return commentTemplate.format(name=aName, 
+			type=ty,
+			doc=documentation.doc.content.strip(),
+			date=str(datetime.datetime.now())[:19])
+	else:
+		return commentTemplateNoDoc.format(name=aName, 
+			type=ty,
+			date=str(datetime.datetime.now())[:19])
+
+
+def getModuleClassHeader(aName, documentation):
+	return getHeader(aName, documentation, 'ModuleClass')
+
+def getEventHeader(aName, documentation):
+	return getHeader(aName, documentation, 'Event')
+
+def getStructHeader(aName, documentation):
+	return getHeader(aName, documentation, 'Struct')
+
+def getDeviceHeader(aName, documentation):
+	return getHeader(aName, documentation, 'Device')
+
+def getActionHeader(documentation):
+	global commentTemplateAction
+	return commentTemplateAction.format(doc=documentation.doc.content.strip())
+
+def getDataPointHeader(documentation):
+	global commentTemplateDataPoint
+	return commentTemplateDataPoint.format(doc=documentation.doc.content.strip())
+
+
+#
 #	Helpers
 #
 
 # Sanitize the name for Java
 
-def sanitizeName(name, isEntity):
+def sanitizeName(name, isClass):
 	result = name
-	if (isEntity):
+	if (isClass):
 		result = result[0].upper() + name[1:]
 	else:
 		result = result[0].lower() + name[1:]

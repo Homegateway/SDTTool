@@ -145,21 +145,24 @@ class SDT3DataType(SDT3Element):
 		self.type = None
 		self.doc = None
 
-class SDT3SimpleType(SDT3Element):
+class SDT3SimpleType(SDT3DataType):
 	def __init__(self):
 		self.type = None
 
-class SDT3StructType(SDT3Element):
+class SDT3StructType(SDT3DataType):
 	def __init__(self):
+		SDT3DataType.__init__(self)
 		self.structElements = []
 
-class SDT3ArrayType(SDT3Element):
+class SDT3ArrayType(SDT3DataType):
 	def __init__(self):
+		SDT3DataType.__init__(self)
 		self.arrayType = None
 
 
 class SDT3Constraint(SDT3Element):
 	def __init__(self):
+		SDT3DataType.__init__(self)
 		self.name = None
 		self.type = None
 		self.value = None
@@ -178,7 +181,6 @@ class SDT3DocBase(SDT3Element):
 
 class SDT3Doc(SDT3DocBase):
 	def __init__(self):
-		SDT3DocBase.__init__(self)
 		self.doc = self
 		self.content = ''
 
