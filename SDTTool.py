@@ -10,7 +10,7 @@ from SDTPrinter import *
 
 import io, sys, traceback, argparse
 
-version = '0.4'
+version = '0.6'
 description = 'SDTTool ' + version + ' - A tool to read and convert Smart Device Templates.'
 epilog = 'See https://github.com/Homegateway for further information.'
 
