@@ -1,6 +1,6 @@
 # Changelog
 
-# Version 0.6
+## Version 0.6
 xx.xx.2015
 - Improved Java export: output documentation when available, generate static variables for property names, added getter for event payload data points
 
