@@ -3,6 +3,7 @@
 ## Version 0.6
 xx.xx.2015
 - Improved Java export: output documentation when available, generate static variables for property names, added getter for event payload data points
+- Fixed error when exporting SDT2 to markdown
 
 ## Version 0.5
 13.11.2015
