@@ -397,7 +397,7 @@ class SDT3Parser:
 	def data(self, data):
 		if (isinstance(self.elementStack[-1], SDT3Doc)):
 			obj = self.elementStack[-1]
-			obj.addContent(' '.join(data.split()))
+			obj.addContent(' ' + ' '.join(data.split()))
 		elif (isinstance(self.elementStack[-1], SDT3DocTT)):
 			obj = self.elementStack[-1]
 			obj.addContent(' '.join(data.split()))

@@ -96,7 +96,7 @@ def main(argv):
 	parser.add_argument('-if', '--inputformat', choices=('sdt2', 'sdt3', ''), action='store', dest='inputFormat', default='sdt2', help='The input format to read. The default is sdt2')
 	parser.add_argument('-of', '--outputformat', choices=('plain', 'opml', 'markdown', 'sdt3', 'java'), action='store', dest='outputFormat', default='markdown', help='The output format for the result. The default is markdown')
 	parser.add_argument('--hidedetails',  action='store_true', help='Hide the details of module classes and devices when printing documentation')
-	parser.add_argument('--markdowntables',  action='store_true', help='Format output as tables for markdown')
+	parser.add_argument('--markdowntables',  action='store_true', help='Format markdown output as tables for markdown')
 	requiredNamed = parser.add_argument_group('required arguments')
 	requiredNamed.add_argument('-i', '--infile', action='store', dest='inFile', required=True, help='The SDT input file to parse')
 	

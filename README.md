@@ -1,5 +1,5 @@
 # SDTTool
-Version 0.5
+Version 0.6
 
 *SDTTool* is a tool to read and convert XML files that conform to the *Smart Device Template* schema definition.
 
@@ -70,17 +70,22 @@ Output formats for documentation for the ``-of`` or ``--outputformat`` command l
 ## Changelog
 
 ### Version 0.6
-xx.xx.2015
+04.02.2016
+
 - Improved Java export: output documentation when available, generate static variables for property names, added getter for event payload data points
+- Fixed error when exporting SDT2 to markdown
+- Added option (``--markdowntables``) to present data points, actions, properties and more in table format
 
 ### Version 0.5
 13.11.2015
+
 - Added markdown export for SDT3
 - Added OPML export for SDT3
 - Added support to export SDT3 structure as markdown tables
 
 ### Version 0.4
 29.10.2015
+
 - Added support for converting SDT2 to SDT3 format
 - Added first support for generating Java classes (from SDT3 format only)
 - Added --hidedetails option to hide detailed information when generating documentation 
