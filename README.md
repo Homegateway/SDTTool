@@ -18,11 +18,11 @@ Download the latest release of *SDTTool* and copy them into a directory of your 
 
 ## Usage
 
-*SDTTool* is called as follows:
+*SDTTool* is run as follows:
 
 	python3 sdttool.py -i anInputFile.xml 
 
-This will read in the SDT version 2 definitions from the file *anInputFile.xml* and writes the documentation in markdown format to standard out. Writing the output to a new file can be done like this:
+This will read in the SDT version 2, the default, definitions from the file *anInputFile.xml* and writes the documentation in markdown format to standard out. Writing the output to a new file can be done like this:
 
 	python3 sdttool.py -i anInputFile.xml -o anOutputFile.md
 
@@ -33,12 +33,14 @@ To change the output format the option ``-of`` must be given:
 This would write the documentation in the OPML format to the file *anOutputFile.opml*.
 
 The input format can be set by the option ``-if``.  
-Please note that only ``sdt2`` is supported at the moment.
-
 
 	python3 sdttool.py -i anInputFile.xml -o anOutputFile.opml -of opml -if sdt2
 
-Running the script without with the ``-h`` option or without any will present a an overview about all possible command line parameters.
+It is also possible to generate Java interfaces and classes from SDT version 3 with the ``java`` output format. In this case the ``-o`` argument must point to an output directory.
+
+	python3 SDTTool.py -i anInputFile.xml -if sdt3 -o anOutputDirectoy -of java
+
+Running the script without with the ``-h`` option or without any argument will present a an overview about all possible command line parameters.
 
 ### Input Formats
 The following input formats are supported for the ``-if`` or ``--inputformat`` command line argument:
@@ -50,7 +52,7 @@ The following input formats are supported for the ``-if`` or ``--inputformat`` c
 Output formats for documentation for the ``-of`` or ``--outputformat`` command line argument:
 
 - **plain**: This produces a plain text representation, with indentations, of the components of the input file.
-- **markdown**: Markdown is a markup language with plain text formatting syntax designed so that it can be converted to many formats. GitHub natively supports markdown as its documentation format.
+- **markdown**: Markdown is a markup language with plain text formatting syntax designed so that it can be converted to many formats. GitHub natively supports markdown as its documentation format. See also the ``--markdowntables``argument below.
 - **opml**: OPML (Outline Processor Markup Language) is a simple XML format for outlines, which can be imported in various mind mapping applications.
 - **sdt3**: This output format is only valid when the input format is **sdt2**. It is used to convert SDT definitions from version 2 to version 3.
 - **java**: This output format is only valid for the input format **sdt3**. It generates Java interfaces and classes for the input definition. For this output format the argument ``-o`` refers to an output directory, not a single file.
@@ -67,14 +69,23 @@ Output formats for documentation for the ``-of`` or ``--outputformat`` command l
 
 ## Changelog
 
+### Version 0.6
+04.02.2016
+
+- Improved Java export: output documentation when available, generate static variables for property names, added getter for event payload data points
+- Fixed error when exporting SDT2 to markdown
+- Added option (``--markdowntables``) to present data points, actions, properties and more in table format
+
 ### Version 0.5
 13.11.2015
+
 - Added markdown export for SDT3
 - Added OPML export for SDT3
 - Added support to export SDT3 structure as markdown tables
 
 ### Version 0.4
 29.10.2015
+
 - Added support for converting SDT2 to SDT3 format
 - Added first support for generating Java classes (from SDT3 format only)
 - Added --hidedetails option to hide detailed information when generating documentation 

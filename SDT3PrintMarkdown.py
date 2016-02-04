@@ -26,6 +26,13 @@ def newLine():
 		result += '\t'
 	return result
 
+def tableNewLine():
+	global tab
+	result = '<br />'
+	for i in range(tab):
+		result += '&nbsp;&nbsp;'
+	return result
+
 
 # header level
 headerLevel = 1
@@ -42,9 +49,12 @@ def decHeaderLevel():
 def markdownHeader(text):
 	global headerLevel
 	result = '\n\n'
-	for i in range(headerLevel):
-		result += '#'
-	result += ' ' + text
+	if (headerLevel <= 6):
+		for i in range(headerLevel):
+			result += '#'
+		result += ' ' + text
+	else:
+		result += '**' + text + '**' + '\n'
 	return result
 
 
@@ -110,7 +120,7 @@ def printDevice(device):
 	if (len(device.subDevices) > 0):
 		incHeaderLevel()
 		result += markdownHeader('SubDevices')
-		for subDevice in rootDevice.subDevices:
+		for subDevice in device.subDevices:
 			result += printSubDevice(subDevice)
 		decHeaderLevel()
 	decTab()
@@ -130,7 +140,7 @@ def printSubDevice(subDevice):
 	if (len(subDevice.modules) > 0):
 		incHeaderLevel()
 		result += newLine() + markdownHeader('Modules')
-		for module in device.modules:
+		for module in subDevice.modules:
 			result += newLine() + printModule(module)
 		decHeaderLevel()
 	decHeaderLevel()
@@ -297,9 +307,11 @@ def printAction(action):
 		result += '|' + action.name
 
 		result += '|'
-		if (len(action.args) > 0):
+		if (len(action.args) == 1):
+			result += printArgument(action.args[0])
+		elif(len(action.args) > 0):
 			for argument in action.args:
-				result += printArgument(argument) + '<br />'
+				result += printArgument(argument) + '<br /><br />'
 		else:
 			result += 'None'
 		result += ' '
@@ -438,43 +450,57 @@ def printSimpleType(dataType):
 
 	simpleType = dataType.type
 	result = ''
-	result += printDataTypeAttributes(dataType)
+	result += simpleType.type
 	if (len(result) > 0):
 		result += ' '
-	result += simpleType.type
-	if (dataType.doc != None):
-		result += '  ' + newLine() + printDoc(dataType.doc)
-	incTab()
-	for constraint in dataType.constraints:
-		if tables:
-			result += '; ' + printConstraint(constraint)
-		else:
-			result += newLine() + printConstraint(constraint)
-	decTab()
+	if (tables):
+		result += printDataTypeAttributes(dataType)
+		incTab()
+		if (dataType.doc != None):
+			result += tableNewLine() + printDoc(dataType.doc)
+		for constraint in dataType.constraints:
+			result += tableNewLine() + printConstraint(constraint)
+		decTab()
+	else:
+		result += printDataTypeAttributes(dataType)
+		if (dataType.doc != None):
+			result += '  ' + newLine() + printDoc(dataType.doc)
+		incTab()
+		for constraint in dataType.constraints:
+			result += '  ' + newLine() + printConstraint(constraint)
+		decTab()
 	return result
 
 
 def printSimpleTypeProperty(simpleType):
 	result = ''
-	if (len(result) > 0):
-		result += ' '
 	result += simpleType.type
 	return result
 
 
 def printStructType(dataType):
+	global tables
 	result = 'Struct'
 	result += printDataTypeAttributes(dataType)
-	incTab()
-	for element in dataType.type.structElements:
-		result += newLine() + printDataType(element)
-	decTab()
-	if (dataType.doc != None):
-		result += '  ' + newLine() + printDoc(dataType.doc)
-	incTab()
-	for constraint in dataType.constraints:
-		result += newLine() + printConstraint(constraint)
-	decTab()
+	if (tables):
+		for element in dataType.type.structElements:
+			result += tableNewLine() + '- ' + printDataType(element)
+		if (dataType.doc != None):
+			result += tableNewLine() + printDoc(dataType.doc)
+		for constraint in dataType.constraints:
+			result += tableNewLine() + printConstraint(constraint)
+	else:
+		incTab()
+		for element in dataType.type.structElements:
+			result += newLine() + '- ' + printDataType(element)
+		decTab()
+		if (dataType.doc != None):
+			result += '  ' + newLine() + printDoc(dataType.doc)
+		incTab()
+		for constraint in dataType.constraints:
+			result += '  ' + newLine() + printConstraint(constraint)
+		decTab()
+
 	return result
 
 def printArrayType(dataType):
@@ -483,50 +509,50 @@ def printArrayType(dataType):
 	result += printDataTypeAttributes(dataType)
 	if (arrayType.arrayType != None):
 		incTab()
-		result += '[' + printDataType(arrayType.arrayType) + ']'
+		result += ': ' + printDataType(arrayType.arrayType)
 		decTab()
 	if (dataType.doc != None):
 		result += '  ' + newLine() + printDoc(dataType.doc)
 	incTab()
 	for constraint in dataType.constraints:
-		result += newLine() + printConstraint(constraint)
+		result += '  ' + newLine() + printConstraint(constraint)
 	decTab()
 	return result
 
 
 def printDataTypeAttributes(dataType):
+	global tables
 	result = ''
+	name = ''
 	if (dataType.name != None):
-		result += 'name="' + dataType.name + '"'
+		name = '*' + dataType.name + '*'
 	if (dataType.unitOfMeasure != None):
 		if (len(result) > 0):
 			result += ' '
-		result += 'unitOfMeasure="' + dataType.unitOfMeasure + '"'
+		result += 'UnitOfMeasure: "' + dataType.unitOfMeasure + '"'
 	if (len(result) > 0):
-		result = ' [' + result + ']'
+		result = name + ' {' + result + '}'
+	else:
+		result = name
 	return result
 
 
 def printConstraint(constraint):
-	result = ' [Constraint: '
+	result = ' {Constraint: '
 	attr   = ''
 	if (constraint.name != None):
-		attr += 'name="' + constraint.name + '"'
+		attr += constraint.name
 	if (constraint.type != None):
-		if (len(attr) > 0):
-			attr += ', '
-		attr += 'type="' + constraint.type + '"'
+		attr += '(' + constraint.type + ')'
 	if (constraint.value != None):
-		if (len(attr) > 0):
-			attr += ', '
-		attr += 'value="' + constraint.value + '"'
+		attr += '="' + constraint.value + '"'
 	if (constraint.doc != None):
 		if (len(attr) > 0):
-			attr += ', '
+			attr += '; '
 		attr += printDoc(constraint.doc)
 	if (len(attr) > 0):
 		result += attr
-	result += ']'
+	result += '}'
 	return result
 
 def printBoolean(value):

@@ -161,10 +161,10 @@ class SDT3Parser:
 			if (isinstance(lastElem, SDT3Event) or isinstance(lastElem, SDT3ModuleClass) or isinstance(lastElem, SDT3Module)):
 				dataPoint = SDT3DataPoint()
 				dataPoint.name = attrib['name'].strip() if 'name' in attrib else None
-				dataPoint.optional = attrib['optional'].strip() if 'optional' in attrib else None
-				dataPoint.writable = attrib['writable'].strip() if 'writable' in attrib else None
-				dataPoint.readable = attrib['readable'].strip() if 'readable' in attrib else None
-				dataPoint.eventable = attrib['eventable'].strip() if 'eventable' in attrib else None
+				dataPoint.optional = attrib['optional'].strip() if 'optional' in attrib else dataPoint.optional
+				dataPoint.writable = attrib['writable'].strip() if 'writable' in attrib else dataPoint.writable
+				dataPoint.readable = attrib['readable'].strip() if 'readable' in attrib else dataPoint.readable
+				dataPoint.eventable = attrib['eventable'].strip() if 'eventable' in attrib else dataPoint.eventable
 				lastElem.data.append(dataPoint)
 				self.elementStack.append(dataPoint)
 			else:
@@ -397,7 +397,7 @@ class SDT3Parser:
 	def data(self, data):
 		if (isinstance(self.elementStack[-1], SDT3Doc)):
 			obj = self.elementStack[-1]
-			obj.addContent(' '.join(data.split()))
+			obj.addContent(' ' + ' '.join(data.split()))
 		elif (isinstance(self.elementStack[-1], SDT3DocTT)):
 			obj = self.elementStack[-1]
 			obj.addContent(' '.join(data.split()))

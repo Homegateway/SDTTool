@@ -2,14 +2,13 @@
 #
 #	Generate Java clasess from SDT3 
 
-# TODO Add header to the java file. at least describe SDT equivalent (device, moduleclass, type, event, ...)
 # TODO export properties
 
-import os, pathlib, string
+import datetime, os, pathlib, string
 from SDT3Classes import *
 
 # Dictionary to temporarly store the found structs.
-# TODO: export for each ModuleClass (as done yet) or only once. Check for duplicates?
+# TODO: export for each ModuleClass (as done yet) or only once? Check for duplicates?
 structs = {}
 
 # Dictionary to temporarly store necessary imports
@@ -50,6 +49,7 @@ def exportModuleClass(module, package, path):
 	outputFile = None
 	try:
 		outputFile = open(fileName, 'w')
+		outputFile.write(getModuleClassHeader(name, module.doc))
 		outputFile.write(getModuleClassInterface(module, package, name))
 	except IOError as err:
 		print(err)
@@ -65,6 +65,7 @@ def exportModuleClass(module, package, path):
 		outputFile = None
 		try:
 			outputFile = open(fileName, 'w')
+			outputFile.write(getEventHeader(eventName, event.doc))
 			outputFile.write(getJavaEvents(event, package, eventName))
 		except IOError as err:
 			print(err)
@@ -80,6 +81,7 @@ def exportModuleClass(module, package, path):
 		outputFile = None
 		try:
 			outputFile = open(fileName, 'w')
+			outputFile.write(getStructHeader(structName, ty.doc))
 			outputFile.write(getStruct(ty, package, name))
 		except IOError as err:
 			print(err)
@@ -106,6 +108,7 @@ def exportDevice(device, package, path):
 	outputFile = None
 	try:
 		outputFile = open(fileName, 'w')
+		outputFile.write(getDeviceHeader(name, device.doc))
 		outputFile.write(getDeviceInterface(device, package, name))
 	except IOError as err:
 		print(err)
@@ -124,7 +127,6 @@ def exportDevice(device, package, path):
 		for subdevice in device.subDevices:
 			exportDevice(subdevice, package, path)
 
-	# TODO deviceinfo
 
 
 # Get the ModuleClass text
@@ -138,29 +140,36 @@ def getModuleClassInterface(module, package, name):
 	result += newLine() + 'public interface ' + sanitizeName(name, True) + extends + ' {'
 	incTab()
 
+	# Properties
+
+	result += getPropertyNames(module.properties)
+
 	# Actions
 
 	hasActions = False
 	for action in module.actions:
 		if (hasActions == False):
 			hasActions = True
-			result += newLine() + newLine() + '// Actions' + newLine()
+			result += newLine() + newLine() + newLine() + '// Actions'
+
+		if action.doc:
+			result += newLine() + newLine() + getActionHeader(action.doc)
 
 		returnType = 'void'
-		if (action.type != None):
+		if action.type != None:
 			returnType = getType(action.type)
 		default = ''
 		defaultBody = ''
-		if (action.optional != None and action.optional):
+		if action.optional != None and action.optional:
 			default = 'default '
 			defaultBody = ' ' + getOptionalActionBody(action.type.type)
 		args = ''
-		if (action.args != None):
+		if action.args != None:
 			args = getActionArguments(action.args)
 		result += newLine() + default + returnType + ' ' + sanitizeName(action.name, False) + '(' + args + ')' + defaultBody + ';'
 
 	# DataPoints getters/setters
-	result += getDatePointSettersGetters(module.data)
+	result += getDataPointSettersGetters(module.data, False)
 
 	decTab()
 	result += newLine() + '}'
@@ -197,7 +206,11 @@ def getDeviceInterface(device, package, name):
 	result += zw + ' {'
 	incTab()
 
-	# TODO DeviceInfo. Map? Hash
+	# Properties
+
+	result += getPropertyNames(device.properties)
+
+
 	decTab()
 	result += newLine() + '}'
 	return printPackage(package) + printImports() + result
@@ -210,7 +223,7 @@ def getJavaEvents(event, package, name):
 	incTab()
 
 	# DataPoints getters/setters
-	result += getDatePointSettersGetters(event.data)
+	result += getDataPointSettersGetters(event.data, True)
 
 	decTab()
 	result += newLine() + '}'
@@ -254,11 +267,12 @@ def getDataPoint(dataPoint):
 	return getType(dataPoint.type) + ' ' + dataPoint.name + ';'
 
 
-def getType(ty):
+def getType(datatype):
 	global structs, imports
 
 	# Simple type
-	if (isinstance(ty, SDT3SimpleType)):
+	if (isinstance(datatype.type, SDT3SimpleType)):
+		ty = datatype.type
 		if (ty.type == 'boolean'):
 			return 'Boolean'
 		elif (ty.type == 'integer'):
@@ -284,33 +298,44 @@ def getType(ty):
 			return 'xx_' + ty.type
 
 	# Array
-	elif (isinstance(ty, SDT3ArrayType)):
-		if (isinstance(ty.arrayType, SDT3SimpleType)):
-			return getType(ty.arrayType) + '[]'
+	elif (isinstance(datatype.type, SDT3ArrayType)):
+		arrayType = datatype.type
+		if arrayType.arrayType != None:
+			return getType(arrayType.arrayType) + '[]'
 		else:
-			return sanitizeName(ty.name) + '[]'
+			return sanitizeName(arrayType.name, True) + '[]'
 
 	# Struct
-	elif (isinstance(ty, SDT3StructType)):
-		name = sanitizeName(ty.name, True)
-		structs[name] = ty
+	elif (isinstance(datatype.type, SDT3StructType)):
+		name = sanitizeName(datatype.name, True)
+		structs[name] = datatype.type
 		return name
 	return 'Object'
 
 
-def getOptionalActionBody(ty):
-	if (ty == 'void'):
+def getOptionalActionBody(datatype):
+	if (datatype.type == 'void'):
 		return '{ }'
-	elif (ty.lower() == 'boolean'):
+	elif (datatype.type.lower() == 'boolean'):
 		return '{ return false; }'
-	elif (ty.lower() == 'integer'):
+	elif (datatype.type.lower() == 'integer'):
 		return '{ return 0; }'
-	elif (ty.lower() == 'float'):
+	elif (datatype.type.lower() == 'float'):
 		return '{ return 0.0; }'
-	elif (ty.lower() == 'string'):
+	elif (datatype.type.lower() == 'string'):
+		return '{ return null; }'
+	elif (datatype.type.lower() == 'datetime'):
+		return '{ return null; }'
+	elif (datatype.type.lower() == 'date'):
+		return '{ return null; }'
+	elif (datatype.type.lower() == 'time'):
+		return '{ return null; }'
+	elif (datatype.type.lower() == 'enum'):
+		return '{ return null; }'
+	elif (datatype.type.lower() == 'array'):
 		return '{ return null; }'
 	else:
-		return '/* TODO ' + ty + ' */'
+		return '/* TODO ' + datatype.type + ' */ ;'
 
 def getActionArguments(args):
 	result = ''
@@ -321,17 +346,20 @@ def getActionArguments(args):
 	return result
 
 
-def getDatePointSettersGetters(dataPoints):
+def getDataPointSettersGetters(dataPoints, isEvent):
 	result = ''
 	hasDataPoints = False
 	for dataPoint in dataPoints:
 		if (hasDataPoints == False):
 			hasDataPoints = True
-			result += newLine() + newLine() + '// DataPoint getters/setters' + newLine() 
+			result += newLine() + newLine() + newLine() +  '// DataPoints - getters/setters'
+
+		if dataPoint.doc:
+			result += newLine() + newLine() + getDataPointHeader(dataPoint.doc)
 
 		args = ''
 		defaultBody = ''
-		if (dataPoint.writable == 'true'):
+		if (dataPoint.writable == 'true' and isEvent == False):
 			args = getType(dataPoint.type) + ' ' + sanitizeName(dataPoint.name, False)
 			if (dataPoint.optional == 'true'):
 				defaultBody = '{}'
@@ -344,15 +372,98 @@ def getDatePointSettersGetters(dataPoints):
 			result += newLine() + default + getType(dataPoint.type) + ' _get' + sanitizeName(dataPoint.name, True) + '()' + defaultBody + ';'
 	return result
 
+
+def getPropertyNames(properties):
+	result = ''
+	if properties != None and len(properties) > 0:
+		result += newLine() + newLine() + newLine() + '// Properties' + newLine()
+		for prop in properties:
+			result += newLine() + getPropertyHeader(prop.doc)
+			result += newLine() + 'static final String PROP_' + sanitizeName(prop.name, False) + ' = "' + prop.name + '";'
+	return result
+
+#
+#	Headers
+#
+
+commentTemplate = '''/*
+{type} : {name}
+
+{doc}
+
+Created: {date}
+*/
+
+'''
+
+commentTemplateNoDoc = '''/*
+{type} : {name}
+
+Created: {date}
+*/
+
+'''
+
+commentTemplateAction = '/* {doc} */'
+
+commentTemplateDataPoint = '/* {doc} */'
+
+commentTemplateProperty = '/* {doc} */'
+
+
+def getHeader(aName, documentation, ty):
+	global commentTemplate, commentTemplateNoDoc
+	if documentation:
+		return commentTemplate.format(name=aName, 
+			type=ty,
+			doc=documentation.doc.content.strip(),
+			date=str(datetime.datetime.now())[:19])
+	else:
+		return commentTemplateNoDoc.format(name=aName, 
+			type=ty,
+			date=str(datetime.datetime.now())[:19])
+
+
+def getModuleClassHeader(aName, documentation):
+	return getHeader(aName, documentation, 'ModuleClass')
+
+def getEventHeader(aName, documentation):
+	return getHeader(aName, documentation, 'Event')
+
+def getStructHeader(aName, documentation):
+	return getHeader(aName, documentation, 'Struct')
+
+def getDeviceHeader(aName, documentation):
+	return getHeader(aName, documentation, 'Device')
+
+def getActionHeader(documentation):
+	global commentTemplateAction
+	if documentation:
+		return commentTemplateAction.format(doc=documentation.doc.content.strip())
+	return ''
+
+def getDataPointHeader(documentation):
+	global commentTemplateDataPoint
+	if documentation:
+		return commentTemplateDataPoint.format(doc=documentation.doc.content.strip())
+	return ''
+
+def getPropertyHeader(documentation):
+	global commentTemplateProperty
+	if documentation:
+		return commentTemplateProperty.format(doc=documentation.doc.content.strip())
+	return ''
+
+
 #
 #	Helpers
 #
 
 # Sanitize the name for Java
 
-def sanitizeName(name, isEntity):
+def sanitizeName(name, isClass):
 	result = name
-	if (isEntity):
+	if (isClass):
 		result = result[0].upper() + name[1:]
 	else:
 		result = result[0].lower() + name[1:]
