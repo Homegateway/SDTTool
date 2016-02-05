@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 0.7
+xx.XX.2016
+
+- Fixed Markdown output: escape special characters, better formatting of structs
+
 ## Version 0.6
 04.02.2016
 
