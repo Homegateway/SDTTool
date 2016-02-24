@@ -12,6 +12,7 @@ from SDT3PrintMarkdown import print3DomainMarkdown
 from SDT3PrintOPML import print3DomainOPML
 from SDT3PrintPlain import print3DomainPlain
 from SDT3PrintJava import print3JavaClasses
+from SDT3PrintVortoDSL import print3VortoDSL
 
 
 def printPlain(domain, options):
@@ -66,6 +67,21 @@ def printJava(domain, inputFormat, directory, options):
 	print3JavaClasses(domain, directory, options)
 
 
+def printVortoDSL(domain, inputFormat, directory, options):
+	if (inputFormat != 'sdt3'):
+		print('Only the input format "sdt3" is supported yet')
+		return
+	if (directory == None):
+		print('-o <directory> must be specified')
+		return
+
+	try:
+		os.mkdir(directory)
+	except FileExistsError as e:
+		# ignore existing directory for now
+		pass
+
+	print3VortoDSL(domain, directory, options)
 
 
 
