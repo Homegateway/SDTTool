@@ -66,7 +66,8 @@ def exportModuleClass(module, package, path):
 
 	# Export struct definitions found in the ModuleClass as classes
 
-	for name,ty in structs.items():
+	while len(structs) > 0:
+		name,ty = structs.popitem()
 		structName = sanitizeName(name, True)
 		fileName = str(path) + os.sep + structName + '.java'
 		outputFile = None
@@ -152,6 +153,7 @@ def getModuleClassInterface(module, package, name):
 	# Actions
 	result += getActions(module.actions)
 
+	decTab()
 	result += newLine() + '}'
 	return printImports() + result
 
