@@ -75,7 +75,6 @@ def exportModuleClass(module, package, path):
 
 	# Export struct definitions found in the ModuleClass as classes
 
-#	for name,ty in structs.items():
 
 	while len(structs) > 0:
 		name,ty = structs.popitem()
