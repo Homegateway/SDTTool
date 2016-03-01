@@ -75,7 +75,10 @@ def exportModuleClass(module, package, path):
 
 	# Export struct definitions found in the ModuleClass as classes
 
-	for name,ty in structs.items():
+#	for name,ty in structs.items():
+
+	while len(structs) > 0:
+		name,ty = structs.popitem()
 		structName = sanitizeName(name, True)
 		fileName = str(path) + os.sep + structName + '.java'
 		outputFile = None
@@ -162,7 +165,7 @@ def getModuleClassInterface(module, package, name):
 		defaultBody = ''
 		if action.optional != None and action.optional:
 			default = 'default '
-			defaultBody = ' ' + getOptionalActionBody(action.type.type)
+			defaultBody = ' ' + getOptionalActionBody(action.type)
 		args = ''
 		if action.args != None:
 			args = getActionArguments(action.args)
@@ -294,6 +297,9 @@ def getType(datatype):
 			return 'String[]'
 		elif (ty.type == 'array'):
 			return 'String[]'
+		elif (ty.type == 'uri'):
+			imports['URI'] = 'java.net.URI'
+			return 'URI'
 		else:
 			return 'xx_' + ty.type
 
@@ -314,7 +320,11 @@ def getType(datatype):
 
 
 def getOptionalActionBody(datatype):
-	if (datatype.type == 'void'):
+	if (datatype == None or datatype.type == None):
+		return '{ }'
+	if (isinstance(datatype, SDT3ArrayType)):
+		return '{ return null; }'
+	elif (datatype.type == 'void'):
 		return '{ }'
 	elif (datatype.type.lower() == 'boolean'):
 		return '{ return false; }'
