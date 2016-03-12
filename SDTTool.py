@@ -93,8 +93,8 @@ def main(argv):
 	# Read command line arguments
 	parser = argparse.ArgumentParser(description=description, epilog=epilog)
 	parser.add_argument('-o', '--outfile', action='store', dest='outFile', help='The output file or directory for the result. The default is stdout')
-	parser.add_argument('-if', '--inputformat', choices=('sdt2', 'sdt3', ''), action='store', dest='inputFormat', default='sdt2', help='The input format to read. The default is sdt2')
-	parser.add_argument('-of', '--outputformat', choices=('plain', 'opml', 'markdown', 'sdt3', 'java', 'vorto-dsl'), action='store', dest='outputFormat', default='markdown', help='The output format for the result. The default is markdown')
+	parser.add_argument('-if', '--inputformat', choices=('sdt2', 'sdt3', ''), action='store', dest='inputFormat', default='sdt3', help='The input format to read. The default is sdt3')
+	parser.add_argument('-of', '--outputformat', choices=('plain', 'opml', 'markdown', 'sdt3', 'java', 'vorto-dsl', 'onem2m-svg'), action='store', dest='outputFormat', default='markdown', help='The output format for the result. The default is markdown')
 	parser.add_argument('--hidedetails',  action='store_true', help='Hide the details of module classes and devices when printing documentation')
 	parser.add_argument('--markdowntables',  action='store_true', help='Format markdown output as tables for markdown')
 	requiredNamed = parser.add_argument_group('required arguments')
@@ -143,6 +143,8 @@ def main(argv):
 		printJava(domain, inputFormat, outFile, moreOptions)
 	elif (outputFormat == 'vorto-dsl'):
 		printVortoDSL(domain, inputFormat, outFile, moreOptions)
+	elif (outputFormat == 'onem2m-svg'):
+		printOneM2MSVG(domain, inputFormat, outFile, moreOptions)
 
 
 if __name__ == "__main__":
