@@ -142,7 +142,7 @@ def getDataPointsDetails(resource, dataPoints):
 		dp = Resource(sanitizeName(dataPoint.name, False))
 
 		if (dataPoint.optional == 'true'):
-			dp.cardinality = '0,1'
+			dp.cardinality = '0..1'
 		else:
 			dp.cardinality = '1'
 		resource.add(dp)
