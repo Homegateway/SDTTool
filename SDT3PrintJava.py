@@ -370,9 +370,11 @@ def getDataPointSettersGetters(dataPoints, isEvent):
 		defaultBody = ''
 		if (dataPoint.writable == 'true' and isEvent == False):
 			args = getType(dataPoint.type) + ' ' + sanitizeName(dataPoint.name, False)
+			default = ''
 			if (dataPoint.optional == 'true'):
-				defaultBody = '{}'
-			result += newLine() + 'void _set' + sanitizeName(dataPoint.name, True) + '(' + args + ')' + defaultBody + ';'
+				default = 'default '
+				defaultBody = ' {}'
+			result += newLine() + default + 'void _set' + sanitizeName(dataPoint.name, True) + '(' + args + ')' + defaultBody + ';'
 		if (dataPoint.readable == 'true'):
 			default = ''
 			if (dataPoint.optional == 'true'):

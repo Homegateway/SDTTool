@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 0.7
+xx.xx.xxxx
+- Export to Eclipse Vorto
+- First version of export to SVG in oneM2M resource format
+- Fixed errors in Java export
+- Fixed errors in OPML export
+
 ## Version 0.6
 04.02.2016
 
