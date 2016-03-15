@@ -6,7 +6,8 @@
 stdHeight      =  30
 stdWidth       = 200
 sdtBorderSpace =  10
-stdGap         =  30
+stdGapH        =  50
+stdGapV        =  20
 stdRound       =  15
 stdFontSize    =  12
 sdtFontSizeLine=  10
@@ -29,15 +30,15 @@ class Resource(object):
 		self.children    = []
 
 	def add(self, obj):
-		global stdWidth, stdHeight, stdGap
+		global stdWidth, stdHeight, stdGapH, stdGapV
 		self.children.append(obj)
-		obj.x = self.x + stdWidth/2 + stdGap
-		obj.y = self.y + (stdHeight + stdGap) * len(self.children)
+		obj.x = self.x + stdWidth/2 + stdGapH
+		obj.y = self.y + (stdHeight + stdGapV) * len(self.children)
 		obj.parent = self
 		pass
 
 	def draw(self):
-		result = drawResource(self.x, self.y, self.name)
+		result = drawResource(self.x, self.y, self.name, self.parent)
 		if self.parent != None:
 			result += drawLine(self.parent.x, self.parent.y, self.x, self.y, self.cardinality)
 		for o in self.children:
@@ -163,6 +164,14 @@ def drawResource(x, y, text):
 	result += svgText(x+(stdWidth/2), y+((stdHeight+stdFontSize)/2-2), '&lt;' + text + '&gt;', 'middle')
 	return result
 
+
+
+def drawResource(x, y, text, parent=None):
+	global stdWidth, stdHeight, stdFontSize
+	result  = svgRect(x, y, stdWidth, stdHeight)
+	label = ('[' + text + ']') if parent == None else ('&lt;' + text + '&gt;') 
+	result += svgText(x+(stdWidth/2), y+((stdHeight+stdFontSize)/2-2), label, 'middle')
+	return result
 
 
 def drawLine(x1, y1, x2, y2, label):

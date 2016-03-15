@@ -7,6 +7,11 @@ import datetime, os, pathlib, string
 from SDT3Classes import *
 from SDTSVG import *
 
+cardinality1 = '1'
+cardinality01 = '0..1'
+cardinality0n = '0..n'
+
+
 
 def print3OneM2MSVG(domain, directory, options):
 
@@ -34,7 +39,6 @@ def print3OneM2MSVG(domain, directory, options):
 # Export a ModuleClass definition to a file
 
 def exportModuleClass(module, package, path):
-	global structs
 
 	# export the module class itself
 
@@ -43,7 +47,24 @@ def exportModuleClass(module, package, path):
 	outputFile = None
 	try:
 		outputFile = open(fileName, 'w')
-		outputFile.write(getModuleClassInterface(module, package, name))		
+		outputFile.write(getModuleClassSVG(module, package, name, path))		
+	except IOError as err:
+		print(err)
+	finally:
+		if (outputFile != None):
+			outputFile.close()
+
+
+# Export a DataPoint definiton to a file
+
+def exportDataPoint(dataPoint, moduleName, path):
+	name = sanitizeName(dataPoint.name, True)
+	mName = sanitizeName(moduleName, True)
+	fileName = str(path) + os.sep + mName + '_' + name + '.svg'
+	outputFile = None
+	try:
+		outputFile = open(fileName, 'w')
+		outputFile.write(getDataPointSVG(dataPoint))		
 	except IOError as err:
 		print(err)
 	finally:
@@ -69,7 +90,7 @@ def exportDevice(device, package, path):
 	outputFile = None
 	try:
 		outputFile = open(fileName, 'w')
-		outputFile.write(getDeviceInterface(device, package, name))
+		outputFile.write(getDeviceSVG(device, package, name, path))
 	except IOError as err:
 		print(err)
 	finally:
@@ -83,24 +104,21 @@ def exportDevice(device, package, path):
 
 
 
-# Get the ModuleClass text
+# Get the ModuleClass resource
 
-def getModuleClassInterface(module, package, name):
+def getModuleClassSVG(module, package, name, path):
 	res = Resource(sanitizeName(name, True))
 
-	# TODO: Extends
-	# TODO: oneM2M specifics
+	# TODO: Extends?
 	# TODO: events?
 	# TODO: actions?
 
-	if (module.extends != None):
-		pass
-		#extendsID = module.extends.domain + '.' + sanitizeName(module.extends.clazz, True)
-		#extends = ' extends ' + extendsID
+	addHeaderToResource(res)
 
 	# DataPoints 
-	getDataPoints(res, module.data)
+	getDataPoints(res, module.data, name, path)
 
+	addFooterToResource(res)
 
 	result  = svgStart(res.width(), res.height())
 	result += res.draw()
@@ -108,17 +126,32 @@ def getModuleClassInterface(module, package, name):
 	return result
 
 
-# Get the Device text
+# Get the Device resource
 
-def getDeviceInterface(device, package, name):
+def getDeviceSVG(device, package, name):
 	res = Resource(sanitizeName(name, True))
 
 	# TODO: oneM2M specifics
 
 	for module in device.modules:
 		mod = Resource(sanitizeName(module.name, True))
-		mod.cardinality = '1'
+		mod.cardinality = cardinality1
 		res.add(mod)
+
+	result  = svgStart(res.width(), res.height())
+	result += res.draw()
+	result += svgFinish()
+	return result
+
+
+# Get the DataPoint resource
+
+def getDataPointSVG(dataPoint):
+	res = Resource(sanitizeName(dataPoint.name, False))
+
+	addHeaderToResource(res)
+	# Nothing in between
+	addFooterToResource(res)
 
 	result  = svgStart(res.width(), res.height())
 	result += res.draw()
@@ -129,23 +162,23 @@ def getDeviceInterface(device, package, name):
 ########################################################################
 
 # Construct data points export
-def getDataPoints(resource, dataPoints):
+def getDataPoints(resource, dataPoints, moduleName, path):
 	if (dataPoints == None or len(dataPoints) == 0):
 		return
-	getDataPointsDetails(resource, dataPoints)
-
-
-
-# Construct data points cores export
-def getDataPointsDetails(resource, dataPoints):
 	for dataPoint in dataPoints:
-		dp = Resource(sanitizeName(dataPoint.name, False))
+
+		# First add it to the resource
+
+		dp = Attribute(sanitizeName(dataPoint.name, False))
 
 		if (dataPoint.optional == 'true'):
-			dp.cardinality = '0..1'
+			dp.cardinality = cardinality01
 		else:
-			dp.cardinality = '1'
+			dp.cardinality = cardinality1
 		resource.add(dp)
+
+		# write out to a file
+		exportDataPoint(dataPoint, moduleName, path)
 
 
 ########################################################################
@@ -184,3 +217,30 @@ def sanitizePackage(package):
 	result = package.replace('/', '.')
 	return result
 
+
+
+# Add standard header attributes to a resource
+
+def addHeaderToResource(resource):
+
+	contDefinition = Attribute('contDefinition')
+	contDefinition.cardinality = cardinality1
+	resource.add(contDefinition)
+
+	creator = Attribute('creator')
+	creator.cardinality = cardinality01
+	resource.add(creator)
+
+	ontologyRef = Attribute('ontologyRef')
+	ontologyRef.cardinality = cardinality01
+	resource.add(ontologyRef)
+
+
+
+# Add standard footer to a resource
+
+def addFooterToResource(resource):
+
+	subscription = Resource('subscription')
+	subscription.cardinality = cardinality0n
+	resource.add(subscription)
