@@ -162,7 +162,7 @@ def getModuleClassInterface(module, package, name):
 			returnType = getType(action.type)
 		default = ''
 		defaultBody = ''
-		if action.optional != None and action.optional:
+		if action.optional != None and action.optional == 'true':
 			default = 'default '
 			defaultBody = ' ' + getOptionalActionBody(action.type)
 		args = ''
@@ -184,7 +184,7 @@ def getMethod(ty, ):
 		returnType = getType(ty)
 	default = ''
 	defaultBody = ''
-	if (action.optional != None and action.optional):
+	if (action.optional != None and action.optional == 'true'):
 		default = 'default '
 		defaultBody = ' ' + getOptionalActionBody(action.type)
 	args = ''
@@ -255,7 +255,7 @@ def getJavaMethods(module, package):
 			returnType = getType(action.type)
 		default = ''
 		defaultBody = ''
-		if (action.optional != None and action.optional):
+		if (action.optional != None and action.optional == 'true'):
 			default = 'default '
 			defaultBody = ' ' + getOptionalActionBody(action.type)
 		args = ''
@@ -321,6 +321,8 @@ def getType(datatype):
 def getOptionalActionBody(datatype):
 	if (datatype == None or datatype.type == None):
 		return '{ }'
+	if isinstance(datatype.type, SDT3SimpleType):
+		datatype = datatype.type
 	if (isinstance(datatype, SDT3ArrayType)):
 		return '{ return null; }'
 	elif (datatype.type == 'void'):
