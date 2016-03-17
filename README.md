@@ -45,8 +45,8 @@ Running the script without with the ``-h`` option or without any argument will p
 ### Input Formats
 The following input formats are supported for the ``-if`` or ``--inputformat`` command line argument:
 
-- **sdt2**: SDT Version 2.0.1, the default
-- **sdt3**: SDT Version 3.0
+- **sdt2**: SDT Version 2.0.1
+- **sdt3**: SDT Version 3.0, the default
 
 ### Output Formats
 Output formats for documentation for the ``-of`` or ``--outputformat`` command line argument:
@@ -56,6 +56,9 @@ Output formats for documentation for the ``-of`` or ``--outputformat`` command l
 - **opml**: OPML (Outline Processor Markup Language) is a simple XML format for outlines, which can be imported in various mind mapping applications.
 - **sdt3**: This output format is only valid when the input format is **sdt2**. It is used to convert SDT definitions from version 2 to version 3.
 - **java**: This output format is only valid for the input format **sdt3**. It generates Java interfaces and classes for the input definition. For this output format the argument ``-o`` refers to an output directory, not a single file.
+- **vorto-dsl**: This output format generates files that can be used to export Device, ModuleClass and data type definitions to an [Eclipse Vorto repository](http://vorto.eclipse.org). For this output format the argument ``-o`` refers to an output directory, not a single file.
+- **onem2m-svg**: This output format generates SVG files that present the structure of Devices and ModuleClass in the graphical representation format used by [oneM2M](http://onem2m.org). For this output format the argument ``-o`` refers to an output directory, not a single file.
+
 
 ### Other Arguments
 - ``-i INFILE``, ``--infile INFILE``: Required argument. Specify the input file for the conversion.
@@ -72,7 +75,13 @@ Output formats for documentation for the ``-of`` or ``--outputformat`` command l
 ### Version 0.7
 xx.XX.2016
 
-- Fixed Markdown output: escape special characters, better formatting of structs
+- Export to Eclipse Vorto
+- First version of export to SVG in oneM2M resource format
+- Fixed errors in Java export
+- Fixed errors in OPML export
+- Improved markdown export
+- Made SDT3 the default input format
+- minor bug fixes
 
 ### Version 0.6
 04.02.2016

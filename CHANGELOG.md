@@ -2,11 +2,13 @@
 
 ## Version 0.7
 xx.xx.xxxx
+
 - Export to Eclipse Vorto
 - First version of export to SVG in oneM2M resource format
 - Fixed errors in Java export
 - Fixed errors in OPML export
-- Improved Markdown export
+- Improved markdown export
+- Made SDT3 the default input format
 - minor bug fixes
 
 
