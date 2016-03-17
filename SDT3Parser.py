@@ -63,6 +63,13 @@ class SDT3Parser:
 			self.nameSpaces.append(uri)
 		ntag = ntag.lower()
 
+		# Check non-emptyness of attributes
+		for at in attrib:
+			value = attrib[at].strip()
+			if len(value) == 0:
+				raise SyntaxError('empty attribute: ' + at + ' for element ' + tag)
+
+
 		# Handle all elements 
 
 		# The lastElem always contains the last element on the stack and is
