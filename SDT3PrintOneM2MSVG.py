@@ -12,7 +12,6 @@ cardinality01 = '0..1'
 cardinality0n = '0..n'
 
 
-
 def print3OneM2MSVG(domain, directory, options):
 
 	# Create package path and make directories
@@ -36,14 +35,20 @@ def print3OneM2MSVG(domain, directory, options):
 		exportDevice(device, package, path)
 
 
+#############################################################################
+
+
 # Export a ModuleClass definition to a file
 
-def exportModuleClass(module, package, path):
+def exportModuleClass(module, package, path, name=None):
 
 	# export the module class itself
+	prefix = ''
+	if name != None:
+		prefix = sanitizeName(name, True) + '_'
 
-	name = sanitizeName(module.name, True)
-	fileName = str(path) + os.sep + name + '.svg'
+	name = sanitizeName(module.name, False)
+	fileName = str(path) + os.sep + prefix + name + '.svg'
 	outputFile = None
 	try:
 		outputFile = open(fileName, 'w')
@@ -54,6 +59,142 @@ def exportModuleClass(module, package, path):
 		if (outputFile != None):
 			outputFile.close()
 
+
+# Get the ModuleClass resource
+
+def getModuleClassSVG(module, package, name, path):
+	res = Resource(sanitizeName(name, False))
+	res.specialization = True
+
+	# TODO: Extends?
+	# TODO: events?
+	# TODO: actions?
+
+	addModuleClassHeaderToResource(res)
+
+	# DataPoints 
+	getDataPoints(res, module.data, name, path)
+
+	addModuleClassFooterToResource(res)
+
+	result  = svgStart(res.width(), res.height())
+	result += res.draw()
+	result += svgFinish()
+	return result
+
+
+# Add standard header attributes to a module class resource
+
+def addModuleClassHeaderToResource(resource):
+
+	contDefinition = Attribute('contDefinition')
+	contDefinition.cardinality = cardinality1
+	resource.add(contDefinition)
+
+	creator = Attribute('creator')
+	creator.cardinality = cardinality01
+	resource.add(creator)
+
+	ontologyRef = Attribute('ontologyRef')
+	ontologyRef.cardinality = cardinality01
+	resource.add(ontologyRef)
+
+
+# Add standard footer to a module class resource
+
+def addModuleClassFooterToResource(resource):
+
+	subscription = Resource('subscription')
+	subscription.cardinality = cardinality0n
+	resource.add(subscription)
+
+#############################################################################
+
+
+# Export a Device definition to a file
+
+def exportDevice(device, package, path):
+	name = sanitizeName(device.id, True)
+	packagePath = str(path) + os.sep + name.lower()
+	path = pathlib.Path(packagePath)
+
+	try:
+		path.mkdir(parents=True)
+	except FileExistsError as e:
+		pass # on purpose. We override files for now
+
+	fileName = str(path) + os.sep + name + '.svg'
+	outputFile = None
+	try:
+		outputFile = open(fileName, 'w')
+		outputFile.write(getDeviceSVG(device, package, name))
+	except IOError as err:
+		print(err)
+	finally:
+		if (outputFile != None):
+			outputFile.close()
+
+	# export module classes of the device
+
+	for module in device.modules:
+		exportModuleClass(module, package, path, name)
+
+
+# Get the Device resource
+
+def getDeviceSVG(device, package, name):
+	res = Resource(sanitizeName(name, True))
+	res.specialization = True
+
+	addDeviceHeaderToResource(res)
+
+	for module in device.modules:
+		mod = Resource(sanitizeName(module.name, True))
+		mod.cardinality = cardinality1
+		mod.specialization = True
+		res.add(mod)
+
+	addDeviceFooterToResource(res)
+
+	result  = svgStart(res.width(), res.height())
+	result += res.draw()
+	result += svgFinish()
+	return result
+
+
+# Add standard header attributes to a device resource
+
+def addDeviceHeaderToResource(resource):
+
+	contDefinition = Attribute('contDefinition')
+	contDefinition.cardinality = cardinality1
+	resource.add(contDefinition)
+
+	creator = Attribute('creator')
+	creator.cardinality = cardinality01
+	resource.add(creator)
+
+	ontologyRef = Attribute('ontologyRef')
+	ontologyRef.cardinality = cardinality01
+	resource.add(ontologyRef)
+
+	subscription = Resource('deviceProperty')
+	subscription.cardinality = cardinality01
+	subscription.specialization = True
+	resource.add(subscription)
+
+
+
+# Add standard footer to a device resource
+
+def addDeviceFooterToResource(resource):
+
+	subscription = Resource('subscription')
+	subscription.cardinality = cardinality0n
+	subscription.specialization = False
+	resource.add(subscription)
+
+#############################################################################
 
 # Export a DataPoint definiton to a file
 
@@ -72,94 +213,21 @@ def exportDataPoint(dataPoint, moduleName, path):
 			outputFile.close()
 
 
-# Export a Device definition to a file
-
-def exportDevice(device, package, path):
-	name = sanitizeName(device.id, True)
-	packagePath = str(path) + os.sep + name.lower()
-	path = pathlib.Path(packagePath)
-
-	# TODO: SubDevices
-
-	try:
-		path.mkdir(parents=True)
-	except FileExistsError as e:
-		pass # on purpose. We override files for now
-
-	fileName = str(path) + os.sep + name + '.svg'
-	outputFile = None
-	try:
-		outputFile = open(fileName, 'w')
-		outputFile.write(getDeviceSVG(device, package, name, path))
-	except IOError as err:
-		print(err)
-	finally:
-		if (outputFile != None):
-			outputFile.close()
-
-	# export module classes of the device
-
-	for module in device.modules:
-		exportModuleClass(module, package, path)
-
-
-
-# Get the ModuleClass resource
-
-def getModuleClassSVG(module, package, name, path):
-	res = Resource(sanitizeName(name, True))
-
-	# TODO: Extends?
-	# TODO: events?
-	# TODO: actions?
-
-	addHeaderToResource(res)
-
-	# DataPoints 
-	getDataPoints(res, module.data, name, path)
-
-	addFooterToResource(res)
-
-	result  = svgStart(res.width(), res.height())
-	result += res.draw()
-	result += svgFinish()
-	return result
-
-
-# Get the Device resource
-
-def getDeviceSVG(device, package, name):
-	res = Resource(sanitizeName(name, True))
-
-	# TODO: oneM2M specifics
-
-	for module in device.modules:
-		mod = Resource(sanitizeName(module.name, True))
-		mod.cardinality = cardinality1
-		res.add(mod)
-
-	result  = svgStart(res.width(), res.height())
-	result += res.draw()
-	result += svgFinish()
-	return result
-
-
 # Get the DataPoint resource
 
 def getDataPointSVG(dataPoint):
 	res = Resource(sanitizeName(dataPoint.name, False))
+	res.specialization = True
 
-	addHeaderToResource(res)
+	addDataPointHeaderToResource(res)
 	# Nothing in between
-	addFooterToResource(res)
+	addDataPointFooterToResource(res)
 
 	result  = svgStart(res.width(), res.height())
 	result += res.draw()
 	result += svgFinish()
 	return result
 
-
-########################################################################
 
 # Construct data points export
 def getDataPoints(resource, dataPoints, moduleName, path):
@@ -180,6 +248,33 @@ def getDataPoints(resource, dataPoints, moduleName, path):
 		# write out to a file
 		exportDataPoint(dataPoint, moduleName, path)
 
+
+
+# Add standard header attributes to a device resource
+
+def addDataPointHeaderToResource(resource):
+
+	contDefinition = Attribute('contDefinition')
+	contDefinition.cardinality = cardinality1
+	resource.add(contDefinition)
+
+	creator = Attribute('creator')
+	creator.cardinality = cardinality01
+	resource.add(creator)
+
+	ontologyRef = Attribute('ontologyRef')
+	ontologyRef.cardinality = cardinality01
+	resource.add(ontologyRef)
+
+
+# Add standard footer to a device resource
+
+def addDataPointFooterToResource(resource):
+
+	subscription = Resource('subscription')
+	subscription.cardinality    = cardinality0n
+	subscription.specialization = False
+	resource.add(subscription)
 
 ########################################################################
 
@@ -217,30 +312,3 @@ def sanitizePackage(package):
 	result = package.replace('/', '.')
 	return result
 
-
-
-# Add standard header attributes to a resource
-
-def addHeaderToResource(resource):
-
-	contDefinition = Attribute('contDefinition')
-	contDefinition.cardinality = cardinality1
-	resource.add(contDefinition)
-
-	creator = Attribute('creator')
-	creator.cardinality = cardinality01
-	resource.add(creator)
-
-	ontologyRef = Attribute('ontologyRef')
-	ontologyRef.cardinality = cardinality01
-	resource.add(ontologyRef)
-
-
-
-# Add standard footer to a resource
-
-def addFooterToResource(resource):
-
-	subscription = Resource('subscription')
-	subscription.cardinality = cardinality0n
-	resource.add(subscription)
