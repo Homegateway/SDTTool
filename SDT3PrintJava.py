@@ -330,7 +330,7 @@ def getOptionalActionBody(datatype):
 	elif (datatype.type.lower() == 'integer'):
 		return '{ return 0; }'
 	elif (datatype.type.lower() == 'float'):
-		return '{ return 0.0; }'
+		return '{ return 0.0f; }'
 	elif (datatype.type.lower() == 'string'):
 		return '{ return null; }'
 	elif (datatype.type.lower() == 'datetime'):
