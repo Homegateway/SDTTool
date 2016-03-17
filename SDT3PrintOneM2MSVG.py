@@ -7,12 +7,22 @@ import datetime, os, pathlib, string
 from SDT3Classes import *
 from SDTSVG import *
 
+# definition of cardinality constants
 cardinality1 = '1'
 cardinality01 = '0..1'
 cardinality0n = '0..n'
 
+# variable that hold an optional header text
+headerText = ''
+
 
 def print3OneM2MSVG(domain, directory, options):
+	global headerText
+
+	lfile = options['licensefile']
+	if lfile != None:
+	    with open(lfile, 'rt') as f:
+	    	headerText = f.read()
 
 	# Create package path and make directories
 
@@ -77,7 +87,7 @@ def getModuleClassSVG(module, package, name, path):
 
 	addModuleClassFooterToResource(res)
 
-	result  = svgStart(res.width(), res.height())
+	result  = svgStart(res.width(), res.height(), headerText)
 	result += res.draw()
 	result += svgFinish()
 	return result
@@ -156,7 +166,7 @@ def getDeviceSVG(device, package, name):
 
 	addDeviceFooterToResource(res)
 
-	result  = svgStart(res.width(), res.height())
+	result  = svgStart(res.width(), res.height(), headerText)
 	result += res.draw()
 	result += svgFinish()
 	return result
@@ -223,7 +233,7 @@ def getDataPointSVG(dataPoint):
 	# Nothing in between
 	addDataPointFooterToResource(res)
 
-	result  = svgStart(res.width(), res.height())
+	result  = svgStart(res.width(), res.height(), headerText)
 	result += res.draw()
 	result += svgFinish()
 	return result

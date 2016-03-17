@@ -65,6 +65,7 @@ Output formats for documentation for the ``-of`` or ``--outputformat`` command l
 - ``-o OUTFILE``, ``--outfile OUTFILE``: The output file or directory for the result. The default is stdout.
 - ``--hidedetails``: Hide the details of module classes and devices when generating the documentation.
 - ``--markdowntables``: Generate tables instead of the usual list output style for markdown.
+- ``--licensefile <filename>``: Add the text of the specified file as a license to the generated files.
 
 
 ## Limitations

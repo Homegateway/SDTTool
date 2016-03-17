@@ -7,6 +7,9 @@ from SDT3Classes import *
 hideDetails = False
 tables = False
 
+# variable that hold an optional header text
+headerText = ''
+
 # tabulator level
 tab = 0
 
@@ -63,9 +66,15 @@ def markdownHeader(text):
 #
 
 def print3DomainMarkdown(domain, options):
-	global hideDetails, tables
+	global hideDetails, tables, headerText
 	hideDetails = options['hideDetails']
 	tables = options['markdowntables']
+
+	# read the optional licensefile into the header
+	lfile = options['licensefile']
+	if lfile != None:
+	    with open(lfile, 'rt') as f:
+	    	headerText = f.read()
 
 	result = ''
 	result += markdownHeader('Domain "' + domain.id + '"')
@@ -86,6 +95,11 @@ def print3DomainMarkdown(domain, options):
 		result += markdownHeader('Devices')
 		for device in domain.devices:
 			result += newLine() + printDevice(device)
+		decHeaderLevel()
+	if headerText != None and len(headerText) > 0:
+		incHeaderLevel()
+		result += markdownHeader('License')
+		result += newLine() +  headerText
 		decHeaderLevel()
 	return result
 

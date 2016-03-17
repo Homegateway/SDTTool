@@ -100,9 +100,15 @@ class Attribute(object):
 
 # SVG Stuff
 
-def svgStart(width=0, height=0):
+def svgStart(width=0, height=0, header=None):
 	global stdFillColor
 	result  = '<?xml version="1.0"?>\n'
+
+	if header != None:
+		result += '\n<!--\n'
+		result += sanitizeText(header)
+		result += '\n-->\n\n'
+
 	if width > 0 and height > 0:
 		result += '<svg height="' + str(height) + '" width="' + str(width) + '" xmlns="http://www.w3.org/2000/svg">\n'
 	else:
@@ -184,4 +190,14 @@ def drawLine(x1, y1, x2, y2, label):
 	# Draw cardinality
 	fs = sdtFontSizeLine
 	result += svgText(xe-5, ye-fs/2, label, 'end', fs)
+	return result
+
+
+
+def sanitizeText(text):
+	if (text == None or len(text) == 0):
+		return ''
+	result = text
+	result = result.replace('<', '&lt;')
+	result = result.replace('>', '&gt;')
 	return result

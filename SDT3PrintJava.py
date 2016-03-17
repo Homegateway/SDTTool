@@ -14,7 +14,18 @@ structs = {}
 # Dictionary to temporarly store necessary imports
 imports = {}
 
+# variable that hold an optional header text
+headerText = ''
+
+
 def print3JavaClasses(domain, directory, options):
+	global headerText
+
+	# read the optional licensefile into the header
+	lfile = options['licensefile']
+	if lfile != None:
+	    with open(lfile, 'rt') as f:
+	    	headerText = f.read()
 
 	# Create package path and make directories
 
@@ -402,6 +413,8 @@ def getPropertyNames(properties):
 commentTemplate = '''/*
 {type} : {name}
 
+{license}
+
 {doc}
 
 Created: {date}
@@ -409,13 +422,6 @@ Created: {date}
 
 '''
 
-commentTemplateNoDoc = '''/*
-{type} : {name}
-
-Created: {date}
-*/
-
-'''
 
 commentTemplateAction = '/* {doc} */'
 
@@ -425,16 +431,14 @@ commentTemplateProperty = '/* {doc} */'
 
 
 def getHeader(aName, documentation, ty):
-	global commentTemplate, commentTemplateNoDoc
-	if documentation:
-		return commentTemplate.format(name=aName, 
-			type=ty,
-			doc=documentation.doc.content.strip(),
-			date=str(datetime.datetime.now())[:19])
-	else:
-		return commentTemplateNoDoc.format(name=aName, 
-			type=ty,
-			date=str(datetime.datetime.now())[:19])
+	lic = headerText if headerText != None else ''
+	doc = documentation.doc.content.strip() if documentation != None else ''
+	return commentTemplate.format(name=aName, 
+		type=ty,
+		license=lic,
+		doc=doc,
+		date=str(datetime.datetime.now())[:19])
+
 
 
 def getModuleClassHeader(aName, documentation):

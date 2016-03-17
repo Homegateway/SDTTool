@@ -97,6 +97,7 @@ def main(argv):
 	parser.add_argument('-of', '--outputformat', choices=('plain', 'opml', 'markdown', 'sdt3', 'java', 'vorto-dsl', 'onem2m-svg'), action='store', dest='outputFormat', default='markdown', help='The output format for the result. The default is markdown')
 	parser.add_argument('--hidedetails',  action='store_true', help='Hide the details of module classes and devices when printing documentation')
 	parser.add_argument('--markdowntables',  action='store_true', help='Format markdown output as tables for markdown')
+	parser.add_argument('--licensefile',  action='store', dest='licensefile', help='Add the text of license file to output files')
 	requiredNamed = parser.add_argument_group('required arguments')
 	requiredNamed.add_argument('-i', '--infile', action='store', dest='inFile', required=True, help='The SDT input file to parse')
 	
@@ -113,6 +114,7 @@ def main(argv):
 	moreOptions = {}
 	moreOptions['hideDetails'] = results.hidedetails
 	moreOptions['markdowntables'] = results.markdowntables
+	moreOptions['licensefile'] = results.licensefile
 
 
 	# Read input file. Check for correct format
