@@ -6,6 +6,7 @@ xx.xx.xxxx
 - First version of export to SVG in oneM2M resource format
 - Fixed errors in Java export
 - Fixed errors in OPML export
+- minor bug fixes
 
 ## Version 0.6
 04.02.2016
