@@ -160,7 +160,7 @@ def getDeviceSVG(device, package, name):
 
 	for module in device.modules:
 		mod = Resource(sanitizeName(module.name, True))
-		mod.cardinality = cardinality1
+		mod.cardinality = cardinality01 if module.optional == 'true' else cardinality1
 		mod.specialization = True
 		res.add(mod)
 
