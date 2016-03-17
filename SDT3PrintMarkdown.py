@@ -30,7 +30,7 @@ def tableNewLine():
 	global tab
 	result = '<br />'
 	for i in range(tab):
-		result += '&nbsp;&nbsp;'
+		result += '&nbsp;&nbsp;&nbsp;&nbsp;'
 	return result
 
 
@@ -480,15 +480,17 @@ def printSimpleTypeProperty(simpleType):
 
 def printStructType(dataType):
 	global tables
-	result = 'Struct'
+	result = 'Struct '
 	result += printDataTypeAttributes(dataType)
 	if (tables):
+		incTab()
 		for element in dataType.type.structElements:
 			result += tableNewLine() + '- ' + printDataType(element)
 		if (dataType.doc != None):
 			result += tableNewLine() + printDoc(dataType.doc)
 		for constraint in dataType.constraints:
 			result += tableNewLine() + printConstraint(constraint)
+		decTab()
 	else:
 		incTab()
 		for element in dataType.type.structElements:
@@ -505,18 +507,32 @@ def printStructType(dataType):
 
 def printArrayType(dataType):
 	arrayType = dataType.type
-	result = 'Array'
+	result = 'Array '
 	result += printDataTypeAttributes(dataType)
-	if (arrayType.arrayType != None):
+	if (tables):
+		if (arrayType.arrayType != None):
+			result += ': '
+			incTab()
+			result += tableNewLine() + printDataType(arrayType.arrayType)
+			decTab()
+		if (dataType.doc != None):
+			result += '  ' + tableNewLine() + printDoc(dataType.doc)
 		incTab()
-		result += ': ' + printDataType(arrayType.arrayType)
+		for constraint in dataType.constraints:
+			result += '  ' + tableNewLine() + printConstraint(constraint)
 		decTab()
-	if (dataType.doc != None):
-		result += '  ' + newLine() + printDoc(dataType.doc)
-	incTab()
-	for constraint in dataType.constraints:
-		result += '  ' + newLine() + printConstraint(constraint)
-	decTab()
+	else:
+		if (arrayType.arrayType != None):
+			result += ': '
+			incTab()
+			result += newLine() + '- ' + printDataType(arrayType.arrayType)
+			decTab()
+		if (dataType.doc != None):
+			result += '  ' + newLine() + printDoc(dataType.doc)
+		incTab()
+		for constraint in dataType.constraints:
+			result += '  ' + newLine() + printConstraint(constraint)
+		decTab()
 	return result
 
 
@@ -564,5 +580,8 @@ def printBoolean(value):
 
 def printDoc(doc):
 	result = doc.content.strip()
+	for ch in ['*','#', '-']:
+		if ch in result:
+			result = result.replace(ch,"\\"+ch)
 	return result
 
