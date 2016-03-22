@@ -2,7 +2,7 @@
 #
 #	Print an SDT in various formats
 
-import os
+import os, pathlib
 
 from SDT2PrintMarkdown import print2DomainMarkdown
 from SDT2PrintOPML import print2DomainOPML
@@ -59,12 +59,7 @@ def printJava(domain, inputFormat, directory, options):
 		print('-o <directory> must be specified')
 		return
 
-	try:
-		os.mkdir(directory)
-	except FileExistsError as e:
-		# ignore existing directory for now
-		pass
-
+	_makeDir(directory)
 	print3JavaClasses(domain, directory, options)
 
 
@@ -76,12 +71,7 @@ def printVortoDSL(domain, inputFormat, directory, options):
 		print('-o <directory> must be specified')
 		return
 
-	try:
-		os.mkdir(directory)
-	except FileExistsError as e:
-		# ignore existing directory for now
-		pass
-
+	_makeDir(directory)
 	print3VortoDSL(domain, directory, options)
 
 
@@ -93,12 +83,16 @@ def printOneM2MSVG(domain, inputFormat, directory, options):
 		print('-o <directory> must be specified')
 		return
 
-	try:
-		os.mkdir(directory)
-	except FileExistsError as e:
-		# ignore existing directory for now
-		pass
-
+	_makeDir(directory)
 	print3OneM2MSVG(domain, directory, options)
 
 
+##############################################################################
+
+def _makeDir(directory):
+	try:
+		path = pathlib.Path(directory)
+		path.mkdir(parents=True)
+	except FileExistsError as e:
+		# ignore existing directory for now
+		pass
