@@ -63,7 +63,6 @@ def exportModuleClass(module, package, path):
 		if (outputFile != None):
 			outputFile.close()
 
-
 	# Export struct definitions found in the ModuleClass as classes
 
 	while len(structs) > 0:
@@ -73,7 +72,7 @@ def exportModuleClass(module, package, path):
 		outputFile = None
 		try:
 			outputFile = open(fileName, 'w')
-			outputFile.write(getStructHeader(structName, ty.doc))
+			outputFile.write(getStructHeader(structName, package, ty.doc))
 			outputFile.write(getStruct(ty, package, name))
 		except IOError as err:
 			print(err)
@@ -81,14 +80,6 @@ def exportModuleClass(module, package, path):
 			if (outputFile != None):
 				outputFile.close()
 	structs = {}
-
-
-
-
-
-
-
-
 
 
 # Export each Device definition to a separate sub-package
@@ -104,11 +95,11 @@ def exportDevice(device, package, path):
 	except FileExistsError as e:
 		pass # on purpose. We override files for now
 
-	fileName = str(path) + os.sep + name + '.java'
+	fileName = str(path) + os.sep + name + '.fbmodel'
 	outputFile = None
 	try:
 		outputFile = open(fileName, 'w')
-		outputFile.write(getDeviceHeader(name, device.doc))
+		outputFile.write(getDeviceHeader(name, package, device.doc))
 		outputFile.write(getDeviceInterface(device, package, name))
 	except IOError as err:
 		print(err)
@@ -126,7 +117,6 @@ def exportDevice(device, package, path):
 	if (isinstance(device, SDT3Device)):
 		for subdevice in device.subDevices:
 			exportDevice(subdevice, package, path)
-
 
 
 # Get the ModuleClass text
@@ -155,50 +145,65 @@ def getModuleClassInterface(module, package, name):
 
 	decTab()
 	result += newLine() + '}'
-	return printImports() + result
+	return result
 
 
 # Get the Device text
 
 def getDeviceInterface(device, package, name):
-	result  = newLine() + 'public interface ' + sanitizeName(name, True)
-	zw = ''
+	result = ''
+
+	# Print imported used ModuleClasses
 	for module in device.modules:
-		if (len(zw) == 0):
-			zw += ' extends '
-		else:
-			zw += ', '
-		zw += sanitizeName(module.name, True)
-	result += zw + ' {'
+		result += newLine() + 'using ' + package + '.' + sanitizeName(module.name, True)
+	
+	result += newLine()
+	result += newLine() + 'infomodel ' + sanitizeName(name, True)
+	result += ' {'
 	incTab()
 
 	# Properties
+	# TODO print properties. Extra file
+	#result += getPropertyNames(device.properties)
 
-	result += getPropertyNames(device.properties)
-
+	result += newLine()
+	result += newLine() + 'functionblocks {'
+	incTab()
+	for module in device.modules:
+		result += newLine() + sanitizeName(module.name, False)
+		result += ' as ' + sanitizeName(module.name, True)
+		if module.doc:
+			result += ' "' + getDocumentation(module.doc) + '"'
+	decTab()
+	result += newLine() + '}'
 
 	decTab()
 	result += newLine() + '}'
-	return printPackage(package) + printImports() + result
+	return result
 
 
 # Get the struct text
 
 def getStruct(struct, package, name):
-	result  = newLine() + 'public class ' + name + ' {'
+	result  = ''
+	result += newLine() + 'entity ' + sanitizeName(name, True) + ' {'
 	incTab()
 	for element in struct.structElements:
-		result += newLine() + getType(element) + ' ' + element.name + ';'
+		result += newLine() + 'mandatory '
+		result += sanitizeName(element.name, False)
+		result += ' as ' + getType(element)
+		if element.doc:
+			result += getDocumentation(element.doc)
 	decTab()
 	result += newLine() + '}'
-	return printPackage(package) + printImports() + result
+	return result
 
 
 ########################################################################
 
 # Construct data points export
 def getDataPoints(dataPoints):
-	if (dataPoints == None or len(dataPoints) == 0):
+	if dataPoints == None or len(dataPoints) == 0:
 		return ''
 	result = ''
 	result += newLine() + newLine() + 'status {'
@@ -209,7 +214,7 @@ def getDataPoints(dataPoints):
 
 # Construct events export
 def getEvents(events):
-	if (events == None or len(events) == 0):
+	if events == None or len(events) == 0:
 		return ''
 	result = ''
 	result += newLine() + newLine() + 'events {'
@@ -226,13 +231,13 @@ def getEvents(events):
 
 # Construct actions export
 def getActions(actions):
-	if (actions == None or len(actions) == 0):
+	if actions == None or len(actions) == 0:
 		return ''
 	result = ''
 	result += newLine() + newLine() + 'operations {'
 	incTab()
 	for action in actions:
-		result += newLine() + sanitizeName(action.name, True) + ' ('
+		result += newLine() + sanitizeName(action.name, False) + '('
 		argResult = []
 		for arg in action.args:
 			a = arg.name + ' as '
@@ -241,15 +246,16 @@ def getActions(actions):
 			a += getType(arg.type)
 			argResult.append(a)
 		result += ', '.join(argResult)
-		result += ') '
+		result += ')'
 		if (action.type):
-			result += 'returns '
+			result += ' returns'
 			if (isinstance(action.type.type, SDT3ArrayType)):
-				result += 'multiple '
-			result += getType(action.type)
+				result += ' multiple'
+			result += ' ' + getType(action.type)
+		if action.doc:
+			result += ' "' + getDocumentation(action.doc) + '"'
 	decTab()
 	result += newLine() + '}'
-	# TODO documentation
 	return result
 
 
@@ -270,14 +276,14 @@ def getDataPointsDetails(dataPoints):
 
 		result += sanitizeName(dataPoint.name, False)
 		result += ' as ' + getType(dataPoint.type) 
-		result += ' with {'
+		result += ' with { '
 		result += 'readable : ' + dataPoint.readable + ', '
 		result += 'writable : ' + dataPoint.writable + ', '
 		result += 'eventable : ' + dataPoint.eventable
-		result += '} '
+		result += ' } '
 
 		if dataPoint.doc:
-			result += ' "' + dataPoint.doc.doc.content.strip() + '"'
+			result += '"' + getDocumentation(dataPoint.doc) + '"'
 
 	decTab()
 	return result
@@ -301,11 +307,11 @@ def getType(datatype):
 		elif (ty.type == 'string'):
 			return 'string'
 		elif (ty.type == 'datetime'):
-			return 'datetime'
+			return 'dateTime'
 		elif (ty.type == 'date'):
-			return 'datetime'	# TOOD
+			return 'dateTime'	# TOOD
 		elif (ty.type == 'time'):
-			return 'datetime'	# TODO
+			return 'dateTime'	# TODO
 		elif (ty.type == 'enum'):
 			return 'string'
 		elif (ty.type =='uri'):
@@ -356,9 +362,7 @@ displayname "{displayname}"
 category {category}
 '''
 
-
-
-def getHeader(aName, package, documentation, ty):
+def getHeader(aName, package, documentation):
 	global commentTemplate, commentTemplateNoDoc
 	global vortoModelVersion, vortoModelCategory
 
@@ -376,17 +380,13 @@ def getHeader(aName, package, documentation, ty):
 
 
 def getModuleClassHeader(aName, package, documentation):
-	return getHeader(aName, package, documentation, 'Event')
+	return getHeader(aName, package, documentation)
 
+def getStructHeader(aName, package, documentation):
+	return getHeader(aName, package, documentation)
 
-
-def getStructHeader(aName, documentation):
-	return ''#  getHeader(aName, documentation, 'Struct')
-
-def getDeviceHeader(aName, documentation):
-	return ''# getHeader(aName, documentation, 'Device')
-
-
+def getDeviceHeader(aName, package, documentation):
+	return getHeader(aName, package, documentation)
 
 #
 #	Helpers
@@ -415,25 +415,15 @@ def sanitizeName(name, isClass):
 
 	return result
 
-# Sanitize the package name for Java
+# Sanitize the package name for Vorto DSL
 
 def sanitizePackage(package):
 	result = package.replace('/', '.')
 	return result
 
-# Print the package at the beginning of a Java file
-
-def printPackage(package):
-	return 'package ' + package + ';' + newLine()
-
-def printImports():
-	global imports
-
-	result = ''
-	for name, imp in imports.items():
-		result += newLine() + 'import ' + imp + ';'
-	imports = {}
-	return result + newLine()
+# Get and sanitize documentation
+def getDocumentation(doc):
+	return doc.doc.content.strip()
 
 # Tabulator handling
 
