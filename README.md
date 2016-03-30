@@ -68,6 +68,15 @@ Output formats for documentation for the ``-of`` or ``--outputformat`` command l
 - ``--licensefile <filename>``: Add the text of the specified file as a license to the generated files.
 
 
+### Configuration Files
+Sometimes the number of command line arguments can get pretty big. Therefore, it is possible to put some or all arguments into a configuration file. This configuration file can be specified as follows
+
+	python3 SDTTool.py @config
+
+It is also possible to have more than one configuration file:
+
+	python3 SDTTool.py @config1 @config2
+
 ## Limitations
 - *SDTTool* does not validate the input XML. It is assumed that the input XML conforms to the SDT schema.
 

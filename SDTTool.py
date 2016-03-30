@@ -8,13 +8,38 @@ from SDT3Parser import SDT3Parser
 from SDTPrinter import *
 
 
-import io, sys, traceback, argparse
+import io, sys, traceback, argparse, textwrap
 
 version = '0.7'
 description = 'SDTTool ' + version + ' - A tool to read and convert Smart Device Templates.'
-epilog = 'See https://github.com/Homegateway for further information.'
+epilog = 'Read arguments from one or more configuration files: @file1 @file2 ...|n |n See https://github.com/Homegateway for further information.'
 
+#
+#	Helper method for loading arguments from file
+#
+
+def convertArgLineToArgs(arg_line):
+	print(arg_line)
+	for arg in arg_line.split():
+		if not arg.strip():
+			continue
+		yield arg
+
+class MultilineFormatter(argparse.HelpFormatter):
+	def _fill_text(self, text, width, indent):
+		text = self._whitespace_matcher.sub(' ', text).strip()
+		paragraphs = text.split('|n ')
+		multiline_text = ''
+		for paragraph in paragraphs:
+			formatted_paragraph = textwrap.fill(paragraph, width, initial_indent=indent, subsequent_indent=indent) + '\n'
+			multiline_text = multiline_text + formatted_paragraph
+		return multiline_text
+
+
+#
 # Read data from the input file
+#
+
 def readDataFromFile(inFile):
 	# Read the input file
 	inputFile = open(inFile, 'r')
@@ -22,7 +47,9 @@ def readDataFromFile(inFile):
 	inputFile.close()
 	return data
 
+#
 # Parse the data with the given parser and handle errors
+#
 def parseData(target, data):
 	parser = XMLParser(target=target)
 	errormsg = ''
@@ -46,7 +73,9 @@ def parseData(target, data):
 	return target.domain, target.nameSpaces
 
 
+#
 # Read and parse an SDT2 XML
+#
 def readSDT2XML(inFile):
 	# open the file
 	data = readDataFromFile(inFile)
@@ -54,7 +83,9 @@ def readSDT2XML(inFile):
 	return parseData(SDT2Parser(), data)
 
 
+#
 # Read and parse an SDT3 XML
+#
 def readSDT3XML(inFile):
 	# open the file
 	data = readDataFromFile(inFile)
@@ -62,7 +93,9 @@ def readSDT3XML(inFile):
 	return parseData(SDT3Parser(), data)
 
 
-
+#
+#	Print the output to stdout or to a file
+#
 def outputResult(outFile, result):
 	if (result == None):
 		return
@@ -80,6 +113,9 @@ def outputResult(outFile, result):
 				outputFile.close()
 
 
+#
+#	Check the available name spaces
+#
 def checkForNamespace(nameSpaces, checkNameSpace):
 	for ns in nameSpaces:
 		if (ns.find(checkNameSpace) > -1):
@@ -91,13 +127,17 @@ def main(argv):
 	outFile = None
 
 	# Read command line arguments
-	parser = argparse.ArgumentParser(description=description, epilog=epilog)
+	
+	parser = argparse.ArgumentParser(description=description, epilog=epilog, fromfile_prefix_chars='@', formatter_class=MultilineFormatter)
+	parser.convert_arg_line_to_args = convertArgLineToArgs
+
 	parser.add_argument('-o', '--outfile', action='store', dest='outFile', help='The output file or directory for the result. The default is stdout')
 	parser.add_argument('-if', '--inputformat', choices=('sdt2', 'sdt3', ''), action='store', dest='inputFormat', default='sdt3', help='The input format to read. The default is sdt3')
-	parser.add_argument('-of', '--outputformat', choices=('plain', 'opml', 'markdown', 'sdt3', 'java', 'vorto-dsl', 'onem2m-svg'), action='store', dest='outputFormat', default='markdown', help='The output format for the result. The default is markdown')
+	parser.add_argument('-of', '--outputformat', choices=('plain', 'opml', 'markdown', 'sdt3', 'java', 'vorto-dsl', 'onem2m-svg', 'onem2m-xsd'), action='store', dest='outputFormat', default='markdown', help='The output format for the result. The default is markdown')
 	parser.add_argument('--hidedetails',  action='store_true', help='Hide the details of module classes and devices when printing documentation')
 	parser.add_argument('--markdowntables',  action='store_true', help='Format markdown output as tables for markdown')
 	parser.add_argument('--licensefile',  action='store', dest='licensefile', help='Add the text of license file to output files')
+	# parser.add_argument('--config', type=open, action=LoadArgumentsFromFile, help='Read arguments from a file instead from the command line')
 	requiredNamed = parser.add_argument_group('required arguments')
 	requiredNamed.add_argument('-i', '--infile', action='store', dest='inFile', required=True, help='The SDT input file to parse')
 	
@@ -105,16 +145,16 @@ def main(argv):
 		parser.print_help()
 		sys.exit(1)
 
-	results = parser.parse_args()
-	inFile = results.inFile
-	outFile = results.outFile
-	inputFormat = results.inputFormat
-	outputFormat = results.outputFormat
+	args = parser.parse_args()
+	inFile = args.inFile
+	outFile = args.outFile
+	inputFormat = args.inputFormat
+	outputFormat = args.outputFormat
 	
 	moreOptions = {}
-	moreOptions['hideDetails'] = results.hidedetails
-	moreOptions['markdowntables'] = results.markdowntables
-	moreOptions['licensefile'] = results.licensefile
+	moreOptions['hideDetails'] = args.hidedetails
+	moreOptions['markdowntables'] = args.markdowntables
+	moreOptions['licensefile'] = args.licensefile
 
 
 	# Read input file. Check for correct format
@@ -147,6 +187,8 @@ def main(argv):
 		printVortoDSL(domain, inputFormat, outFile, moreOptions)
 	elif (outputFormat == 'onem2m-svg'):
 		printOneM2MSVG(domain, inputFormat, outFile, moreOptions)
+	elif (outputFormat == 'onem2m-xsd'):
+		printOneM2MXSD(domain, inputFormat, outFile, moreOptions)
 
 
 if __name__ == "__main__":
