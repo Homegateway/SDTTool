@@ -14,7 +14,7 @@ from SDT3PrintPlain import print3DomainPlain
 from SDT3PrintJava import print3JavaClasses
 from SDT3PrintVortoDSL import print3VortoDSL
 from SDT3PrintOneM2MSVG import print3OneM2MSVG
-#from SDT3PrintOneM2MXSD import print3OneM2MXSD
+from SDT3PrintOneM2MXSD import print3OneM2MXSD
 
 
 def printPlain(domain, options):
@@ -87,6 +87,7 @@ def printOneM2MSVG(domain, inputFormat, directory, options):
 	_makeDir(directory)
 	print3OneM2MSVG(domain, directory, options)
 
+
 def printOneM2MXSD(domain, inputFormat, directory, options):
 	if (inputFormat != 'sdt3'):
 		print('Only the input format "sdt3" is supported yet')
@@ -96,7 +97,7 @@ def printOneM2MXSD(domain, inputFormat, directory, options):
 		return
 
 	_makeDir(directory)
-	#print3OneM2MXSD(domain, directory, options)
+	print3OneM2MXSD(domain, directory, options)
 
 
 ##############################################################################

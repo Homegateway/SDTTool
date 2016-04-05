@@ -58,6 +58,7 @@ Output formats for documentation for the ``-of`` or ``--outputformat`` command l
 - **java**: This output format is only valid for the input format **sdt3**. It generates Java interfaces and classes for the input definition. For this output format the argument ``-o`` refers to an output directory, not a single file.
 - **vorto-dsl**: This output format generates files that can be used to export Device, ModuleClass and data type definitions to an [Eclipse Vorto repository](http://vorto.eclipse.org). For this output format the argument ``-o`` refers to an output directory, not a single file.
 - **onem2m-svg**: This output format generates SVG files that present the structure of Devices and ModuleClass in the graphical representation format used by [oneM2M](http://onem2m.org). For this output format the argument ``-o`` refers to an output directory, not a single file.
+- **onem2m-xsd**: This output format generates XSD files according to the type definions of TS-0004 of the oneM2M specifications. In addition to the XSD files, skeleton files for enum type definitions are generated in the *hd* sub-directory. For this output format the argument ``-o`` refers to an output directory, not a single file. Also, the oneM2M domain needs to be specified via the ``--domain`` argument.
 
 
 ### Other Arguments
@@ -66,6 +67,7 @@ Output formats for documentation for the ``-of`` or ``--outputformat`` command l
 - ``--hidedetails``: Hide the details of module classes and devices when generating the documentation.
 - ``--markdowntables``: Generate tables instead of the usual list output style for markdown.
 - ``--licensefile <filename>``: Add the text of the specified file as a license to the generated files.
+- ``--domain <domain name>``: Specify the domain name for XSD output.
 
 
 ### Configuration Files
@@ -85,11 +87,13 @@ It is also possible to have more than one configuration file:
 ### Version 0.7
 xx.XX.2016
 
-- Export to Eclipse Vorto
+- Export to Eclipse Vorto, first version
 - First version of export to SVG in oneM2M resource format
+- First version of export to oneM2M XSD
 - Fixed errors in Java export
 - Fixed errors in OPML export
 - Improved markdown export
+- Added optional reading of command line arguments from configuration file(s)
 - Made SDT3 the default input format
 - minor bug fixes
 

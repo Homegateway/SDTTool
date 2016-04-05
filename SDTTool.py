@@ -19,7 +19,6 @@ epilog = 'Read arguments from one or more configuration files: @file1 @file2 ...
 #
 
 def convertArgLineToArgs(arg_line):
-	print(arg_line)
 	for arg in arg_line.split():
 		if not arg.strip():
 			continue
@@ -137,7 +136,7 @@ def main(argv):
 	parser.add_argument('--hidedetails',  action='store_true', help='Hide the details of module classes and devices when printing documentation')
 	parser.add_argument('--markdowntables',  action='store_true', help='Format markdown output as tables for markdown')
 	parser.add_argument('--licensefile',  action='store', dest='licensefile', help='Add the text of license file to output files')
-	# parser.add_argument('--config', type=open, action=LoadArgumentsFromFile, help='Read arguments from a file instead from the command line')
+	parser.add_argument('--domain',  action='store', dest='domain', help='Set the domain for the model')
 	requiredNamed = parser.add_argument_group('required arguments')
 	requiredNamed.add_argument('-i', '--infile', action='store', dest='inFile', required=True, help='The SDT input file to parse')
 	
@@ -155,6 +154,7 @@ def main(argv):
 	moreOptions['hideDetails'] = args.hidedetails
 	moreOptions['markdowntables'] = args.markdowntables
 	moreOptions['licensefile'] = args.licensefile
+	moreOptions['domain'] = args.domain
 
 
 	# Read input file. Check for correct format
