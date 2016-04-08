@@ -5,6 +5,8 @@
 
 import datetime, os, pathlib, string
 from SDT3Classes import *
+import SDTAbbreviate 
+
 
 
 # variable that holds an optional header text
@@ -16,8 +18,11 @@ domainDefinition = ''
 # variable for found enum types
 enumTypes = set()
 
+# whether of not create abbreviated XSD
+doAbbreviations = False
+
 def print3OneM2MXSD(domain, directory, options):
-	global headerText, domainDefinition, enumTypes
+	global headerText, domainDefinition, enumTypes, doAbbreviations
 
 	# read license text
 	lfile = options['licensefile']
@@ -29,6 +34,11 @@ def print3OneM2MXSD(domain, directory, options):
 	domainDefinition = options['domain']
 	if domainDefinition == None:
 		domainDefinition = ''
+
+	# get abbreviation status
+	doAbbreviations = options['withabbreviations']
+	if doAbbreviations == None:
+		doAbbreviations = False
 
 
 	# Create package path and make directories
@@ -43,10 +53,14 @@ def print3OneM2MXSD(domain, directory, options):
 	# Export ModuleClasses
 
 	for module in domain.modules:
-		exportModuleClass(module, package, path)
+		exportModuleClass(module, package, path, abbreviate=False)
+		if doAbbreviations:
+			exportModuleClass(module, package, path, abbreviate=True)
 
 	# Export enum types
-	exportEnumTypes(path)
+	exportEnumTypes(path, abbreviate=False)
+	if doAbbreviations:
+		exportEnumTypes(path, abbreviate=True)
 
 
 	# Export Devices
@@ -60,33 +74,37 @@ def print3OneM2MXSD(domain, directory, options):
 
 # Export a ModuleClass definition to a file
 
-def exportModuleClass(module, package, path, name=None):
+def exportModuleClass(module, package, path, name=None, abbreviate=False):
 
 	# export the module class itself
 	prefix = ''
 	if name != None:
-		prefix = sanitizeName(name, True) + '_'
+		prefix = sanitizeName(name, True, abbreviate=abbreviate) + '_'
+	postfix = ''
+	if abbreviate:
+		postfix = '.abbr'
 
-	name = sanitizeName(module.name, False)
-	fileName = str(path) + os.sep + prefix + name + '.xsd'
+	moduleName = sanitizeName(module.name, False, abbreviate=abbreviate)
+	fileName = sanitizeName(module.name, False, abbreviate=False)
+	fullFilename = str(path) + os.sep + prefix + fileName + postfix + '.xsd'
 	outputFile = None
 	try:
-		outputFile = open(fileName, 'w')
-		outputFile.write(getModuleClassXSD(module, package, name, path))		
+		outputFile = open(fullFilename, 'w')
+		outputFile.write(getModuleClassXSD(module, package, moduleName, path, abbreviate))		
 	except IOError as err:
 		print(err)
 	finally:
-		if (outputFile != None):
+		if outputFile != None:
 			outputFile.close()
 
 
 # Get the ModuleClass resource
 
-def getModuleClassXSD(module, package, name, path):
+def getModuleClassXSD(module, package, name, path, abbreviate):
 
 	result  = ''
 	result += addModuleClassHeader()
-	result += addModuleClass(module, name)
+	result += addModuleClass(module, name, abbreviate)
 	result += addModuleClassFooter()
 	return result
 
@@ -165,36 +183,36 @@ flexContainerResourceTemplate = '''
 	</xs:element>
 '''
 
-def addModuleClass(module, name):
+def addModuleClass(module, name, abbreviate):
 	global flexContainerResourceTemplate
-	return flexContainerResourceTemplate.format(name=sanitizeName(name, False), 
-												specificAttributes=getSpecificAttributes(module),
-												specificAttributesAnnc=getSpecificAttributes(module, annc=True));
+	return flexContainerResourceTemplate.format(name=sanitizeName(name, False, abbreviate=abbreviate), 
+												specificAttributes=getSpecificAttributes(module, annc=False, abbreviate=abbreviate),
+												specificAttributesAnnc=getSpecificAttributes(module, annc=True, abbreviate=abbreviate));
 
 
-def getSpecificAttributes(module, annc=False):
+def getSpecificAttributes(module, annc=False, abbreviate=False):
 	result = ''
 	incTab(5)
 	for data in module.data:
-		result += getDataPointXSD(data, annc)
+		result += getDataPointXSD(data, annc, abbreviate)
 	decTab(5)
 	return result
 
 
-def getDataPointXSD(data, annc):
+def getDataPointXSD(data, annc, abbreviate):
 	result = ''
-	result += newLine() + '<xs:element name="' + sanitizeName(data.name, False) + '"'
+	result += newLine() + '<xs:element name="' + sanitizeName(data.name, False, abbreviate=abbreviate) + '"'
 	if annc:
 		result += ' minOccurs="0"'
-	result += getDataPointType(data)
+	result += getDataPointType(data, abbreviate)
 	return result;
 
 
 
-def getDataPointType(dataPoint):
+def getDataPointType(dataPoint, abbreviate):
 	global enumTypes
 	result = ''
-	name = sanitizeName(dataPoint.name, False)
+	name = sanitizeName(dataPoint.name, False, abbreviate)
 
 	# Simple type
 	if (isinstance(dataPoint.type.type, SDT3SimpleType)):
@@ -208,7 +226,7 @@ def getDataPointType(dataPoint):
 			decTab()
 			result += newLine() + '</xs:simpleType>'
 			decTab()
-			enumTypes.add(name)
+			enumTypes.add(dataPoint.name)
 		else:
 			result += ' type="'
 			if (ty.type == 'boolean'):
@@ -245,7 +263,7 @@ def getDataPointType(dataPoint):
 
 # Enum Types
 
-def exportEnumTypes(path):
+def exportEnumTypes(path, abbreviate=False):
 	global enumTypes
 
 	if len(enumTypes) > 0:
@@ -257,21 +275,26 @@ def exportEnumTypes(path):
 		except FileExistsError as e:
 			pass # on purpose. We override files for now
 
-	for en in enumTypes:
-		exportEnumType(hdPath, en)
+	for enumName in enumTypes:
+		exportEnumType(hdPath, enumName, abbreviate)
 
 
-def exportEnumType(path, en):
+def exportEnumType(path, enumName, abbreviate):
 
-	fileName = str(path) + os.sep + en + '.xsd'
+	postfix = ''
+	if abbreviate:
+		postfix = '.abbr'
+
+	fileName = sanitizeName(enumName, False, abbreviate=False)
+	fullFileName = str(path) + os.sep + fileName + postfix + '.xsd'
 	outputFile = None
 	try:
-		outputFile = open(fileName, 'w')
-		outputFile.write(getEnumType(en))		
+		outputFile = open(fullFileName, 'w')
+		outputFile.write(getEnumType(enumName, abbreviate))		
 	except IOError as err:
 		print(err)
 	finally:
-		if (outputFile != None):
+		if outputFile != None:
 			outputFile.close()
 
 
@@ -288,12 +311,12 @@ xsdSchemaTemplateFooter = '''
 </xs:schema>'''
 
 
-def getEnumType(en):
+def getEnumType(enumName, abbreviate=False):
 	global xsdSchemaTemplate, xsdSchemaTemplateHeader, xsdSchemaTemplateFooter
 	global domainDefinition, headerText
 
 	result  = xsdSchemaTemplate.format(headerText=headerText, domain=domainDefinition)
-	result += xsdSchemaTemplateHeader.format(name=en)
+	result += xsdSchemaTemplateHeader.format(name=sanitizeName(enumName, False, abbreviate))
 	incTab(3)
 	result += newLine() + '<!-- TODO comment -->'
 	result += newLine() + '<xs:enumeration value="1" />'
@@ -309,7 +332,7 @@ def getEnumType(en):
 
 # Sanitize the name for SVG
 
-def sanitizeName(name, isClass):
+def sanitizeName(name, isClass, abbreviate=False):
 	if (name == None or len(name) == 0):
 		return ''
 	result = name
@@ -328,6 +351,8 @@ def sanitizeName(name, isClass):
 	result = result.replace(')', '_')
 	result = result.replace('-', '_')
 
+	if abbreviate:
+		result = SDTAbbreviate.abbreviate(result)
 	return result
 
 # Sanitize the package name for SVG
@@ -335,45 +360,6 @@ def sanitizeName(name, isClass):
 def sanitizePackage(package):
 	result = package.replace('/', '.')
 	return result
-
-
-
-# experimental abreviation function. Move later
-
-def abbreviate(name, length=5):
-	l = len(name)
-	if l <= length:
-		result = name
-		while l < length:
-			for i in range(length - l):
-				result += result[i]
-			l = len(result)
-		return result.upper()
-	
-	# First char
-	result  = name[0]
-	
-	# Last char
-	result += name[-1]
-
-	if len(result) < length:
-		mask = name[1:l-1]
-		# Camel cases chars
-		camels = ''
-		for i in range(1,l-1):
-			c = name[i]
-			if c.isupper():
-				camels += c
-				mask = mask[:i-1] + mask[i:]
-		result = result[:1] + camels + result[1:]
-
-		# Fill with remaining chars of the mask, starting from the back
-		lm = len(mask)
-		for i in range(0, length - len(result)):
-			pos = i + 1
-			result = result[:pos] + mask[i] + result[pos:] 
-
-	return result[:length].upper()
 
 
 

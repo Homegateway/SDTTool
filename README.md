@@ -43,12 +43,16 @@ It is also possible to generate Java interfaces and classes from SDT version 3 w
 Running the script without with the ``-h`` option or without any argument will present a an overview about all possible command line parameters.
 
 ### Input Formats
+- ``-if {sdt2,sdt3,}`` , ``--inputformat {sdt2,sdt3,}``: The input format to read. The default is *sdt3*.
+
 The following input formats are supported for the ``-if`` or ``--inputformat`` command line argument:
 
 - **sdt2**: SDT Version 2.0.1
 - **sdt3**: SDT Version 3.0, the default
 
 ### Output Formats
+- ``-of {plain,opml,markdown,sdt3,java,vorto-dsl,onem2m-svg,onem2m-xsd}``, ``--outputformat {plain,opml,markdown,sdt3,java,vorto-dsl,onem2m-svg,onem2m-xsd}``: The output format for the result. The default is *markdown*.
+
 Output formats for documentation for the ``-of`` or ``--outputformat`` command line argument:
 
 - **plain**: This produces a plain text representation, with indentations, of the components of the input file.
@@ -60,14 +64,22 @@ Output formats for documentation for the ``-of`` or ``--outputformat`` command l
 - **onem2m-svg**: This output format generates SVG files that present the structure of Devices and ModuleClass in the graphical representation format used by [oneM2M](http://onem2m.org). For this output format the argument ``-o`` refers to an output directory, not a single file.
 - **onem2m-xsd**: This output format generates XSD files according to the type definions of TS-0004 of the oneM2M specifications. In addition to the XSD files, skeleton files for enum type definitions are generated in the *hd* sub-directory. For this output format the argument ``-o`` refers to an output directory, not a single file. Also, the oneM2M domain needs to be specified via the ``--domain`` argument.
 
+### Basic Arguments
+- ``-i <filename>``, ``--infile <filename>``: Required argument. Specify the input file for the conversion.
+- ``-o <filename>``, ``--outfile <filename>``: The output file or directory for the result. The default is stdout.
+
+### oneM2M specific arguments
+- ``--domain <domain name>``: Specify the domain name for XSD output.
+- ``--withabbreviations``: Specify whether to generate additional output files with abbreviated identifiers.
+- ``--abbreviationfile <filename``: Specify the file to store the list of abbreviations.
+- ``--abbreviationlength <integer>``: Specify the maximum length for abbreviations. The default is *5*.
+
+### Markdown Specific Arguments
+- ``--markdowntables``: Generate tables instead of the usual list output style for markdown.
 
 ### Other Arguments
-- ``-i INFILE``, ``--infile INFILE``: Required argument. Specify the input file for the conversion.
-- ``-o OUTFILE``, ``--outfile OUTFILE``: The output file or directory for the result. The default is stdout.
 - ``--hidedetails``: Hide the details of module classes and devices when generating the documentation.
-- ``--markdowntables``: Generate tables instead of the usual list output style for markdown.
 - ``--licensefile <filename>``: Add the text of the specified file as a license to the generated files.
-- ``--domain <domain name>``: Specify the domain name for XSD output.
 
 
 ### Configuration Files
@@ -78,6 +90,10 @@ Sometimes the number of command line arguments can get pretty big. Therefore, it
 It is also possible to have more than one configuration file:
 
 	python3 SDTTool.py @config1 @config2
+
+or to mix command line arguments and configuration files:
+
+	python3 SDTTool.py @config --markdowntables
 
 ## Limitations
 - *SDTTool* does not validate the input XML. It is assumed that the input XML conforms to the SDT schema.

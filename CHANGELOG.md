@@ -5,7 +5,8 @@ xx.xx.xxxx
 
 - Export to Eclipse Vorto, first version
 - First version of export to SVG in oneM2M resource format
-- First version of export to oneM2M XSD 
+- First version of export to oneM2M XSD
+- First version of abbreviation support (for oneM2M)
 - Fixed errors in Java export
 - Fixed errors in OPML export
 - Improved markdown export
