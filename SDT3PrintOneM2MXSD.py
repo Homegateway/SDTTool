@@ -15,14 +15,18 @@ headerText = ''
 # variable that holds the domain for the oneM2M XSD definition
 domainDefinition = ''
 
-# variable for found enum types
-enumTypes = set()
 
 # whether of not create abbreviated XSD
 doAbbreviations = False
 
+# the target name space for the XSD
+targetNamespace = ''
+
+# variable for found enum types
+enumTypes = set()
+
 def print3OneM2MXSD(domain, directory, options):
-	global headerText, domainDefinition, enumTypes, doAbbreviations
+	global headerText, domainDefinition, enumTypes, doAbbreviations, targetNamespace
 
 	# read license text
 	lfile = options['licensefile']
@@ -40,6 +44,11 @@ def print3OneM2MXSD(domain, directory, options):
 	if doAbbreviations == None:
 		doAbbreviations = False
 
+	# get target name space 
+	targetNamespace = options['xsdtargetnamespace']
+	if targetNamespace == None:
+		targetNamespace = 'undefined'
+	
 
 	# Create package path and make directories
 	packagePath = directory + os.sep + domain.id.replace('.', os.sep)
@@ -116,7 +125,7 @@ xsdSchemaTemplate = '''<?xml version="1.0" encoding="UTF-8"?>
 {headerText}
 -->
 
-<xs:schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.onem2m.org/xml/protocols/homedomain"
+<xs:schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="{targetnamespace}"
 	xmlns:m2m="http://www.onem2m.org/xml/protocols" xmlns:hd="http://www.onem2m.org/xml/protocols/{domain}" elementFormDefault="unqualified" attributeFormDefault="unqualified"
 	xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
@@ -127,11 +136,11 @@ xsdSchemaTemplate = '''<?xml version="1.0" encoding="UTF-8"?>
 
 def addModuleClassHeader():
 	global xsdSchemaTemplate
-	global headerText, domainDefinition
+	global headerText, domainDefinition, targetNamespace
 
 	# XML header + license text
 	incTab()
-	return xsdSchemaTemplate.format(headerText=headerText, domain=domainDefinition)
+	return xsdSchemaTemplate.format(headerText=headerText, domain=domainDefinition, targetnamespace=targetNamespace)
 
 
 def addModuleClassFooter():
@@ -204,6 +213,9 @@ def getDataPointXSD(data, annc, abbreviate):
 	result += newLine() + '<xs:element name="' + sanitizeName(data.name, False, abbreviate=abbreviate) + '"'
 	if annc:
 		result += ' minOccurs="0"'
+	else:
+		if data.optional == 'true':	# indicate an optional data point
+			result += ' minOccurs="0"'
 	result += getDataPointType(data, abbreviate)
 	return result;
 
@@ -313,9 +325,9 @@ xsdSchemaTemplateFooter = '''
 
 def getEnumType(enumName, abbreviate=False):
 	global xsdSchemaTemplate, xsdSchemaTemplateHeader, xsdSchemaTemplateFooter
-	global domainDefinition, headerText
+	global domainDefinition, headerText, targetNamespace
 
-	result  = xsdSchemaTemplate.format(headerText=headerText, domain=domainDefinition)
+	result  = xsdSchemaTemplate.format(headerText=headerText, domain=domainDefinition, targetnamespace=targetNamespace)
 	result += xsdSchemaTemplateHeader.format(name=sanitizeName(enumName, False, abbreviate))
 	incTab(3)
 	result += newLine() + '<!-- TODO comment -->'

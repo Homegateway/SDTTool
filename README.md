@@ -73,6 +73,7 @@ Output formats for documentation for the ``-of`` or ``--outputformat`` command l
 - ``--withabbreviations``: Specify whether to generate additional output files with abbreviated identifiers.
 - ``--abbreviationfile <filename``: Specify the file to store the list of abbreviations.
 - ``--abbreviationlength <integer>``: Specify the maximum length for abbreviations. The default is *5*.
+- ``--xsdtargetnamespace <URI>`` : Specify the target namespace for the oneM2M XSD.
 
 ### Markdown Specific Arguments
 - ``--markdowntables``: Generate tables instead of the usual list output style for markdown.

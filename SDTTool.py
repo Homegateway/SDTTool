@@ -142,6 +142,7 @@ def main(argv):
 	oneM2MArgs.add_argument('--withabbreviations',  action='store_true', dest='withabbreviations', help='Specify whether to generate additional output files with abbreviated identifiers.')
 	oneM2MArgs.add_argument('--abbreviationfile',  action='store', dest='abbreviationfile', help='Specify the file to store the list of abbreviations.')
 	oneM2MArgs.add_argument('--abbreviationlength',  action='store', dest='abbreviationlength', default='5', help='Specify the maximum length for abbreviations. The default is 5.')
+	oneM2MArgs.add_argument('--xsdtargetnamespace',  action='store', dest='xsdtargetnamespace', help='Specify the target namespace for the oneM2M XSD (a URI).')
 
 	requiredNamed = parser.add_argument_group('required arguments')
 	requiredNamed.add_argument('-i', '--infile', action='store', dest='inFile', required=True, help='The SDT input file to parse')
@@ -164,6 +165,7 @@ def main(argv):
 	moreOptions['withabbreviations'] = args.withabbreviations
 	moreOptions['abbreviationfile'] = args.abbreviationfile
 	moreOptions['abbreviationlength'] = args.abbreviationlength
+	moreOptions['xsdtargetnamespace'] = args.xsdtargetnamespace
 
 
 	# Read input file. Check for correct format
