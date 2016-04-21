@@ -5,15 +5,21 @@
 
 import csv
 
+# Dictionary for abbreviations (name, abbr)
+abbreviations = {}
+
 def SDTAbbreviateInit(options):
 	pass
-
-
 
 
 # experimental abreviation function. Move later
 
 def abbreviate(name, length=5):
+	global abbreviations
+
+	if name in abbreviations:	# return abbreviation if already in dictionary
+		return abbreviations[name]
+
 	l = len(name)
 	if l <= length:
 		result = name
@@ -46,10 +52,26 @@ def abbreviate(name, length=5):
 			pos = i + 1
 			result = result[:pos] + mask[i] + result[pos:] 
 
-	return result[:length]
+	# put the new abbreviation into the global dictionary.
+	# resolve clashes
+	abbr = result[:length]
+	clashVal = -1
+	while abbr in list(abbreviations.values()):
+		#print('clash: ' + abbr)
+		clashVal += 1
+		prf = result[:length]
+		pof = str(clashVal)
+		abbr = prf[:len(prf)-len(pof)] + pof
+		#print('resolution: ' + abbr)
 
+	abbreviations[name] = abbr
+	return abbreviations[name]
 
+# Return abbreviations
 
+def getAbbreviations():
+	global abbreviations
+	return abbreviations.copy()
 
 
 

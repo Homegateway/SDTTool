@@ -70,7 +70,6 @@ Output formats for documentation for the ``-of`` or ``--outputformat`` command l
 
 ### oneM2M specific arguments
 - ``--domain <domain name>``: Specify the domain name for XSD output.
-- ``--withabbreviations``: Specify whether to generate additional output files with abbreviated identifiers.
 - ``--abbreviationfile <filename``: Specify the file to store the list of abbreviations.
 - ``--abbreviationlength <integer>``: Specify the maximum length for abbreviations. The default is *5*.
 - ``--xsdtargetnamespace <URI>`` : Specify the target namespace for the oneM2M XSD.
