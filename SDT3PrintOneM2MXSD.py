@@ -2,8 +2,7 @@
 #
 #	Generate XSD for oneM2M
 
-
-import datetime, os, pathlib, string
+import csv, datetime, os, pathlib, re, string
 from SDT3Classes import *
 import SDTAbbreviate 
 
@@ -14,6 +13,8 @@ headerText = ''
 # variable that holds the domain for the oneM2M XSD definition
 domainDefinition = ''
 
+# variable that holds the file name for predefined abbreviations
+abbreviationsInFile = ''
 
 # the target name space for the XSD
 targetNamespace = ''
@@ -23,6 +24,7 @@ enumTypes = set()
 
 def print3OneM2MXSD(domain, directory, options):
 	global headerText, domainDefinition, enumTypes, doAbbreviations, targetNamespace
+	global abbreviationsInFile
 
 	# read license text
 	lfile = options['licensefile']
@@ -39,7 +41,12 @@ def print3OneM2MXSD(domain, directory, options):
 	targetNamespace = options['xsdtargetnamespace']
 	if targetNamespace == None:
 		targetNamespace = 'undefined'
-	
+
+	# get in and out file names for abbreviations
+	abbreviationsInFile = options['abbreviationsinfile']
+
+	# Read abbreviations
+	SDTAbbreviate.readAbbreviations(abbreviationsInFile)
 
 	# Create package path and make directories
 	packagePath = directory + os.sep + domain.id.replace('.', os.sep)
@@ -98,6 +105,8 @@ def exportModuleClass(module, package, path, name=None):
 # Export abbreviations
 
 def exportAbbreviations(path, abbreviations):
+
+	# Export as python map
 	fullFilename = str(path) + os.sep + '_Abbreviations.py'
 	outputFile = None
 	try:
@@ -109,6 +118,19 @@ def exportAbbreviations(path, abbreviations):
 		if outputFile != None:
 			outputFile.close()
 
+	# Export as CSV
+	fullFilename = str(path) + os.sep + '_Abbreviations.csv'
+	outputFile = None
+	try:
+		outputFile = open(fullFilename, 'w', newline='')
+		writer = csv.writer(outputFile)
+		for key, value in abbreviations.items():
+			writer.writerow([key, value])
+	except IOError as err:
+		print(err)
+	finally:
+		if outputFile != None:
+			outputFile.close()
 
 # Get the ModuleClass resource
 
@@ -198,7 +220,9 @@ flexContainerResourceTemplate = '''
 
 def addModuleClass(module, name):
 	global flexContainerResourceTemplate
-	return flexContainerResourceTemplate.format(name=sanitizeName(name, False), 
+	name = sanitizeName(name, False)
+	nameAnnc = sanitizeName(name + 'Annc', False)
+	return flexContainerResourceTemplate.format(name=name, 
 												specificAttributes=getSpecificAttributes(module, annc=False),
 												specificAttributesAnnc=getSpecificAttributes(module, annc=True));
 
@@ -231,9 +255,9 @@ def getDataPointType(dataPoint):
 	name = sanitizeName(dataPoint.name, False)
 
 	# Simple type
-	if (isinstance(dataPoint.type.type, SDT3SimpleType)):
+	if isinstance(dataPoint.type.type, SDT3SimpleType):
 		ty = dataPoint.type.type
-		if (ty.type == 'enum'):
+		if ty.type == 'enum':
 			result += ' />'
 			incTab()
 			result += newLine() + '<xs:simpleType>'
@@ -245,24 +269,26 @@ def getDataPointType(dataPoint):
 			enumTypes.add(dataPoint.name)
 		else:
 			result += ' type="'
-			if (ty.type == 'boolean'):
+			if ty.type == 'boolean':
 				result += 'xs:boolean'
-			elif (ty.type == 'integer'):
+			elif ty.type == 'integer':
 				result += 'xs:integer'
-			elif (ty.type == 'float'):
+			elif ty.type == 'float':
 				result += 'xs:float'
-			elif (ty.type == 'string'):
+			elif ty.type == 'string':
 				result += 'xs:string'
-			elif (ty.type == 'datetime'):
+			elif ty.type == 'datetime':
 				result += 'm2m:timestamp'	# CHECK
-			elif (ty.type == 'date'):
+			elif ty.type == 'date':
 				result += 'm2m:timestamp'	# CHECK
-			elif (ty.type == 'time'):
+			elif ty.type == 'time':
 				result += 'm2m:timestamp'	# CHECK
-			elif (ty.type =='uri'):
+			elif ty.type =='uri':
 				result += 'm2m:URI'			# CHECK
-			elif (ty.type == 'blob'):
+			elif ty.type == 'blob':
 				result += 'xs:base64Binary'	# CHECK 
+			elif re.match('.+:.+', ty.type):	# CHECK enum
+				result += ty.type
 			result += '" />'
 
 	# Array

@@ -8,8 +8,8 @@ import csv
 # Dictionary for abbreviations (name, abbr)
 abbreviations = {}
 
-def SDTAbbreviateInit(options):
-	pass
+# Dicionary for existing abbreviations
+preDefinedAbbreviations = {}
 
 
 # experimental abreviation function. Move later
@@ -17,8 +17,10 @@ def SDTAbbreviateInit(options):
 def abbreviate(name, length=5):
 	global abbreviations
 
-	if name in abbreviations:	# return abbreviation if already in dictionary
+	if name in abbreviations:			# return abbreviation if already in dictionary
 		return abbreviations[name]
+	if name in preDefinedAbbreviations:	# return abbreviation if it exists in the predefined dictionary
+		return preDefinedAbbreviations[name]
 
 	l = len(name)
 	if l <= length:
@@ -37,7 +39,7 @@ def abbreviate(name, length=5):
 
 	if len(result) < length:
 		mask = name[1:l-1]
-		# Camel cases chars
+		# Camel case chars
 		camels = ''
 		for i in range(1,l-1):
 			c = name[i]
@@ -56,7 +58,7 @@ def abbreviate(name, length=5):
 	# resolve clashes
 	abbr = result[:length]
 	clashVal = -1
-	while abbr in list(abbreviations.values()):
+	while abbr in list(abbreviations.values()) or abbr in list(preDefinedAbbreviations.values()	):
 		#print('clash: ' + abbr)
 		clashVal += 1
 		prf = result[:length]
@@ -73,6 +75,24 @@ def getAbbreviations():
 	global abbreviations
 	return abbreviations.copy()
 
+
+# Read existing abbreviations
+
+def readAbbreviations(infile):
+	if infile == None:
+		return
+	try:
+		with open(infile) as csvfile:
+			reader = csv.reader(csvfile, delimiter=',', quotechar='\\')
+			for row in reader:
+				if len(row) == 2:
+					preDefinedAbbreviations[row[0]] = row[1]
+				else:
+					print('Unknwon row found (ignored): ' + ', '.join(row))
+	except FileNotFoundError as e:
+		print(str(e) + ' (abbreviation input file ignored)')
+	except Exception as e:
+		raise
 
 
 

@@ -62,7 +62,10 @@ Output formats for documentation for the ``-of`` or ``--outputformat`` command l
 - **java**: This output format is only valid for the input format **sdt3**. It generates Java interfaces and classes for the input definition. For this output format the argument ``-o`` refers to an output directory, not a single file.
 - **vorto-dsl**: This output format generates files that can be used to export Device, ModuleClass and data type definitions to an [Eclipse Vorto repository](http://vorto.eclipse.org). For this output format the argument ``-o`` refers to an output directory, not a single file.
 - **onem2m-svg**: This output format generates SVG files that present the structure of Devices and ModuleClass in the graphical representation format used by [oneM2M](http://onem2m.org). For this output format the argument ``-o`` refers to an output directory, not a single file.
-- **onem2m-xsd**: This output format generates XSD files according to the type definions of TS-0004 of the oneM2M specifications. In addition to the XSD files, skeleton files for enum type definitions are generated in the *hd* sub-directory. For this output format the argument ``-o`` refers to an output directory, not a single file. Also, the oneM2M domain needs to be specified via the ``--domain`` argument.
+- **onem2m-xsd**: This output format generates XSD files according to the type definions of TS-0004 of the oneM2M specifications. For this output format the argument ``-o`` refers to an output directory, not a single file. The oneM2M domain needs to be specified via the ``--domain`` argument.   
+In addition to the XSD files the following files are generated as well
+	- Skeleton files for enum type definitions are generated in the *hd* sub-directory.
+	- Files with newly found abbreviations (``_Abbreviations.*``). One file contains a python map, the other file contains the abbreviations in CSV format. Only new abbreviations, which are not found in the file that was specified with ``--abbreviationsinfile``, are added.
 
 ### Basic Arguments
 - ``-i <filename>``, ``--infile <filename>``: Required argument. Specify the input file for the conversion.
@@ -70,7 +73,7 @@ Output formats for documentation for the ``-of`` or ``--outputformat`` command l
 
 ### oneM2M specific arguments
 - ``--domain <domain name>``: Specify the domain name for XSD output.
-- ``--abbreviationfile <filename``: Specify the file to store the list of abbreviations.
+- ``--abbreviationsinfile <filename>``: Specify the file that contains a CSV table of already existing abbreviations.
 - ``--abbreviationlength <integer>``: Specify the maximum length for abbreviations. The default is *5*.
 - ``--xsdtargetnamespace <URI>`` : Specify the target namespace for the oneM2M XSD.
 
