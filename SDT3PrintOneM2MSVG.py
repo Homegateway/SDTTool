@@ -78,7 +78,6 @@ def getModuleClassSVG(module, package, name, path):
 
 	# TODO: Extends?
 	# TODO: events?
-	# TODO: actions?
 
 	addModuleClassHeaderToResource(res)
 
@@ -86,7 +85,7 @@ def getModuleClassSVG(module, package, name, path):
 	getDataPoints(res, module.data, name, path)
 
 	# Actions
-	getActions(res, module.data, name, path)
+	getActions(res, module.actions, name, path)
 
 	addModuleClassFooterToResource(res)
 
@@ -275,7 +274,7 @@ def getDataPoints(resource, dataPoints, moduleName, path):
 
 
 
-# Add standard header attributes to a device resource
+# Add standard header attributes to a data point resource
 
 def addDataPointHeaderToResource(resource):
 
@@ -292,7 +291,7 @@ def addDataPointHeaderToResource(resource):
 	resource.add(ontologyRef)
 
 
-# Add standard footer to a device resource
+# Add standard footer to a data point resource
 
 def addDataPointFooterToResource(resource):
 
@@ -307,6 +306,92 @@ def addDataPointFooterToResource(resource):
 	flexContainer.cardinality = cardinality0n
 	resource.add(flexContainer)
 
+########################################################################
+
+# Export an action definiton to a file
+
+def exportAction(action, moduleName, path):
+	name = sanitizeName(action.name, True)
+	mName = sanitizeName(moduleName, True)
+	fileName = str(path) + os.sep + mName + '_Action_' + name + '.svg'
+	outputFile = None
+	try:
+		outputFile = open(fileName, 'w')
+		outputFile.write(getActionSVG(action))		
+	except IOError as err:
+		print(err)
+	finally:
+		if (outputFile != None):
+			outputFile.close()
+
+
+# Get the Action resource
+
+def getActionSVG(action):
+	res = Resource(sanitizeName(action.name, False))
+	res.specialization = True
+
+	addActionHeaderToResource(res)
+	# Nothing in between
+	addActionFooterToResource(res)
+
+	result  = svgStart(res.width(), res.height(), headerText)
+	result += res.draw()
+	result += svgFinish()
+	return result
+
+
+# Construct actions export
+def getActions(resource, actions, moduleName, path):
+	if (actions == None or len(actions) == 0):
+		return
+	for action in actions:
+
+		# First add it to the resource
+
+		dp = Attribute(sanitizeName(action.name, False))
+
+		if (action.optional == 'true'):
+			dp.cardinality = cardinality01
+		else:
+			dp.cardinality = cardinality1
+		resource.add(dp)
+
+		# write out to a file
+		exportAction(action, moduleName, path)
+
+
+# Add standard header attributes to a device resource
+
+def addActionHeaderToResource(resource):
+
+	contDefinition = Attribute('contDefinition')
+	contDefinition.cardinality = cardinality1
+	resource.add(contDefinition)
+
+	creator = Attribute('creator')
+	creator.cardinality = cardinality01
+	resource.add(creator)
+
+	ontologyRef = Attribute('ontologyRef')
+	ontologyRef.cardinality = cardinality01
+	resource.add(ontologyRef)
+
+
+# Add standard footer to an  resource
+
+def addActionFooterToResource(resource):
+
+	subscription = Resource('subscription')
+	subscription.cardinality    = cardinality0n
+	subscription.specialization = False
+	resource.add(subscription)
+	container = Resource('container')
+	container.cardinality = cardinality0n
+	resource.add(container)
+	flexContainer = Resource('flexContainer')
+	flexContainer.cardinality = cardinality0n
+	resource.add(flexContainer)
 ########################################################################
 
 
