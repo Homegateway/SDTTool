@@ -85,6 +85,9 @@ def getModuleClassSVG(module, package, name, path):
 	# DataPoints 
 	getDataPoints(res, module.data, name, path)
 
+	# Actions
+	getActions(res, module.data, name, path)
+
 	addModuleClassFooterToResource(res)
 
 	result  = svgStart(res.width(), res.height(), headerText)
@@ -194,10 +197,10 @@ def addDeviceHeaderToResource(resource):
 	ontologyRef.cardinality = cardinality01
 	resource.add(ontologyRef)
 
-	subscription = Resource('deviceProperty')
-	subscription.cardinality = cardinality01
-	subscription.specialization = True
-	resource.add(subscription)
+	deviceProperty = Resource('deviceProperty')
+	deviceProperty.cardinality = cardinality01
+	deviceProperty.specialization = True
+	resource.add(deviceProperty)
 
 
 
@@ -209,6 +212,12 @@ def addDeviceFooterToResource(resource):
 	subscription.cardinality = cardinality0n
 	subscription.specialization = False
 	resource.add(subscription)
+	container = Resource('container')
+	container.cardinality = cardinality0n
+	resource.add(container)
+	flexContainer = Resource('flexContainer')
+	flexContainer.cardinality = cardinality0n
+	resource.add(flexContainer)
 
 #############################################################################
 
@@ -291,6 +300,12 @@ def addDataPointFooterToResource(resource):
 	subscription.cardinality    = cardinality0n
 	subscription.specialization = False
 	resource.add(subscription)
+	container = Resource('container')
+	container.cardinality = cardinality0n
+	resource.add(container)
+	flexContainer = Resource('flexContainer')
+	flexContainer.cardinality = cardinality0n
+	resource.add(flexContainer)
 
 ########################################################################
 

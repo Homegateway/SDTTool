@@ -157,6 +157,9 @@ xsdSchemaTemplate = '''<?xml version="1.0" encoding="UTF-8"?>
 	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v2_5_0.xsd" />
 	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-subscription-v2_5_0.xsd" />
 
+	<xs:include schemaLocation="CDT-hd_enumerationTypes.xsd" />
+	<xs:include schemaLocation="moduleClassProperty.xsd" />
+
 '''
 
 def addModuleClassHeader():
@@ -187,10 +190,15 @@ flexContainerResourceTemplate = '''
 {specificAttributes}
 
 						<!-- Child Resources -->
+
 						<xs:choice minOccurs="0" maxOccurs="1">
-							<xs:element name="childResource" type="m2m:childResourceRef" maxOccurs="unbounded" />
-							<xs:element ref="m2m:subscription" maxOccurs="unbounded" />
+							<xs:element name="childResource" type="m2m:childResourceRef" minOccurs="1" maxOccurs="unbounded" />
+							<xs:choice minOccurs="1" maxOccurs="unbounded">
+								<xs:element ref="hd:moduleClassProperty" />
+								<xs:element ref="m2m:subscription"  />
+							</xs:choice>
 						</xs:choice>
+
 					</xs:sequence>
 				</xs:extension>
 			</xs:complexContent>
@@ -203,14 +211,20 @@ flexContainerResourceTemplate = '''
 				<!-- Inherit Common Attributes from data type "announcedFlexContainerResource" -->
 				<xs:extension base="m2m:announcedFlexContainerResource">
 					<xs:sequence>
+
 						<!-- Resource Specific Attributes -->		
 {specificAttributesAnnc}
 
 						<!-- Child Resources -->
+
 						<xs:choice minOccurs="0" maxOccurs="1">
-							<xs:element name="childResource" type="m2m:childResourceRef" maxOccurs="unbounded" />
-							<xs:element ref="m2m:subscription" maxOccurs="unbounded" />
+							<xs:element name="childResource" type="m2m:childResourceRef" minOccurs="1" maxOccurs="unbounded" />
+							<xs:choice minOccurs="1" maxOccurs="unbounded">
+								<xs:element ref="hd:moduleClassProperty" />
+								<xs:element ref="m2m:subscription"  />
+							</xs:choice>
 						</xs:choice>
+
 					</xs:sequence>
 				</xs:extension>
 			</xs:complexContent>
