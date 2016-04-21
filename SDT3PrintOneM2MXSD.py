@@ -22,6 +22,9 @@ targetNamespace = ''
 # variable for found enum types
 enumTypes = set()
 
+# variable for found actions
+actions = {}
+
 def print3OneM2MXSD(domain, directory, options):
 	global headerText, domainDefinition, enumTypes, doAbbreviations, targetNamespace
 	global abbreviationsInFile
@@ -65,6 +68,8 @@ def print3OneM2MXSD(domain, directory, options):
 	# Export enum types
 	exportEnumTypes(path)
 
+	# Export found Actions
+	exportActions(path)
 
 	# Export Devices
 
@@ -196,6 +201,7 @@ flexContainerResourceTemplate = '''
 							<xs:choice minOccurs="1" maxOccurs="unbounded">
 								<xs:element ref="hd:moduleClassProperty" />
 								<xs:element ref="m2m:subscription"  />
+								<xs:element ref="m2m:flexContainer" />
 							</xs:choice>
 						</xs:choice>
 
@@ -222,6 +228,7 @@ flexContainerResourceTemplate = '''
 							<xs:choice minOccurs="1" maxOccurs="unbounded">
 								<xs:element ref="hd:moduleClassProperty" />
 								<xs:element ref="m2m:subscription"  />
+								<xs:element ref="m2m:flexContainer" />
 							</xs:choice>
 						</xs:choice>
 
@@ -238,7 +245,7 @@ def addModuleClass(module, name):
 	nameAnnc = sanitizeName(name + 'Annc', False)
 	return flexContainerResourceTemplate.format(name=name, 
 												specificAttributes=getSpecificAttributes(module, annc=False),
-												specificAttributesAnnc=getSpecificAttributes(module, annc=True));
+												specificAttributesAnnc=getSpecificAttributes(module, annc=True))
 
 
 def getSpecificAttributes(module, annc=False):
@@ -246,6 +253,8 @@ def getSpecificAttributes(module, annc=False):
 	incTab(5)
 	for data in module.data:
 		result += getDataPointXSD(data, annc)
+	for action in module.actions:
+		result += getActionXSD(action, annc)
 	decTab(5)
 	return result
 
@@ -261,6 +270,20 @@ def getDataPointXSD(data, annc):
 	result += getDataPointType(data)
 	return result;
 
+
+def getActionXSD(action, annc):
+	global actions
+	result = ''
+	result += newLine() + '<xs:element name="' + sanitizeName(action.name, False) + '"'
+	if annc:
+		result += ' minOccurs="0"'
+	else:
+		if action.optional == 'true':	# indicate an optional action
+			result += ' minOccurs="0"'
+	result += ' type="????" />' # how to specify an action element in the XSD
+	print('TODO: action type for: ' + action.name)
+	actions[action.name] = action
+	return result;
 
 
 def getDataPointType(dataPoint):
@@ -317,13 +340,16 @@ def getDataPointType(dataPoint):
 	
 	return result
 
+
+#############################################################################
+
 # Enum Types
 
 def exportEnumTypes(path):
 	global enumTypes
 
 	if len(enumTypes) > 0:
-		# Create package path and make directories
+		# Create pakage path and make directories
 		hdDirectory = str(path) + os.sep + 'hd'
 		hdPath = pathlib.Path(hdDirectory)
 		try:
@@ -375,6 +401,94 @@ def getEnumType(enumName):
 	decTab(3)
 	result += xsdSchemaTemplateFooter.format()
 	return result
+
+
+#############################################################################
+
+# Actions
+
+xsdActionTemplate = '''
+	<xs:element name="{name}">
+		<xs:complexType>
+			<xs:complexContent>
+				<!-- Inherit Common Attributes from data type "flexContainerResource" -->
+				<xs:extension base="m2m:flexContainerResource">
+					</xs:sequence>
+
+						<!-- Resource Specific Attributes -->
+					
+						<!-- Child Resources -->
+
+						<xs:choice minOccurs="0" maxOccurs="1">
+							<xs:element name="childResource" type="m2m:childResourceRef" maxOccurs="unbounded" />
+							<xs:choice minOccurs="1" maxOccurs="unbounded">
+								<xs:element ref="m2m:subscription" />
+								<xs:element ref="m2m:container" />							
+								<xs:element ref="m2m:flexContainer" />
+							</xs:choice>
+						</xs:choice>
+					</xs:sequence>
+				</xs:extension>
+			</xs:complexContent>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="{name}Annc">
+		<xs:complexType>
+			<xs:complexContent>
+				<!-- Inherit Common Attributes from data type "announcedFlexContainerResource" -->
+				<xs:extension base="m2m:announcedFlexContainerResource">
+					<xs:sequence>
+
+						<!-- Resource Specific Attributes -->
+										
+						<!-- Child Resources -->
+
+						<xs:choice minOccurs="0" maxOccurs="1">
+							<xs:element name="childResource" type="m2m:childResourceRef" maxOccurs="unbounded" />
+							<xs:choice minOccurs="1" maxOccurs="unbounded">
+								<xs:element ref="m2m:subscription" />
+								<xs:element ref="m2m:container" />	
+								<xs:element ref="m2m:containerAnnc" />							
+								<xs:element ref="m2m:flexContainer" />
+								<xs:element ref="m2m:flexContainerAnnc" />								
+							</xs:choice>
+						</xs:choice>	
+					</xs:sequence>
+				</xs:extension>
+			</xs:complexContent>
+		</xs:complexType>
+	</xs:element>
+'''
+
+def exportActions(path):
+	global actions
+	for actionName in actions:
+		exportAction(path, actions[actionName])
+
+
+def exportAction(path, action):
+	fileName = sanitizeName(action.name, False)
+	fullFileName = str(path) + os.sep + 'Action_' + fileName + '.xsd'
+	outputFile = None
+	try:
+		outputFile = open(fullFileName, 'w')
+		outputFile.write(getAction(action))		
+	except IOError as err:
+		print(err)
+	finally:
+		if outputFile != None:
+			outputFile.close()
+
+def getAction(action):
+	global xsdActionTemplate
+
+	result = ''
+	result += addModuleClassHeader()
+	result += xsdActionTemplate.format(name=sanitizeName(action.name, False))
+	result += addModuleClassFooter()
+	return result
+
 
 #############################################################################
 
