@@ -13,6 +13,9 @@ headerText = ''
 # variable that holds the domain for the oneM2M XSD definition
 domainDefinition = ''
 
+# variable that holds the domain prefix for the oneM2M XSD
+namespacePrefix = ''
+
 # variable that holds the file name for predefined abbreviations
 abbreviationsInFile = ''
 
@@ -26,8 +29,12 @@ enumTypes = set()
 actions = {}
 
 def print3OneM2MXSD(domain, directory, options):
-	global headerText, domainDefinition, enumTypes, doAbbreviations, targetNamespace
+	global headerText, domainDefinition, namespacePrefix, enumTypes, doAbbreviations, targetNamespace
 	global abbreviationsInFile
+
+	#
+	#	Get various parameters
+	#
 
 	# read license text
 	lfile = options['licensefile']
@@ -35,10 +42,15 @@ def print3OneM2MXSD(domain, directory, options):
 		with open(lfile, 'rt') as f:
 			headerText = f.read()
 
-	# get the domain
+	# get the domain and domain prefix
 	domainDefinition = options['domain']
 	if domainDefinition == None:
 		domainDefinition = ''
+
+	namespacePrefix = options['namespaceprefix']
+	if namespacePrefix == None:			# ERROR
+		print('Error: XSD name space prefix not set')
+		return
 
 	# get target name space 
 	targetNamespace = options['xsdtargetnamespace']
@@ -47,6 +59,8 @@ def print3OneM2MXSD(domain, directory, options):
 
 	# get in and out file names for abbreviations
 	abbreviationsInFile = options['abbreviationsinfile']
+
+
 
 	# Read abbreviations
 	SDTAbbreviate.readAbbreviations(abbreviationsInFile)
@@ -156,7 +170,7 @@ xsdSchemaTemplate = '''<?xml version="1.0" encoding="UTF-8"?>
 -->
 
 <xs:schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="{targetnamespace}"
-	xmlns:m2m="http://www.onem2m.org/xml/protocols" xmlns:hd="http://www.onem2m.org/xml/protocols/{domain}" elementFormDefault="unqualified" attributeFormDefault="unqualified"
+	xmlns:m2m="http://www.onem2m.org/xml/protocols" xmlns:{namespace}="http://www.onem2m.org/xml/protocols/{domain}" elementFormDefault="unqualified" attributeFormDefault="unqualified"
 	xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
 	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v2_5_0.xsd" />
@@ -168,12 +182,12 @@ xsdSchemaTemplate = '''<?xml version="1.0" encoding="UTF-8"?>
 '''
 
 def addModuleClassHeader():
-	global xsdSchemaTemplate
+	global xsdSchemaTemplate, namespacePrefix
 	global headerText, domainDefinition, targetNamespace
 
 	# XML header + license text
 	incTab()
-	return xsdSchemaTemplate.format(headerText=headerText, domain=domainDefinition, targetnamespace=targetNamespace)
+	return xsdSchemaTemplate.format(headerText=headerText, namespace=namespacePrefix, domain=domainDefinition, targetnamespace=targetNamespace)
 
 
 def addModuleClassFooter():
@@ -199,7 +213,8 @@ flexContainerResourceTemplate = '''
 						<xs:choice minOccurs="0" maxOccurs="1">
 							<xs:element name="childResource" type="m2m:childResourceRef" minOccurs="1" maxOccurs="unbounded" />
 							<xs:choice minOccurs="1" maxOccurs="unbounded">
-								<xs:element ref="hd:moduleClassProperty" />
+								<xs:element ref="{namespace}:moduleClassProperty" />
+{actionElements}
 								<xs:element ref="m2m:subscription"  />
 								<xs:element ref="m2m:flexContainer" />
 							</xs:choice>
@@ -226,7 +241,9 @@ flexContainerResourceTemplate = '''
 						<xs:choice minOccurs="0" maxOccurs="1">
 							<xs:element name="childResource" type="m2m:childResourceRef" minOccurs="1" maxOccurs="unbounded" />
 							<xs:choice minOccurs="1" maxOccurs="unbounded">
-								<xs:element ref="hd:moduleClassProperty" />
+								<xs:element ref="{namespace}:moduleClassProperty" />
+{actionElements}
+
 								<xs:element ref="m2m:subscription"  />
 								<xs:element ref="m2m:flexContainer" />
 							</xs:choice>
@@ -240,12 +257,14 @@ flexContainerResourceTemplate = '''
 '''
 
 def addModuleClass(module, name):
-	global flexContainerResourceTemplate
+	global flexContainerResourceTemplate, namespacePrefix
 	name = sanitizeName(name, False)
 	nameAnnc = sanitizeName(name + 'Annc', False)
 	return flexContainerResourceTemplate.format(name=name, 
+												namespace=namespacePrefix,
 												specificAttributes=getSpecificAttributes(module, annc=False),
-												specificAttributesAnnc=getSpecificAttributes(module, annc=True))
+												specificAttributesAnnc=getSpecificAttributes(module, annc=True),
+												actionElements=getSpecificActions(module))
 
 
 def getSpecificAttributes(module, annc=False):
@@ -256,6 +275,18 @@ def getSpecificAttributes(module, annc=False):
 	for action in module.actions:
 		result += getActionXSD(action, annc)
 	decTab(5)
+	return result
+
+
+def getSpecificActions(module):
+	global namespacePrefix
+	if len(module.actions) == 0:
+		return ''
+	result = ''
+	incTab(7)
+	for action in module.actions:
+		result += newLine() + '<xs:element ref="' + namespacePrefix + ':' + action.name + '" />'
+	decTab(7)
 	return result
 
 
@@ -287,7 +318,7 @@ def getActionXSD(action, annc):
 
 
 def getDataPointType(dataPoint):
-	global enumTypes
+	global enumTypes, namespacePrefix
 	result = ''
 	name = sanitizeName(dataPoint.name, False)
 
@@ -297,7 +328,7 @@ def getDataPointType(dataPoint):
 		incTab()
 		result += newLine() + '<xs:simpleType>'
 		incTab()
-		result += newLine() + '<xs:list itemType="hd:' + name + '" />'
+		result += newLine() + '<xs:list itemType="' + namespacePrefix + ':' + name + '" />'
 		decTab()
 		result += newLine() + '</xs:simpleType>'
 		decTab()
@@ -312,7 +343,7 @@ def getDataPointType(dataPoint):
 			incTab()
 			result += newLine() + '<xs:simpleType>'
 			incTab()
-			result += newLine() + '<xs:list itemType="hd:enum" />'
+			result += newLine() + '<xs:list itemType="' + namespacePrefix + ':enum" />'
 			decTab()
 			result += newLine() + '</xs:simpleType>'
 			decTab()
@@ -360,11 +391,11 @@ def getSimpleDataType(type):
 # Enum Types
 
 def exportEnumTypes(path):
-	global enumTypes
+	global enumTypes, namespacePrefix
 
 	if len(enumTypes) > 0:
 		# Create pakage path and make directories
-		hdDirectory = str(path) + os.sep + 'hd'
+		hdDirectory = str(path) + os.sep + namespacePrefix
 		hdPath = pathlib.Path(hdDirectory)
 		try:
 			hdPath.mkdir(parents=True)
@@ -405,9 +436,9 @@ xsdSchemaTemplateFooter = '''
 
 def getEnumType(enumName):
 	global xsdSchemaTemplate, xsdSchemaTemplateHeader, xsdSchemaTemplateFooter
-	global domainDefinition, headerText, targetNamespace
+	global domainDefinition, headerText, targetNamespace, namespacePrefix
 
-	result  = xsdSchemaTemplate.format(headerText=headerText, domain=domainDefinition, targetnamespace=targetNamespace)
+	result  = xsdSchemaTemplate.format(headerText=headerText, namespace=namespacePrefix, domain=domainDefinition, targetnamespace=targetNamespace)
 	result += xsdSchemaTemplateHeader.format(name=sanitizeName(enumName, False))
 	incTab(3)
 	result += newLine() + '<!-- TODO comment -->'
@@ -427,7 +458,7 @@ xsdActionTemplate = '''
 			<xs:complexContent>
 				<!-- Inherit Common Attributes from data type "flexContainerResource" -->
 				<xs:extension base="m2m:flexContainerResource">
-					</xs:sequence>
+					<xs:sequence>
 
 						<!-- Resource Specific Attributes -->
 					

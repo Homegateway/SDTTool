@@ -139,6 +139,7 @@ def main(argv):
 
 	oneM2MArgs = parser.add_argument_group('oneM2M sepcific')
 	oneM2MArgs.add_argument('--domain',  action='store', dest='domain', help='Set the domain for the model')
+	oneM2MArgs.add_argument('--namespaceprefix',  action='store', dest='namespaceprefix', help='Specify the XSD name space prefix for the model')
 	oneM2MArgs.add_argument('--abbreviationsinfile',  action='store', dest='abbreviationsinfile', help='Specify the file that contains a CSV table of alreadys existing abbreviations.')
 	oneM2MArgs.add_argument('--abbreviationlength',  action='store', dest='abbreviationlength', default='5', help='Specify the maximum length for abbreviations. The default is 5.')
 	oneM2MArgs.add_argument('--xsdtargetnamespace',  action='store', dest='xsdtargetnamespace', help='Specify the target namespace for the oneM2M XSD (a URI).')
@@ -161,6 +162,7 @@ def main(argv):
 	moreOptions['markdowntables'] = args.markdowntables
 	moreOptions['licensefile'] = args.licensefile
 	moreOptions['domain'] = args.domain
+	moreOptions['namespaceprefix'] = args.namespaceprefix
 	moreOptions['abbreviationsinfile'] = args.abbreviationsinfile
 	moreOptions['abbreviationlength'] = args.abbreviationlength
 	moreOptions['xsdtargetnamespace'] = args.xsdtargetnamespace
