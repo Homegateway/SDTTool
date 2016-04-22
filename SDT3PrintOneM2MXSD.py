@@ -291,47 +291,37 @@ def getDataPointType(dataPoint):
 	result = ''
 	name = sanitizeName(dataPoint.name, False)
 
+	# Array
+	if (isinstance(dataPoint.type.type, SDT3ArrayType)):
+		result += '>'
+		incTab()
+		result += newLine() + '<xs:simpleType>'
+		incTab()
+		result += newLine() + '<xs:list itemType="hd:' + name + '" />'
+		decTab()
+		result += newLine() + '</xs:simpleType>'
+		decTab()
+		result += newLine() + '</xs:element>'
+
+
 	# Simple type
 	if isinstance(dataPoint.type.type, SDT3SimpleType):
 		ty = dataPoint.type.type
 		if ty.type == 'enum':
-			result += ' />'
+			result += ' >'
 			incTab()
 			result += newLine() + '<xs:simpleType>'
 			incTab()
-			result += newLine() + '<xs:list itemType="hd:' + name + '" />'
+			result += newLine() + '<xs:list itemType="hd:enum" />'
 			decTab()
 			result += newLine() + '</xs:simpleType>'
 			decTab()
+			result += newLine() + '</xs:element>'
 			enumTypes.add(dataPoint.name)
 		else:
 			result += ' type="'
-			if ty.type == 'boolean':
-				result += 'xs:boolean'
-			elif ty.type == 'integer':
-				result += 'xs:integer'
-			elif ty.type == 'float':
-				result += 'xs:float'
-			elif ty.type == 'string':
-				result += 'xs:string'
-			elif ty.type == 'datetime':
-				result += 'm2m:timestamp'	# CHECK
-			elif ty.type == 'date':
-				result += 'm2m:timestamp'	# CHECK
-			elif ty.type == 'time':
-				result += 'm2m:timestamp'	# CHECK
-			elif ty.type =='uri':
-				result += 'm2m:URI'			# CHECK
-			elif ty.type == 'blob':
-				result += 'xs:base64Binary'	# CHECK 
-			elif re.match('.+:.+', ty.type):	# CHECK enum
-				result += ty.type
+			result += getSimpleDataType(ty.type)
 			result += '" />'
-
-	# Array
-	elif (isinstance(dataPoint.type.type, SDT3ArrayType)):
-		print('arrayType not supported yet')
-		result += 'XXX'
 
 	# Struct
 	elif (isinstance(dataPoint.type.type, SDT3StructType)):
@@ -340,6 +330,30 @@ def getDataPointType(dataPoint):
 	
 	return result
 
+def getSimpleDataType(type):
+	result = ''
+	if type == 'boolean':
+		result += 'xs:boolean'
+	elif type == 'integer':
+		result += 'xs:integer'
+	elif type == 'float':
+		result += 'xs:float'
+	elif type == 'string':
+		result += 'xs:string'
+	elif type == 'datetime':
+		result += 'm2m:timestamp'	# CHECK
+	elif type == 'date':
+		result += 'm2m:timestamp'	# CHECK
+	elif type == 'time':
+		result += 'm2m:timestamp'	# CHECK
+	elif type =='uri':
+		result += 'm2m:URI'			# CHECK
+	elif type == 'blob':
+		result += 'xs:base64Binary'	# CHECK 
+	elif re.match('.+:.+', type):	# CHECK enum
+		result += type
+	return result
+	
 
 #############################################################################
 
