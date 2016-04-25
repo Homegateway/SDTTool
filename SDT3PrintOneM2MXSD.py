@@ -88,7 +88,7 @@ def print3OneM2MXSD(domain, directory, options):
 	# Export Devices
 
 	# TODO for device in domain.devices:
-	# 	exportDevice(device, package, path)
+	#exportDevice(device, package, path)
 
 	# Export abbreviations
 	exportAbbreviations(path, SDTAbbreviate.getAbbreviations())
@@ -215,8 +215,8 @@ flexContainerResourceTemplate = '''
 							<xs:choice minOccurs="1" maxOccurs="unbounded">
 								<xs:element ref="{namespace}:moduleClassProperty" />
 {actionElements}
+
 								<xs:element ref="m2m:subscription"  />
-								<xs:element ref="m2m:flexContainer" />
 							</xs:choice>
 						</xs:choice>
 
@@ -245,7 +245,6 @@ flexContainerResourceTemplate = '''
 {actionElements}
 
 								<xs:element ref="m2m:subscription"  />
-								<xs:element ref="m2m:flexContainer" />
 							</xs:choice>
 						</xs:choice>
 
@@ -272,20 +271,19 @@ def getSpecificAttributes(module, annc=False):
 	incTab(5)
 	for data in module.data:
 		result += getDataPointXSD(data, annc)
-	for action in module.actions:
-		result += getActionXSD(action, annc)
 	decTab(5)
 	return result
 
 
 def getSpecificActions(module):
-	global namespacePrefix
+	global namespacePrefix, actions
 	if len(module.actions) == 0:
 		return ''
 	result = ''
 	incTab(7)
 	for action in module.actions:
 		result += newLine() + '<xs:element ref="' + namespacePrefix + ':' + action.name + '" />'
+		actions[action.name] = action
 	decTab(7)
 	return result
 
@@ -301,20 +299,6 @@ def getDataPointXSD(data, annc):
 	result += getDataPointType(data)
 	return result;
 
-
-def getActionXSD(action, annc):
-	global actions
-	result = ''
-	result += newLine() + '<xs:element name="' + sanitizeName(action.name, False) + '"'
-	if annc:
-		result += ' minOccurs="0"'
-	else:
-		if action.optional == 'true':	# indicate an optional action
-			result += ' minOccurs="0"'
-	result += ' type="????" />' # how to specify an action element in the XSD
-	print('TODO: action type for: ' + action.name)
-	actions[action.name] = action
-	return result;
 
 
 def getDataPointType(dataPoint):
@@ -468,8 +452,6 @@ xsdActionTemplate = '''
 							<xs:element name="childResource" type="m2m:childResourceRef" maxOccurs="unbounded" />
 							<xs:choice minOccurs="1" maxOccurs="unbounded">
 								<xs:element ref="m2m:subscription" />
-								<xs:element ref="m2m:container" />							
-								<xs:element ref="m2m:flexContainer" />
 							</xs:choice>
 						</xs:choice>
 					</xs:sequence>
@@ -493,10 +475,6 @@ xsdActionTemplate = '''
 							<xs:element name="childResource" type="m2m:childResourceRef" maxOccurs="unbounded" />
 							<xs:choice minOccurs="1" maxOccurs="unbounded">
 								<xs:element ref="m2m:subscription" />
-								<xs:element ref="m2m:container" />	
-								<xs:element ref="m2m:containerAnnc" />							
-								<xs:element ref="m2m:flexContainer" />
-								<xs:element ref="m2m:flexContainerAnnc" />								
 							</xs:choice>
 						</xs:choice>	
 					</xs:sequence>
@@ -512,6 +490,7 @@ def exportActions(path):
 		exportAction(path, actions[actionName])
 
 
+
 def exportAction(path, action):
 	fileName = sanitizeName(action.name, False)
 	fullFileName = str(path) + os.sep + 'Action_' + fileName + '.xsd'
@@ -524,6 +503,7 @@ def exportAction(path, action):
 	finally:
 		if outputFile != None:
 			outputFile.close()
+
 
 def getAction(action):
 	global xsdActionTemplate

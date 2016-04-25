@@ -119,12 +119,6 @@ def addModuleClassFooterToResource(resource):
 	subscription = Resource('subscription')
 	subscription.cardinality = cardinality0n
 	resource.add(subscription)
-	container = Resource('container')
-	container.cardinality = cardinality0n
-	resource.add(container)
-	flexContainer = Resource('flexContainer')
-	flexContainer.cardinality = cardinality0n
-	resource.add(flexContainer)
 
 #############################################################################
 
@@ -211,12 +205,7 @@ def addDeviceFooterToResource(resource):
 	subscription.cardinality = cardinality0n
 	subscription.specialization = False
 	resource.add(subscription)
-	container = Resource('container')
-	container.cardinality = cardinality0n
-	resource.add(container)
-	flexContainer = Resource('flexContainer')
-	flexContainer.cardinality = cardinality0n
-	resource.add(flexContainer)
+
 
 #############################################################################
 
@@ -299,12 +288,7 @@ def addDataPointFooterToResource(resource):
 	subscription.cardinality    = cardinality0n
 	subscription.specialization = False
 	resource.add(subscription)
-	container = Resource('container')
-	container.cardinality = cardinality0n
-	resource.add(container)
-	flexContainer = Resource('flexContainer')
-	flexContainer.cardinality = cardinality0n
-	resource.add(flexContainer)
+
 
 ########################################################################
 
@@ -386,12 +370,8 @@ def addActionFooterToResource(resource):
 	subscription.cardinality    = cardinality0n
 	subscription.specialization = False
 	resource.add(subscription)
-	container = Resource('container')
-	container.cardinality = cardinality0n
-	resource.add(container)
-	flexContainer = Resource('flexContainer')
-	flexContainer.cardinality = cardinality0n
-	resource.add(flexContainer)
+
+
 ########################################################################
 
 
