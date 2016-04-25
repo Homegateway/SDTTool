@@ -75,9 +75,12 @@ def print3OneM2MXSD(domain, directory, options):
 	package = sanitizePackage(domain.id)
 
 	# Export ModuleClasses
-
 	for module in domain.modules:
 		exportModuleClass(module, package, path)
+
+	# Export Devices
+	for device in domain.devices:
+		exportDevice(device, package, path)
 
 	# Export enum types
 	exportEnumTypes(path)
@@ -85,10 +88,6 @@ def print3OneM2MXSD(domain, directory, options):
 	# Export found Actions
 	exportActions(path)
 
-	# Export Devices
-
-	# TODO for device in domain.devices:
-	#exportDevice(device, package, path)
 
 	# Export abbreviations
 	exportAbbreviations(path, SDTAbbreviate.getAbbreviations())
@@ -106,10 +105,10 @@ def exportModuleClass(module, package, path, name=None):
 	if name != None:
 		prefix = sanitizeName(name, True) + '_'
 
-	moduleName = sanitizeName(module.name, False)
-	fileName = sanitizeName(module.name, False)
+	moduleName   = sanitizeName(module.name, False)
+	fileName     = sanitizeName(module.name, False)
 	fullFilename = str(path) + os.sep + prefix + fileName + '.xsd'
-	outputFile = None
+	outputFile   = None
 	try:
 		outputFile = open(fullFilename, 'w')
 		outputFile.write(getModuleClassXSD(module, package, moduleName, path))		
@@ -119,37 +118,6 @@ def exportModuleClass(module, package, path, name=None):
 		if outputFile != None:
 			outputFile.close()
 
-
-
-# Export abbreviations
-
-def exportAbbreviations(path, abbreviations):
-
-	# Export as python map
-	fullFilename = str(path) + os.sep + '_Abbreviations.py'
-	outputFile = None
-	try:
-		outputFile = open(fullFilename, 'w')
-		outputFile.write(getAbbreviations(abbreviations))	
-	except IOError as err:
-		print(err)
-	finally:
-		if outputFile != None:
-			outputFile.close()
-
-	# Export as CSV
-	fullFilename = str(path) + os.sep + '_Abbreviations.csv'
-	outputFile = None
-	try:
-		outputFile = open(fullFilename, 'w', newline='')
-		writer = csv.writer(outputFile)
-		for key, value in abbreviations.items():
-			writer.writerow([key, value])
-	except IOError as err:
-		print(err)
-	finally:
-		if outputFile != None:
-			outputFile.close()
 
 # Get the ModuleClass resource
 
@@ -164,7 +132,7 @@ def getModuleClassXSD(module, package, name, path):
 
 # Add standard header attributes to a module class resource
 
-xsdSchemaTemplate = '''<?xml version="1.0" encoding="UTF-8"?>
+xsdSchemaTemplateHeader = '''<?xml version="1.0" encoding="UTF-8"?>
 <!--
 {headerText}
 -->
@@ -181,18 +149,26 @@ xsdSchemaTemplate = '''<?xml version="1.0" encoding="UTF-8"?>
 
 '''
 
+xsdSchemaTemplateFooter = '''
+</xs:schema>
+'''
+
 def addModuleClassHeader():
-	global xsdSchemaTemplate, namespacePrefix
+	global xsdSchemaTemplateHeader, namespacePrefix
 	global headerText, domainDefinition, targetNamespace
 
 	# XML header + license text
 	incTab()
-	return xsdSchemaTemplate.format(headerText=headerText, namespace=namespacePrefix, domain=domainDefinition, targetnamespace=targetNamespace)
+	return xsdSchemaTemplateHeader.format(headerText=headerText,
+										  namespace=namespacePrefix,
+										  domain=domainDefinition,
+										  targetnamespace=targetNamespace)
 
 
 def addModuleClassFooter():
+	global xsdSchemaTemplateFooter
 	decTab()
-	return newLine() + '</xs:schema>'
+	return xsdSchemaTemplateFooter.format()
 
 
 # The main resource definition
@@ -405,30 +381,30 @@ def exportEnumType(path, enumName):
 			outputFile.close()
 
 
-xsdSchemaTemplateHeader = '''
+xsdSchemaTemplateEnumHeader = '''
 	<xs:simpleType name="{name}">
 		<xs:annotation>
 			<xs:documentation>TODO</xs:documentation>
 		</xs:annotation>
 		<xs:restriction base="xs:integer">'''
 
-xsdSchemaTemplateFooter = '''
+xsdSchemaTemplateEnumFooter = '''
 		</xs:restriction>
 	</xs:simpleType>
 </xs:schema>'''
 
 
 def getEnumType(enumName):
-	global xsdSchemaTemplate, xsdSchemaTemplateHeader, xsdSchemaTemplateFooter
+	global xsdSchemaTemplateHeader, xsdSchemaTemplateEnumHeader, xsdSchemaTemplateEnumFooter
 	global domainDefinition, headerText, targetNamespace, namespacePrefix
 
-	result  = xsdSchemaTemplate.format(headerText=headerText, namespace=namespacePrefix, domain=domainDefinition, targetnamespace=targetNamespace)
-	result += xsdSchemaTemplateHeader.format(name=sanitizeName(enumName, False))
+	result  = xsdSchemaTemplateHeader.format(headerText=headerText, namespace=namespacePrefix, domain=domainDefinition, targetnamespace=targetNamespace)
+	result += xsdSchemaTemplateEnumHeader.format(name=sanitizeName(enumName, False))
 	incTab(3)
 	result += newLine() + '<!-- TODO comment -->'
 	result += newLine() + '<xs:enumeration value="1" />'
 	decTab(3)
-	result += xsdSchemaTemplateFooter.format()
+	result += xsdSchemaTemplateEnumFooter.format()
 	return result
 
 
@@ -516,6 +492,205 @@ def getAction(action):
 
 
 #############################################################################
+
+# Devices
+
+xsdSchemaTemplateDeviceHeader = '''<?xml version="1.0" encoding="UTF-8"?>
+<!--
+{headerText}
+-->
+
+<xs:schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="{targetnamespace}"
+	xmlns:m2m="http://www.onem2m.org/xml/protocols" xmlns:{namespace}="http://www.onem2m.org/xml/protocols/{domain}" elementFormDefault="unqualified" attributeFormDefault="unqualified"
+	xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v2_5_0.xsd" />
+	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-subscription-v2_5_0.xsd" />
+
+	<xs:include schemaLocation="CDT-hd_enumerationTypes-v2_5_0.xsd" />{moduleSchemas}
+
+'''
+
+xsdSchemaTemplateDeviceFooter = '''
+</xs:schema>
+'''
+
+flexContainerDeviceResourceTemplate = '''
+	<xs:element name="{deviceName}">
+		<xs:complexType>
+			<xs:complexContent>
+				<!-- Inherit Common Attributes from data type "flexContainerResource" -->
+				<xs:extension base="m2m:flexContainerResource">
+					<xs:sequence>
+					
+						<!-- Resource Specific Attributes -->
+{properties}
+
+						<!-- Child Resources -->
+						
+						<xs:choice minOccurs="0" maxOccurs="1">
+							<xs:element name="childResource" type="m2m:childResourceRef" minOccurs="1" maxOccurs="unbounded" />
+							<xs:choice minOccurs="1" maxOccurs="unbounded">
+{moduleClasses}
+								<xs:element ref="m2m:subscription"  />
+							</xs:choice>
+						</xs:choice>
+
+					</xs:sequence>
+				</xs:extension>
+			</xs:complexContent>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="{deviceName}Annc">
+		<xs:complexType>
+			<xs:complexContent>
+				<!-- Inherit Common Attributes from data type "announcedFlexContainerResource" -->
+				<xs:extension base="m2m:announcedFlexContainerResource">
+					<xs:sequence>
+
+						<!-- Resource Specific Attributes -->		
+{properties}					
+
+						<!-- Child Resources -->
+
+						<xs:choice minOccurs="0" maxOccurs="1">
+							<xs:element name="childResource" type="m2m:childResourceRef" minOccurs="1" maxOccurs="unbounded" />
+							<xs:choice minOccurs="1" maxOccurs="unbounded">
+{moduleClasses}
+								<xs:element ref="m2m:subscription"  />
+							</xs:choice>
+						</xs:choice>
+
+					</xs:sequence>
+				</xs:extension>
+			</xs:complexContent>
+		</xs:complexType>
+	</xs:element>
+'''
+
+
+def exportDevice(device, package, path):
+	deviceName   = sanitizeName(device.id, True)
+	fileName     = sanitizeName(device.id, True)
+	packagePath  = str(path) + os.sep + deviceName.lower()
+
+	# create sub-directory fist
+	path = pathlib.Path(packagePath)
+	try:
+		path.mkdir(parents=True)
+	except FileExistsError as e:
+		pass # on purpose. We override files for now
+
+	fullFilename = str(path) + os.sep + fileName + '.xsd'
+	outputFile   = None
+	try:
+		outputFile = open(fullFilename, 'w')
+		outputFile.write(getDeviceXSD(device, package, deviceName, path))		
+	except IOError as err:
+		print(err)
+	finally:
+		if outputFile != None:
+			outputFile.close()
+
+
+def getDeviceXSD(device, package, deviceName, path):
+	result  = ''
+	result += addDeviceHeader(device)
+	result += addDevice(device, deviceName)
+	result += addDeviceFooter()
+	return result
+
+
+def addDeviceHeader(device):
+	global xsdSchemaTemplateDeviceHeader, namespacePrefix
+	global headerText, domainDefinition, targetNamespace
+
+	# XML header + license text
+	incTab()
+	return xsdSchemaTemplateDeviceHeader.format(headerText=headerText, 
+												namespace=namespacePrefix,
+												domain=domainDefinition,
+												targetnamespace=targetNamespace,
+												moduleSchemas=getDeviceModuleClassSchemas(device))
+
+
+def addDeviceFooter():
+	global xsdSchemaTemplateDeviceFooter
+	decTab()
+	return xsdSchemaTemplateDeviceFooter.format()
+
+
+def addDevice(device, deviceName):
+	global flexContainerDeviceResourceTemplate
+	incTab(5)
+	result = flexContainerDeviceResourceTemplate.format(deviceName=deviceName, 
+													    properties=getDeviceProperties(device),
+													    moduleClasses=getDeviceModuleClasses(device))
+	decTab(5)
+	return result
+
+
+def getDeviceModuleClassSchemas(device):
+	result = ''
+	for module in device.modules:
+		result += newLine() + '<xs:include schemaLocation="' + sanitizeName(module.name, False) + '.xsd" />'
+	return result
+
+
+def getDeviceProperties(device):
+	global namespacePrefix
+	result = ''
+	for prop in device.properties:
+		optional = '0' if prop.optional == 'true' else '1'
+		result += newLine() + '<xs:element name="' + namespacePrefix + ':' + sanitizeName(prop.name, False) + '" minOccurs="' + optional + '" type="xs:string" />'
+	return result;
+
+
+def getDeviceModuleClasses(device):
+	global namespacePrefix
+	result = ''
+	incTab(2)
+	for module in device.modules:
+		optional = '0' if module.optional == 'true' else '1'
+		result += newLine() + '<xs:element ref="' + namespacePrefix + ':' + sanitizeName(module.name, False) + '" minOccurs="' + optional + '" />'
+	decTab(2)
+	return result;
+
+
+
+#############################################################################
+
+# Export abbreviations
+
+def exportAbbreviations(path, abbreviations):
+
+	# Export as python map
+	fullFilename = str(path) + os.sep + '_Abbreviations.py'
+	outputFile = None
+	try:
+		outputFile = open(fullFilename, 'w')
+		outputFile.write(getAbbreviations(abbreviations))	
+	except IOError as err:
+		print(err)
+	finally:
+		if outputFile != None:
+			outputFile.close()
+
+	# Export as CSV
+	fullFilename = str(path) + os.sep + '_Abbreviations.csv'
+	outputFile = None
+	try:
+		outputFile = open(fullFilename, 'w', newline='')
+		writer = csv.writer(outputFile)
+		for key, value in abbreviations.items():
+			writer.writerow([key, value])
+	except IOError as err:
+		print(err)
+	finally:
+		if outputFile != None:
+			outputFile.close()
+
 
 # create a python map
 def getAbbreviations(abbreviations):
