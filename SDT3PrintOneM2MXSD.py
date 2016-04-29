@@ -103,7 +103,7 @@ def exportModuleClass(module, package, path, name=None):
 	# export the module class itself
 	prefix = ''
 	if name != None:
-		prefix = sanitizeName(name, True) + '_'
+		prefix = sanitizeName(name, False) + '_'
 
 	moduleName   = sanitizeName(module.name, False)
 	fileName     = sanitizeName(module.name, False)
@@ -145,7 +145,6 @@ xsdSchemaTemplateHeader = '''<?xml version="1.0" encoding="UTF-8"?>
 	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-subscription-v2_5_0.xsd" />
 
 	<xs:include schemaLocation="CDT-hd_enumerationTypes.xsd" />
-	<xs:include schemaLocation="moduleClassProperty.xsd" />
 
 '''
 
@@ -189,7 +188,6 @@ flexContainerResourceTemplate = '''
 						<xs:choice minOccurs="0" maxOccurs="1">
 							<xs:element name="childResource" type="m2m:childResourceRef" minOccurs="1" maxOccurs="unbounded" />
 							<xs:choice minOccurs="1" maxOccurs="unbounded">
-								<xs:element ref="{namespace}:moduleClassProperty" />
 {actionElements}
 
 								<xs:element ref="m2m:subscription"  />
@@ -217,7 +215,6 @@ flexContainerResourceTemplate = '''
 						<xs:choice minOccurs="0" maxOccurs="1">
 							<xs:element name="childResource" type="m2m:childResourceRef" minOccurs="1" maxOccurs="unbounded" />
 							<xs:choice minOccurs="1" maxOccurs="unbounded">
-								<xs:element ref="{namespace}:moduleClassProperty" />
 {actionElements}
 
 								<xs:element ref="m2m:subscription"  />
@@ -571,8 +568,8 @@ flexContainerDeviceResourceTemplate = '''
 
 
 def exportDevice(device, package, path):
-	deviceName   = sanitizeName(device.id, True)
-	fileName     = sanitizeName(device.id, True)
+	deviceName   = sanitizeName(device.id, False)
+	fileName     = sanitizeName(device.id, False)
 	packagePath  = str(path) + os.sep + deviceName.lower()
 
 	# create sub-directory fist

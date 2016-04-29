@@ -55,7 +55,7 @@ def exportModuleClass(module, package, path, name=None):
 	# export the module class itself
 	prefix = ''
 	if name != None:
-		prefix = sanitizeName(name, True) + '_'
+		prefix = sanitizeName(name, False) + '_'
 
 	name = sanitizeName(module.name, False)
 	fileName = str(path) + os.sep + prefix + name + '.svg'
@@ -126,7 +126,7 @@ def addModuleClassFooterToResource(resource):
 # Export a Device definition to a file
 
 def exportDevice(device, package, path):
-	name = sanitizeName(device.id, True)
+	name = sanitizeName(device.id, False)
 	packagePath = str(path) + os.sep + name.lower()
 	path = pathlib.Path(packagePath)
 
@@ -155,13 +155,13 @@ def exportDevice(device, package, path):
 # Get the Device resource
 
 def getDeviceSVG(device, package, name):
-	res = Resource(sanitizeName(name, True))
+	res = Resource(sanitizeName(name, False))
 	res.specialization = True
 
 	addDeviceHeaderToResource(res)
 
 	for module in device.modules:
-		mod = Resource(sanitizeName(module.name, True))
+		mod = Resource(sanitizeName(module.name, False))
 		mod.cardinality = cardinality01 if module.optional == 'true' else cardinality1
 		mod.specialization = True
 		res.add(mod)
@@ -212,8 +212,8 @@ def addDeviceFooterToResource(resource):
 # Export a DataPoint definiton to a file
 
 def exportDataPoint(dataPoint, moduleName, path):
-	name = sanitizeName(dataPoint.name, True)
-	mName = sanitizeName(moduleName, True)
+	name = sanitizeName(dataPoint.name, False)
+	mName = sanitizeName(moduleName, False)
 	fileName = str(path) + os.sep + mName + '_' + name + '.svg'
 	outputFile = None
 	try:
@@ -295,8 +295,8 @@ def addDataPointFooterToResource(resource):
 # Export an action definiton to a file
 
 def exportAction(action, moduleName, path):
-	name = sanitizeName(action.name, True)
-	mName = sanitizeName(moduleName, True)
+	name = sanitizeName(action.name, False)
+	mName = sanitizeName(moduleName, False)
 	fileName = str(path) + os.sep + mName + '_Action_' + name + '.svg'
 	outputFile = None
 	try:
