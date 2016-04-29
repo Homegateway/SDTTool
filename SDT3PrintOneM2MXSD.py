@@ -144,7 +144,7 @@ xsdSchemaTemplateHeader = '''<?xml version="1.0" encoding="UTF-8"?>
 	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v2_5_0.xsd" />
 	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-subscription-v2_5_0.xsd" />
 
-	<xs:include schemaLocation="CDT-hd_enumerationTypes.xsd" />
+	<xs:include schemaLocation="CDT-hd_enumerationTypes-v2_5_0.xsd" />
 
 '''
 
@@ -649,8 +649,7 @@ def getDeviceModuleClasses(device):
 	result = ''
 	incTab(2)
 	for module in device.modules:
-		optional = '0' if module.optional == 'true' else '1'
-		result += newLine() + '<xs:element ref="' + namespacePrefix + ':' + sanitizeName(module.name, False) + '" minOccurs="' + optional + '" />'
+		result += newLine() + '<xs:element ref="' + namespacePrefix + ':' + sanitizeName(module.name, False) + '" />'
 	decTab(2)
 	return result;
 
