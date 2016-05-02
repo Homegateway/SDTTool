@@ -1,5 +1,20 @@
 # Changelog
 
+## Version 0.7
+xx.xx.xxxx
+
+- Export to Eclipse Vorto, first version
+- First version of export to SVG in oneM2M resource format
+- First version of export to oneM2M XSD
+- First version of abbreviation support (for oneM2M)
+- Fixed errors in Java export
+- Fixed errors in OPML export
+- Improved markdown export
+- Added optional reading of command line arguments from configuration file(s)
+- Made SDT3 the default input format
+- minor bug fixes
+
+
 ## Version 0.6
 04.02.2016
 

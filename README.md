@@ -1,5 +1,5 @@
 # SDTTool
-Version 0.6
+Version 0.7
 
 *SDTTool* is a tool to read and convert XML files that conform to the *Smart Device Template* schema definition.
 
@@ -43,12 +43,16 @@ It is also possible to generate Java interfaces and classes from SDT version 3 w
 Running the script without with the ``-h`` option or without any argument will present a an overview about all possible command line parameters.
 
 ### Input Formats
+- ``-if {sdt2,sdt3,}`` , ``--inputformat {sdt2,sdt3,}``: The input format to read. The default is *sdt3*.
+
 The following input formats are supported for the ``-if`` or ``--inputformat`` command line argument:
 
-- **sdt2**: SDT Version 2.0.1, the default
-- **sdt3**: SDT Version 3.0
+- **sdt2**: SDT Version 2.0.1
+- **sdt3**: SDT Version 3.0, the default
 
 ### Output Formats
+- ``-of {plain,opml,markdown,sdt3,java,vorto-dsl,onem2m-svg,onem2m-xsd}``, ``--outputformat {plain,opml,markdown,sdt3,java,vorto-dsl,onem2m-svg,onem2m-xsd}``: The output format for the result. The default is *markdown*.
+
 Output formats for documentation for the ``-of`` or ``--outputformat`` command line argument:
 
 - **plain**: This produces a plain text representation, with indentations, of the components of the input file.
@@ -56,18 +60,62 @@ Output formats for documentation for the ``-of`` or ``--outputformat`` command l
 - **opml**: OPML (Outline Processor Markup Language) is a simple XML format for outlines, which can be imported in various mind mapping applications.
 - **sdt3**: This output format is only valid when the input format is **sdt2**. It is used to convert SDT definitions from version 2 to version 3.
 - **java**: This output format is only valid for the input format **sdt3**. It generates Java interfaces and classes for the input definition. For this output format the argument ``-o`` refers to an output directory, not a single file.
+- **vorto-dsl**: This output format generates files that can be used to export Device, ModuleClass and data type definitions to an [Eclipse Vorto repository](http://vorto.eclipse.org). For this output format the argument ``-o`` refers to an output directory, not a single file.
+- **onem2m-svg**: This output format generates SVG files that present the structure of Devices and ModuleClass in the graphical representation format used by [oneM2M](http://onem2m.org). For this output format the argument ``-o`` refers to an output directory, not a single file.
+- **onem2m-xsd**: This output format generates XSD files according to the type definions of TS-0004 of the oneM2M specifications. For this output format the argument ``-o`` refers to an output directory, not a single file. The oneM2M domain needs to be specified via the ``--domain`` argument.   
+In addition to the XSD files the following files are generated as well
+	- Skeleton files for enum type definitions are generated in the *hd* sub-directory.
+	- Files with newly found abbreviations (``_Abbreviations.*``). One file contains a python map, the other file contains the abbreviations in CSV format. Only new abbreviations, which are not found in the file that was specified with ``--abbreviationsinfile``, are added.
 
-### Other Arguments
-- ``-i INFILE``, ``--infile INFILE``: Required argument. Specify the input file for the conversion.
-- ``-o OUTFILE``, ``--outfile OUTFILE``: The output file or directory for the result. The default is stdout.
-- ``--hidedetails``: Hide the details of module classes and devices when generating the documentation.
+### Basic Arguments
+- ``-i <filename>``, ``--infile <filename>``: Required argument. Specify the input file for the conversion.
+- ``-o <filename>``, ``--outfile <filename>``: The output file or directory for the result. The default is stdout.
+
+### oneM2M specific arguments
+- ``--domain <domain name>``: Specify the domain name for XSD output.
+- ``--namespaceprefix <xsd prefix>``: Specify the XSD name space prefix for the model. This argument is mandatory when generating XSD.
+- ``--abbreviationsinfile <filename>``: Specify the file that contains a CSV table of already existing abbreviations.
+- ``--abbreviationlength <integer>``: Specify the maximum length for abbreviations. The default is *5*.
+- ``--xsdtargetnamespace <URI>`` : Specify the target namespace for the oneM2M XSD.
+
+### Markdown Specific Arguments
 - ``--markdowntables``: Generate tables instead of the usual list output style for markdown.
 
+### Other Arguments
+- ``--hidedetails``: Hide the details of module classes and devices when generating the documentation.
+- ``--licensefile <filename>``: Add the text of the specified file as a license to the generated files.
+
+
+### Configuration Files
+Sometimes the number of command line arguments can get pretty big. Therefore, it is possible to put some or all arguments into a configuration file. This configuration file can be specified as follows
+
+	python3 SDTTool.py @config
+
+It is also possible to have more than one configuration file:
+
+	python3 SDTTool.py @config1 @config2
+
+or to mix command line arguments and configuration files:
+
+	python3 SDTTool.py @config --markdowntables
 
 ## Limitations
 - *SDTTool* does not validate the input XML. It is assumed that the input XML conforms to the SDT schema.
 
 ## Changelog
+
+### Version 0.7
+xx.XX.2016
+
+- Export to Eclipse Vorto, first version
+- First version of export to SVG in oneM2M resource format
+- First version of export to oneM2M XSD
+- Fixed errors in Java export
+- Fixed errors in OPML export
+- Improved markdown export
+- Added optional reading of command line arguments from configuration file(s)
+- Made SDT3 the default input format
+- minor bug fixes
 
 ### Version 0.6
 04.02.2016
@@ -82,13 +130,6 @@ Output formats for documentation for the ``-of`` or ``--outputformat`` command l
 - Added markdown export for SDT3
 - Added OPML export for SDT3
 - Added support to export SDT3 structure as markdown tables
-
-### Version 0.4
-29.10.2015
-
-- Added support for converting SDT2 to SDT3 format
-- Added first support for generating Java classes (from SDT3 format only)
-- Added --hidedetails option to hide detailed information when generating documentation 
 
 See the [Changelog](CHANGELOG.md) for all changes.
 

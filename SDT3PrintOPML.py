@@ -392,7 +392,7 @@ def printSimpleTypeProperty(simpleType):
 
 
 def printStructType(dataType):
-	result = '<ouline text="Struct'
+	result = '<outline text="Struct'
 	attr = printDataTypeAttributes(dataType)
 	if (len(attr) > 0):
 		result += ' [' + attr + ']'
@@ -408,7 +408,7 @@ def printStructType(dataType):
 	for constraint in dataType.constraints:
 		result += newLine() + printConstraint(constraint)
 	decTab()
-	result += '</outline>'
+	result += newLine() + '</outline>'
 	return result
 
 def printArrayType(dataType):

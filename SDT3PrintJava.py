@@ -14,7 +14,18 @@ structs = {}
 # Dictionary to temporarly store necessary imports
 imports = {}
 
+# variable that hold an optional header text
+headerText = ''
+
+
 def print3JavaClasses(domain, directory, options):
+	global headerText
+
+	# read the optional licensefile into the header
+	lfile = options['licensefile']
+	if lfile != None:
+	    with open(lfile, 'rt') as f:
+	    	headerText = f.read()
 
 	# Create package path and make directories
 
@@ -75,7 +86,9 @@ def exportModuleClass(module, package, path):
 
 	# Export struct definitions found in the ModuleClass as classes
 
-	for name,ty in structs.items():
+
+	while len(structs) > 0:
+		name,ty = structs.popitem()
 		structName = sanitizeName(name, True)
 		fileName = str(path) + os.sep + structName + '.java'
 		outputFile = None
@@ -160,9 +173,9 @@ def getModuleClassInterface(module, package, name):
 			returnType = getType(action.type)
 		default = ''
 		defaultBody = ''
-		if action.optional != None and action.optional:
+		if action.optional != None and action.optional == 'true':
 			default = 'default '
-			defaultBody = ' ' + getOptionalActionBody(action.type.type)
+			defaultBody = ' ' + getOptionalActionBody(action.type)
 		args = ''
 		if action.args != None:
 			args = getActionArguments(action.args)
@@ -182,7 +195,7 @@ def getMethod(ty, ):
 		returnType = getType(ty)
 	default = ''
 	defaultBody = ''
-	if (action.optional != None and action.optional):
+	if (action.optional != None and action.optional == 'true'):
 		default = 'default '
 		defaultBody = ' ' + getOptionalActionBody(action.type)
 	args = ''
@@ -253,7 +266,7 @@ def getJavaMethods(module, package):
 			returnType = getType(action.type)
 		default = ''
 		defaultBody = ''
-		if (action.optional != None and action.optional):
+		if (action.optional != None and action.optional == 'true'):
 			default = 'default '
 			defaultBody = ' ' + getOptionalActionBody(action.type)
 		args = ''
@@ -294,6 +307,9 @@ def getType(datatype):
 			return 'String[]'
 		elif (ty.type == 'array'):
 			return 'String[]'
+		elif (ty.type == 'uri'):
+			imports['URI'] = 'java.net.URI'
+			return 'URI'
 		else:
 			return 'xx_' + ty.type
 
@@ -314,14 +330,20 @@ def getType(datatype):
 
 
 def getOptionalActionBody(datatype):
-	if (datatype.type == 'void'):
+	if (datatype == None or datatype.type == None):
+		return '{ }'
+	if isinstance(datatype.type, SDT3SimpleType):
+		datatype = datatype.type
+	if (isinstance(datatype, SDT3ArrayType)):
+		return '{ return null; }'
+	elif (datatype.type == 'void'):
 		return '{ }'
 	elif (datatype.type.lower() == 'boolean'):
 		return '{ return false; }'
 	elif (datatype.type.lower() == 'integer'):
 		return '{ return 0; }'
 	elif (datatype.type.lower() == 'float'):
-		return '{ return 0.0; }'
+		return '{ return 0.0f; }'
 	elif (datatype.type.lower() == 'string'):
 		return '{ return null; }'
 	elif (datatype.type.lower() == 'datetime'):
@@ -361,9 +383,11 @@ def getDataPointSettersGetters(dataPoints, isEvent):
 		defaultBody = ''
 		if (dataPoint.writable == 'true' and isEvent == False):
 			args = getType(dataPoint.type) + ' ' + sanitizeName(dataPoint.name, False)
+			default = ''
 			if (dataPoint.optional == 'true'):
-				defaultBody = '{}'
-			result += newLine() + 'void _set' + sanitizeName(dataPoint.name, True) + '(' + args + ')' + defaultBody + ';'
+				default = 'default '
+				defaultBody = ' {}'
+			result += newLine() + default + 'void _set' + sanitizeName(dataPoint.name, True) + '(' + args + ')' + defaultBody + ';'
 		if (dataPoint.readable == 'true'):
 			default = ''
 			if (dataPoint.optional == 'true'):
@@ -389,6 +413,8 @@ def getPropertyNames(properties):
 commentTemplate = '''/*
 {type} : {name}
 
+{license}
+
 {doc}
 
 Created: {date}
@@ -396,13 +422,6 @@ Created: {date}
 
 '''
 
-commentTemplateNoDoc = '''/*
-{type} : {name}
-
-Created: {date}
-*/
-
-'''
 
 commentTemplateAction = '/* {doc} */'
 
@@ -412,16 +431,14 @@ commentTemplateProperty = '/* {doc} */'
 
 
 def getHeader(aName, documentation, ty):
-	global commentTemplate, commentTemplateNoDoc
-	if documentation:
-		return commentTemplate.format(name=aName, 
-			type=ty,
-			doc=documentation.doc.content.strip(),
-			date=str(datetime.datetime.now())[:19])
-	else:
-		return commentTemplateNoDoc.format(name=aName, 
-			type=ty,
-			date=str(datetime.datetime.now())[:19])
+	lic = headerText if headerText != None else ''
+	doc = documentation.doc.content.strip() if documentation != None else ''
+	return commentTemplate.format(name=aName, 
+		type=ty,
+		license=lic,
+		doc=doc,
+		date=str(datetime.datetime.now())[:19])
+
 
 
 def getModuleClassHeader(aName, documentation):

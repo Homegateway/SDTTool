@@ -7,6 +7,9 @@ from SDT3Classes import *
 hideDetails = False
 tables = False
 
+# variable that hold an optional header text
+headerText = ''
+
 # tabulator level
 tab = 0
 
@@ -30,7 +33,7 @@ def tableNewLine():
 	global tab
 	result = '<br />'
 	for i in range(tab):
-		result += '&nbsp;&nbsp;'
+		result += '&nbsp;&nbsp;&nbsp;&nbsp;'
 	return result
 
 
@@ -63,9 +66,15 @@ def markdownHeader(text):
 #
 
 def print3DomainMarkdown(domain, options):
-	global hideDetails, tables
+	global hideDetails, tables, headerText
 	hideDetails = options['hideDetails']
 	tables = options['markdowntables']
+
+	# read the optional licensefile into the header
+	lfile = options['licensefile']
+	if lfile != None:
+	    with open(lfile, 'rt') as f:
+	    	headerText = f.read()
 
 	result = ''
 	result += markdownHeader('Domain "' + domain.id + '"')
@@ -86,6 +95,11 @@ def print3DomainMarkdown(domain, options):
 		result += markdownHeader('Devices')
 		for device in domain.devices:
 			result += newLine() + printDevice(device)
+		decHeaderLevel()
+	if headerText != None and len(headerText) > 0:
+		incHeaderLevel()
+		result += markdownHeader('License')
+		result += newLine() +  headerText
 		decHeaderLevel()
 	return result
 
@@ -480,15 +494,17 @@ def printSimpleTypeProperty(simpleType):
 
 def printStructType(dataType):
 	global tables
-	result = 'Struct'
+	result = 'Struct '
 	result += printDataTypeAttributes(dataType)
 	if (tables):
+		incTab()
 		for element in dataType.type.structElements:
 			result += tableNewLine() + '- ' + printDataType(element)
 		if (dataType.doc != None):
 			result += tableNewLine() + printDoc(dataType.doc)
 		for constraint in dataType.constraints:
 			result += tableNewLine() + printConstraint(constraint)
+		decTab()
 	else:
 		incTab()
 		for element in dataType.type.structElements:
@@ -505,18 +521,32 @@ def printStructType(dataType):
 
 def printArrayType(dataType):
 	arrayType = dataType.type
-	result = 'Array'
+	result = 'Array '
 	result += printDataTypeAttributes(dataType)
-	if (arrayType.arrayType != None):
+	if (tables):
+		if (arrayType.arrayType != None):
+			result += ': '
+			incTab()
+			result += tableNewLine() + printDataType(arrayType.arrayType)
+			decTab()
+		if (dataType.doc != None):
+			result += '  ' + tableNewLine() + printDoc(dataType.doc)
 		incTab()
-		result += ': ' + printDataType(arrayType.arrayType)
+		for constraint in dataType.constraints:
+			result += '  ' + tableNewLine() + printConstraint(constraint)
 		decTab()
-	if (dataType.doc != None):
-		result += '  ' + newLine() + printDoc(dataType.doc)
-	incTab()
-	for constraint in dataType.constraints:
-		result += '  ' + newLine() + printConstraint(constraint)
-	decTab()
+	else:
+		if (arrayType.arrayType != None):
+			result += ': '
+			incTab()
+			result += newLine() + '- ' + printDataType(arrayType.arrayType)
+			decTab()
+		if (dataType.doc != None):
+			result += '  ' + newLine() + printDoc(dataType.doc)
+		incTab()
+		for constraint in dataType.constraints:
+			result += '  ' + newLine() + printConstraint(constraint)
+		decTab()
 	return result
 
 
@@ -564,5 +594,8 @@ def printBoolean(value):
 
 def printDoc(doc):
 	result = doc.content.strip()
+	for ch in ['*','#', '-']:
+		if ch in result:
+			result = result.replace(ch,"\\"+ch)
 	return result
 
