@@ -141,8 +141,8 @@ xsdSchemaTemplateHeader = '''<?xml version="1.0" encoding="UTF-8"?>
 	xmlns:m2m="http://www.onem2m.org/xml/protocols" xmlns:{namespace}="http://www.onem2m.org/xml/protocols/{domain}" elementFormDefault="unqualified" attributeFormDefault="unqualified"
 	xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
-	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v2_5_0.xsd" />
 	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-subscription-v2_5_0.xsd" />
+	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v2_5_0.xsd" />
 
 	<xs:include schemaLocation="CDT-hd_enumerationTypes-v2_5_0.xsd" />
 
@@ -501,8 +501,8 @@ xsdSchemaTemplateDeviceHeader = '''<?xml version="1.0" encoding="UTF-8"?>
 	xmlns:m2m="http://www.onem2m.org/xml/protocols" xmlns:{namespace}="http://www.onem2m.org/xml/protocols/{domain}" elementFormDefault="unqualified" attributeFormDefault="unqualified"
 	xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
-	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v2_5_0.xsd" />
 	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-subscription-v2_5_0.xsd" />
+	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v2_5_0.xsd" />
 
 	<xs:include schemaLocation="CDT-hd_enumerationTypes-v2_5_0.xsd" />{moduleSchemas}
 
