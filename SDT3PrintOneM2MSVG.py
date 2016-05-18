@@ -15,19 +15,34 @@ cardinality0n = '0..n'
 # variable that hold an optional header text
 headerText = ''
 
+# variable that holds the domain prefix for the oneM2M XSD
+namespacePrefix = ''
+
+
+# variable that holds the version of the data model
+modelVersion = ''
 
 def print3OneM2MSVG(domain, directory, options):
-	global headerText
+	global headerText, modelVersion, namespacePrefix
 
 	lfile = options['licensefile']
 	if lfile != None:
 		with open(lfile, 'rt') as f:
 			headerText = f.read()
 
+	# get the version of the data model
+	modelVersion = options['modelversion']
+
+	namespacePrefix = options['namespaceprefix']
+	if namespacePrefix == None:			# ERROR
+		print('Error: name space prefix not set')
+		return
+	print(namespacePrefix)
+
 	# Create package path and make directories
 
-	packagePath = directory + os.sep + domain.id.replace('.', os.sep)
-	path = pathlib.Path(packagePath)
+	#packagePath = directory + os.sep + domain.id.replace('.', os.sep)
+	path = pathlib.Path(directory)
 	try:
 		path.mkdir(parents=True)
 	except FileExistsError as e:
@@ -59,6 +74,7 @@ def exportModuleClass(module, package, path, name=None):
 
 	name = sanitizeName(module.name, False)
 	fileName = str(path) + os.sep + prefix + name + '.svg'
+	fileName = getVersionedFilename(name, path=str(path))
 	outputFile = None
 	try:
 		outputFile = open(fileName, 'w')
@@ -127,7 +143,7 @@ def addModuleClassFooterToResource(resource):
 
 def exportDevice(device, package, path):
 	name = sanitizeName(device.id, False)
-	packagePath = str(path) + os.sep + name.lower()
+	packagePath = str(path) + os.sep + name
 	path = pathlib.Path(packagePath)
 
 	try:
@@ -135,7 +151,7 @@ def exportDevice(device, package, path):
 	except FileExistsError as e:
 		pass # on purpose. We override files for now
 
-	fileName = str(path) + os.sep + name + '.svg'
+	fileName = getVersionedFilename(name, path=str(path))
 	outputFile = None
 	try:
 		outputFile = open(fileName, 'w')
@@ -214,7 +230,7 @@ def addDeviceFooterToResource(resource):
 def exportDataPoint(dataPoint, moduleName, path):
 	name = sanitizeName(dataPoint.name, False)
 	mName = sanitizeName(moduleName, False)
-	fileName = str(path) + os.sep + mName + '_' + name + '.svg'
+	fileName = getVersionedFilename(mName + '_' + name, path=str(path))
 	outputFile = None
 	try:
 		outputFile = open(fileName, 'w')
@@ -297,7 +313,7 @@ def addDataPointFooterToResource(resource):
 def exportAction(action, moduleName, path):
 	name = sanitizeName(action.name, False)
 	mName = sanitizeName(moduleName, False)
-	fileName = str(path) + os.sep + mName + '_Action_' + name + '.svg'
+	fileName = getVersionedFilename(name, path=str(path), isAction=True)
 	outputFile = None
 	try:
 		outputFile = open(fileName, 'w')
@@ -408,4 +424,25 @@ def sanitizePackage(package):
 	result = package.replace('/', '.')
 	return result
 
+# get a versioned filename
+
+def getVersionedFilename(fileName, path=None, isAction=False):
+	global modelVersion, namespacePrefix
+
+	prefix  = ''
+	postfix = ''
+	if namespacePrefix != None:
+		prefix += namespacePrefix.upper() + '_'
+	if isAction:
+		prefix += 'Act_'
+
+	if modelVersion != None:
+		postfix += '_v' + modelVersion.replace('.', '_')
+
+	fullFilename = ''
+	if path != None:
+		fullFilename = path + os.sep
+	fullFilename += prefix + sanitizeName(fileName, False) + postfix + '.svg'
+
+	return fullFilename
 

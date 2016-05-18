@@ -73,10 +73,11 @@ In addition to the XSD files the following files are generated as well
 
 ### oneM2M specific arguments
 - ``--domain <domain name>``: Specify the domain name for XSD output.
-- ``--namespaceprefix <xsd prefix>``: Specify the XSD name space prefix for the model. This argument is mandatory when generating XSD.
+- ``--namespaceprefix <xsd prefix>``: Specify the XSD name space prefix for the model. This argument is mandatory when generating XSD and SVG.
 - ``--abbreviationsinfile <filename>``: Specify the file that contains a CSV table of already existing abbreviations.
 - ``--abbreviationlength <integer>``: Specify the maximum length for abbreviations. The default is *5*.
 - ``--xsdtargetnamespace <URI>`` : Specify the target namespace for the oneM2M XSD.
+- ``--modelversion <version number>`` : Specify the version of the model. This is used in the filenames of XSD and SVG files. "." characters are replaced with "_".
 
 ### Markdown Specific Arguments
 - ``--markdowntables``: Generate tables instead of the usual list output style for markdown.

@@ -22,15 +22,22 @@ abbreviationsInFile = ''
 # the target name space for the XSD
 targetNamespace = ''
 
+# variable that holds the version of the data model
+modelVersion = ''
+
 # variable for found enum types
 enumTypes = set()
 
 # variable for found actions
 actions = {}
 
+# constants for abbreviation file
+constAbbreviationCSVFile = '_Abbreviations.csv'
+constAbbreviationMAPFile = '_Abbreviations.py'
+
 def print3OneM2MXSD(domain, directory, options):
 	global headerText, domainDefinition, namespacePrefix, enumTypes, doAbbreviations, targetNamespace
-	global abbreviationsInFile
+	global abbreviationsInFile, modelVersion, constAbbreviationCSVFile
 
 	#
 	#	Get various parameters
@@ -49,7 +56,7 @@ def print3OneM2MXSD(domain, directory, options):
 
 	namespacePrefix = options['namespaceprefix']
 	if namespacePrefix == None:			# ERROR
-		print('Error: XSD name space prefix not set')
+		print('Error: name space prefix not set')
 		return
 
 	# get target name space 
@@ -60,19 +67,25 @@ def print3OneM2MXSD(domain, directory, options):
 	# get in and out file names for abbreviations
 	abbreviationsInFile = options['abbreviationsinfile']
 
+	# get the version of the data model
+	modelVersion = options['modelversion']
 
-
-	# Read abbreviations
-	SDTAbbreviate.readAbbreviations(abbreviationsInFile)
 
 	# Create package path and make directories
-	packagePath = directory + os.sep + domain.id.replace('.', os.sep)
-	path = pathlib.Path(packagePath)
+	path = pathlib.Path(directory)
 	try:
 		path.mkdir(parents=True)
 	except FileExistsError as e:
 		pass # on purpose. We override files for now
 	package = sanitizePackage(domain.id)
+
+
+	# Read abbreviations
+	SDTAbbreviate.readAbbreviations(abbreviationsInFile)
+	# Add already existing abbreviations
+	localAbbreviationsfile = str(path) + os.sep + constAbbreviationCSVFile
+	SDTAbbreviate.readAbbreviations(localAbbreviationsfile, predefined=False)
+
 
 	# Export ModuleClasses
 	for module in domain.modules:
@@ -99,15 +112,13 @@ def print3OneM2MXSD(domain, directory, options):
 # Export a ModuleClass definition to a file
 
 def exportModuleClass(module, package, path, name=None):
+	global namespacePrefix, modelVersion
 
 	# export the module class itself
-	prefix = ''
-	if name != None:
-		prefix = sanitizeName(name, False) + '_'
 
 	moduleName   = sanitizeName(module.name, False)
 	fileName     = sanitizeName(module.name, False)
-	fullFilename = str(path) + os.sep + prefix + fileName + '.xsd'
+	fullFilename = getVersionedFilename(fileName, name=name, path=str(path))
 	outputFile   = None
 	try:
 		outputFile = open(fullFilename, 'w')
@@ -124,9 +135,9 @@ def exportModuleClass(module, package, path, name=None):
 def getModuleClassXSD(module, package, name, path):
 
 	result  = ''
-	result += addModuleClassHeader()
+	result += addModuleClassHeader(module)
 	result += addModuleClass(module, name)
-	result += addModuleClassFooter()
+	result += addModuleClassFooter(module)
 	return result
 
 
@@ -144,7 +155,7 @@ xsdSchemaTemplateHeader = '''<?xml version="1.0" encoding="UTF-8"?>
 	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-subscription-v2_5_0.xsd" />
 	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v2_5_0.xsd" />
 
-	<xs:include schemaLocation="CDT-hd_enumerationTypes-v2_5_0.xsd" />
+	<xs:include schemaLocation="CDT-hd_enumerationTypes-v2_5_0.xsd" />{actionSchemas}
 
 '''
 
@@ -152,7 +163,7 @@ xsdSchemaTemplateFooter = '''
 </xs:schema>
 '''
 
-def addModuleClassHeader():
+def addModuleClassHeader(module=None):
 	global xsdSchemaTemplateHeader, namespacePrefix
 	global headerText, domainDefinition, targetNamespace
 
@@ -161,10 +172,11 @@ def addModuleClassHeader():
 	return xsdSchemaTemplateHeader.format(headerText=headerText,
 										  namespace=namespacePrefix,
 										  domain=domainDefinition,
-										  targetnamespace=targetNamespace)
+										  targetnamespace=targetNamespace,
+										  actionSchemas=getActionSchemas(module))
 
 
-def addModuleClassFooter():
+def addModuleClassFooter(module=None):
 	global xsdSchemaTemplateFooter
 	decTab()
 	return xsdSchemaTemplateFooter.format()
@@ -398,7 +410,7 @@ def getEnumType(enumName):
 	result  = xsdSchemaTemplateHeader.format(headerText=headerText, namespace=namespacePrefix, domain=domainDefinition, targetnamespace=targetNamespace)
 	result += xsdSchemaTemplateEnumHeader.format(name=sanitizeName(enumName, False))
 	incTab(3)
-	result += newLine() + '<!-- TODO comment -->'
+	#result += newLine() + '<!-- TODO comment -->'
 	result += newLine() + '<xs:enumeration value="1" />'
 	decTab(3)
 	result += xsdSchemaTemplateEnumFooter.format()
@@ -466,7 +478,8 @@ def exportActions(path):
 
 def exportAction(path, action):
 	fileName = sanitizeName(action.name, False)
-	fullFileName = str(path) + os.sep + 'Action_' + fileName + '.xsd'
+	fullFileName = getVersionedFilename(fileName, path=str(path), isAction=True)
+	#fullFileName = str(path) + os.sep + 'Action_' + fileName + '.xsd'
 	outputFile = None
 	try:
 		outputFile = open(fullFileName, 'w')
@@ -568,19 +581,15 @@ flexContainerDeviceResourceTemplate = '''
 
 
 def exportDevice(device, package, path):
+	global namespacePrefix, modelVersion
+
+	# export the module class itself
+
 	deviceName   = sanitizeName(device.id, False)
 	fileName     = sanitizeName(device.id, False)
-	packagePath  = str(path) + os.sep + deviceName.lower()
-
-	# create sub-directory fist
-	path = pathlib.Path(packagePath)
-	try:
-		path.mkdir(parents=True)
-	except FileExistsError as e:
-		pass # on purpose. We override files for now
-
-	fullFilename = str(path) + os.sep + fileName + '.xsd'
+	fullFilename = getVersionedFilename(fileName, name=None, path=str(path))
 	outputFile   = None
+
 	try:
 		outputFile = open(fullFilename, 'w')
 		outputFile.write(getDeviceXSD(device, package, deviceName, path))		
@@ -630,8 +639,21 @@ def addDevice(device, deviceName):
 
 def getDeviceModuleClassSchemas(device):
 	result = ''
+	# Referenced modules
 	for module in device.modules:
-		result += newLine() + '<xs:include schemaLocation="' + sanitizeName(module.name, False) + '.xsd" />'
+		name = getVersionedFilename(module.name)
+		result += newLine() + '<xs:include schemaLocation="' + name + '" />'
+	return result
+
+
+def getActionSchemas(module):
+	if module == None:
+		return ''
+	result = ''
+	# Referenced Actions
+	for action in module.actions:
+		name = getVersionedFilename(action.name, isAction=True)
+		result += newLine() + '<xs:include schemaLocation="' + name + '" />'
 	return result
 
 
@@ -660,9 +682,10 @@ def getDeviceModuleClasses(device):
 # Export abbreviations
 
 def exportAbbreviations(path, abbreviations):
+	global constAbbreviationCSVFile, constAbbreviationMAPFile
 
 	# Export as python map
-	fullFilename = str(path) + os.sep + '_Abbreviations.py'
+	fullFilename = str(path) + os.sep + constAbbreviationMAPFile
 	outputFile = None
 	try:
 		outputFile = open(fullFilename, 'w')
@@ -674,7 +697,7 @@ def exportAbbreviations(path, abbreviations):
 			outputFile.close()
 
 	# Export as CSV
-	fullFilename = str(path) + os.sep + '_Abbreviations.csv'
+	fullFilename = str(path) + os.sep + constAbbreviationCSVFile
 	outputFile = None
 	try:
 		outputFile = open(fullFilename, 'w', newline='')
@@ -743,6 +766,30 @@ def sanitizePackage(package):
 	result = package.replace('/', '.')
 	return result
 
+# get a versioned filename
+
+def getVersionedFilename(fileName, name=None, path=None, isAction=False):
+	global modelVersion, namespacePrefix
+
+	prefix  = ''
+	postfix = ''
+	if name != None:
+		prefix += sanitizeName(name, False) + '_'
+	else:
+		if namespacePrefix != None:
+			prefix += namespacePrefix.upper() + '_'
+		if isAction:
+			prefix += 'Act_'
+
+	if modelVersion != None:
+		postfix += '_v' + modelVersion.replace('.', '_')
+
+	fullFilename = ''
+	if path != None:
+		fullFilename = path + os.sep
+	fullFilename += prefix + sanitizeName(fileName, False) + postfix + '.xsd'
+
+	return fullFilename
 
 
 # Tabulator handling

@@ -78,7 +78,8 @@ def getAbbreviations():
 
 # Read existing abbreviations
 
-def readAbbreviations(infile):
+def readAbbreviations(infile, predefined=True):
+	global preDefinedAbbreviations, abbreviations
 	if infile == None:
 		return
 	try:
@@ -86,14 +87,16 @@ def readAbbreviations(infile):
 			reader = csv.reader(csvfile, delimiter=',', quotechar='\\')
 			for row in reader:
 				if len(row) == 2:
-					preDefinedAbbreviations[row[0]] = row[1]
+					if predefined:
+						preDefinedAbbreviations[row[0]] = row[1]
+					else:
+						abbreviations[row[0]] = row[1]
 				else:
 					print('Unknwon row found (ignored): ' + ', '.join(row))
 	except FileNotFoundError as e:
 		print(str(e) + ' (abbreviation input file ignored)')
 	except Exception as e:
 		raise
-
 
 
 
