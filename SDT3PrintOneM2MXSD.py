@@ -129,6 +129,9 @@ def exportModuleClass(module, package, path, name=None):
 		if outputFile != None:
 			outputFile.close()
 
+	# Export the properties of the module class in an XSD
+	exportProperties(path, moduleName, module.properties)
+
 
 # Get the ModuleClass resource
 
@@ -155,8 +158,7 @@ xsdSchemaTemplateHeader = '''<?xml version="1.0" encoding="UTF-8"?>
 	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-subscription-v2_5_0.xsd" />
 	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v2_5_0.xsd" />
 
-	<xs:include schemaLocation="CDT-hd_enumerationTypes-v2_5_0.xsd" />{actionSchemas}
-
+	<xs:include schemaLocation="CDT-hd_enumerationTypes-v2_5_0.xsd" />{schemas}
 '''
 
 xsdSchemaTemplateFooter = '''
@@ -173,7 +175,7 @@ def addModuleClassHeader(module=None):
 										  namespace=namespacePrefix,
 										  domain=domainDefinition,
 										  targetnamespace=targetNamespace,
-										  actionSchemas=getActionSchemas(module))
+										  schemas=getModuleClassSchemas(module))
 
 
 def addModuleClassFooter(module=None):
@@ -243,11 +245,9 @@ flexContainerResourceTemplate = '''
 def addModuleClass(module, name):
 	global flexContainerResourceTemplate, namespacePrefix
 	name = sanitizeName(name, False)
-	nameAnnc = sanitizeName(name + 'Annc', False)
-	return flexContainerResourceTemplate.format(name=name, 
-												namespace=namespacePrefix,
+	return flexContainerResourceTemplate.format(name=name,
 												specificAttributes=getSpecificAttributes(module, annc=False),
-												specificAttributesAnnc=getSpecificAttributes(module, annc=True),
+						 						specificAttributesAnnc=getSpecificAttributes(module, annc=True),
 												actionElements=getSpecificActions(module))
 
 
@@ -287,12 +287,16 @@ def getDataPointXSD(data, annc):
 
 
 def getDataPointType(dataPoint):
+	name = sanitizeName(dataPoint.name, False)
+	return getDataType(name, dataPoint.type)
+
+
+def getDataType(name, typ):
 	global enumTypes, namespacePrefix
 	result = ''
-	name = sanitizeName(dataPoint.name, False)
 
 	# Array
-	if (isinstance(dataPoint.type.type, SDT3ArrayType)):
+	if (isinstance(typ.type, SDT3ArrayType)):
 		result += '>'
 		incTab()
 		result += newLine() + '<xs:simpleType>'
@@ -305,8 +309,8 @@ def getDataPointType(dataPoint):
 
 
 	# Simple type
-	if isinstance(dataPoint.type.type, SDT3SimpleType):
-		ty = dataPoint.type.type
+	if isinstance(typ.type, SDT3SimpleType) or isinstance(typ, SDT3SimpleType):
+		ty = typ.type if isinstance(typ.type, SDT3SimpleType) else typ
 		if ty.type == 'enum':
 			result += ' >'
 			incTab()
@@ -317,18 +321,19 @@ def getDataPointType(dataPoint):
 			result += newLine() + '</xs:simpleType>'
 			decTab()
 			result += newLine() + '</xs:element>'
-			enumTypes.add(dataPoint.name)
+			enumTypes.add(name)
 		else:
 			result += ' type="'
 			result += getSimpleDataType(ty.type)
 			result += '" />'
 
 	# Struct
-	elif (isinstance(dataPoint.type.type, SDT3StructType)):
+	elif (isinstance(typ.type, SDT3StructType)):
 		print('structType not supported yet')
 		result += 'XXX'
 	
 	return result
+
 
 def getSimpleDataType(type):
 	result = ''
@@ -477,9 +482,8 @@ def exportActions(path):
 
 
 def exportAction(path, action):
-	fileName = sanitizeName(action.name, False)
-	fullFileName = getVersionedFilename(fileName, path=str(path), isAction=True)
-	#fullFileName = str(path) + os.sep + 'Action_' + fileName + '.xsd'
+	name = sanitizeName(action.name, False)
+	fullFileName = getVersionedFilename(name, path=str(path), isAction=True)
 	outputFile = None
 	try:
 		outputFile = open(fullFileName, 'w')
@@ -503,6 +507,60 @@ def getAction(action):
 
 #############################################################################
 
+# Properties
+
+
+def exportProperties(path, moduleName, properties):
+	if len(properties) == 0:	# Nothing to do when there are no properties
+		return
+
+	fileName = sanitizeName(moduleName, False)
+	fullFileName = getVersionedFilename(fileName, path=str(path), isProperty=True)
+	outputFile = None
+	try:
+		outputFile = open(fullFileName, 'w')
+		outputFile.write(getProperties(properties))		
+	except IOError as err:
+		print(err)
+	finally:
+		if outputFile != None:
+			outputFile.close()
+
+
+def getProperties(properties):
+	global flexContainerResourceTemplate
+	result = ''
+	result += addModuleClassHeader()
+	result += flexContainerResourceTemplate.format(name=sanitizeName('XXX', False),
+												   specificAttributes=getSpecificPropertiesXSD(properties, annc=False),
+						 						   specificAttributesAnnc=getSpecificPropertiesXSD(properties, annc=True),
+												   actionElements='')
+	result += addModuleClassFooter()
+	return result
+
+
+def getSpecificPropertiesXSD(properties, annc=False):
+	result = ''
+	incTab(5)
+	for prop in properties:
+		result += getSpecificPropertyXSD(prop, annc)
+	decTab(5)
+	return result
+
+def getSpecificPropertyXSD(prop, annc):
+	result = ''
+	result += newLine() + '<xs:element name="' + sanitizeName(prop.name, False) + '"'
+	if annc:
+		result += ' minOccurs="0"'
+	else:
+		if prop.optional == 'true':	# indicate an optional property
+			result += ' minOccurs="0"'
+	result += getDataType(prop.name, prop.type)
+	return result;
+
+
+#############################################################################
+
 # Devices
 
 xsdSchemaTemplateDeviceHeader = '''<?xml version="1.0" encoding="UTF-8"?>
@@ -517,7 +575,7 @@ xsdSchemaTemplateDeviceHeader = '''<?xml version="1.0" encoding="UTF-8"?>
 	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-subscription-v2_5_0.xsd" />
 	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v2_5_0.xsd" />
 
-	<xs:include schemaLocation="CDT-hd_enumerationTypes-v2_5_0.xsd" />{moduleSchemas}
+	<xs:include schemaLocation="CDT-hd_enumerationTypes-v2_5_0.xsd" />{schemas}
 
 '''
 
@@ -534,7 +592,6 @@ flexContainerDeviceResourceTemplate = '''
 					<xs:sequence>
 					
 						<!-- Resource Specific Attributes -->
-{properties}
 
 						<!-- Child Resources -->
 						
@@ -560,7 +617,6 @@ flexContainerDeviceResourceTemplate = '''
 					<xs:sequence>
 
 						<!-- Resource Specific Attributes -->		
-{properties}					
 
 						<!-- Child Resources -->
 
@@ -585,26 +641,30 @@ def exportDevice(device, package, path):
 
 	# export the module class itself
 
-	deviceName   = sanitizeName(device.id, False)
-	fileName     = sanitizeName(device.id, False)
-	fullFilename = getVersionedFilename(fileName, name=None, path=str(path))
+	name 	     = sanitizeName(device.id, False)
+	fullFilename = getVersionedFilename(name, name=None, path=str(path))
 	outputFile   = None
 
 	try:
 		outputFile = open(fullFilename, 'w')
-		outputFile.write(getDeviceXSD(device, package, deviceName, path))		
+		outputFile.write(getDeviceXSD(device, package, name, path))		
 	except IOError as err:
 		print(err)
 	finally:
 		if outputFile != None:
 			outputFile.close()
 
+	# Export the properties of the Device in an XSD
+	exportProperties(path, name, device.properties)
+
 
 def getDeviceXSD(device, package, deviceName, path):
 	result  = ''
+	incTab()
 	result += addDeviceHeader(device)
 	result += addDevice(device, deviceName)
 	result += addDeviceFooter()
+	decTab()
 	return result
 
 
@@ -613,17 +673,15 @@ def addDeviceHeader(device):
 	global headerText, domainDefinition, targetNamespace
 
 	# XML header + license text
-	incTab()
 	return xsdSchemaTemplateDeviceHeader.format(headerText=headerText, 
 												namespace=namespacePrefix,
 												domain=domainDefinition,
 												targetnamespace=targetNamespace,
-												moduleSchemas=getDeviceModuleClassSchemas(device))
+												schemas=getDeviceSchemas(device))
 
 
 def addDeviceFooter():
 	global xsdSchemaTemplateDeviceFooter
-	decTab()
 	return xsdSchemaTemplateDeviceFooter.format()
 
 
@@ -631,14 +689,17 @@ def addDevice(device, deviceName):
 	global flexContainerDeviceResourceTemplate
 	incTab(5)
 	result = flexContainerDeviceResourceTemplate.format(deviceName=deviceName, 
-													    properties=getDeviceProperties(device),
 													    moduleClasses=getDeviceModuleClasses(device))
 	decTab(5)
 	return result
 
 
-def getDeviceModuleClassSchemas(device):
+def getDeviceSchemas(device):
 	result = ''
+	# Properties
+	for prop in device.properties:
+		name = getVersionedFilename(prop.name, isProperty=True)
+		result += newLine() + '<xs:include schemaLocation="' + name + '" />'
 	# Referenced modules
 	for module in device.modules:
 		name = getVersionedFilename(module.name)
@@ -646,24 +707,19 @@ def getDeviceModuleClassSchemas(device):
 	return result
 
 
-def getActionSchemas(module):
+def getModuleClassSchemas(module):
 	if module == None:
 		return ''
 	result = ''
+	# Properties
+	for prop in module.properties:
+		name = getVersionedFilename(prop.name, isProperty=True)
+		result += newLine() + '<xs:include schemaLocation="' + name + '" />'
 	# Referenced Actions
 	for action in module.actions:
 		name = getVersionedFilename(action.name, isAction=True)
 		result += newLine() + '<xs:include schemaLocation="' + name + '" />'
 	return result
-
-
-def getDeviceProperties(device):
-	global namespacePrefix
-	result = ''
-	for prop in device.properties:
-		optional = '0' if prop.optional == 'true' else '1'
-		result += newLine() + '<xs:element name="' + namespacePrefix + ':' + sanitizeName(prop.name, False) + '" minOccurs="' + optional + '" type="xs:string" />'
-	return result;
 
 
 def getDeviceModuleClasses(device):
@@ -674,7 +730,6 @@ def getDeviceModuleClasses(device):
 		result += newLine() + '<xs:element ref="' + namespacePrefix + ':' + sanitizeName(module.name, False) + '" />'
 	decTab(2)
 	return result;
-
 
 
 #############################################################################
@@ -768,7 +823,7 @@ def sanitizePackage(package):
 
 # get a versioned filename
 
-def getVersionedFilename(fileName, name=None, path=None, isAction=False):
+def getVersionedFilename(fileName, name=None, path=None, isAction=False, isProperty=False):
 	global modelVersion, namespacePrefix
 
 	prefix  = ''
@@ -779,10 +834,12 @@ def getVersionedFilename(fileName, name=None, path=None, isAction=False):
 		if namespacePrefix != None:
 			prefix += namespacePrefix.upper() + '_'
 		if isAction:
-			prefix += 'Act_'
+			prefix += 'Act-'
+		if isProperty:
+			prefix += 'Prop_'
 
 	if modelVersion != None:
-		postfix += '_v' + modelVersion.replace('.', '_')
+		postfix += '-v' + modelVersion.replace('.', '_')
 
 	fullFilename = ''
 	if path != None:

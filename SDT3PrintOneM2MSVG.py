@@ -37,7 +37,6 @@ def print3OneM2MSVG(domain, directory, options):
 	if namespacePrefix == None:			# ERROR
 		print('Error: name space prefix not set')
 		return
-	print(namespacePrefix)
 
 	# Create package path and make directories
 
@@ -434,10 +433,10 @@ def getVersionedFilename(fileName, path=None, isAction=False):
 	if namespacePrefix != None:
 		prefix += namespacePrefix.upper() + '_'
 	if isAction:
-		prefix += 'Act_'
+		prefix += 'Act-'
 
 	if modelVersion != None:
-		postfix += '_v' + modelVersion.replace('.', '_')
+		postfix += '-v' + modelVersion.replace('.', '_')
 
 	fullFilename = ''
 	if path != None:
