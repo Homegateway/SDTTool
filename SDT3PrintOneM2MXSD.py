@@ -118,7 +118,7 @@ def exportModuleClass(module, package, path, name=None):
 
 	moduleName   = sanitizeName(module.name, False)
 	fileName     = sanitizeName(module.name, False)
-	fullFilename = getVersionedFilename(fileName, name=name, path=str(path))
+	fullFilename = getVersionedFilename(fileName, name=name, path=str(path), isModule=True)
 	outputFile   = None
 	try:
 		outputFile = open(fullFilename, 'w')
@@ -128,9 +128,6 @@ def exportModuleClass(module, package, path, name=None):
 	finally:
 		if outputFile != None:
 			outputFile.close()
-
-	# Export the properties of the module class in an XSD
-	exportProperties(path, moduleName, module.properties)
 
 
 # Get the ModuleClass resource
@@ -254,8 +251,17 @@ def addModuleClass(module, name):
 def getSpecificAttributes(module, annc=False):
 	result = ''
 	incTab(5)
+
+	# Properties
+	if len(module.properties) > 0:
+		for prop in module.properties:
+			result += getSpecificPropertyXSD(prop, annc)
+		result += newLine()
+
+	# DataPoints
 	for data in module.data:
 		result += getDataPointXSD(data, annc)
+
 	decTab(5)
 	return result
 
@@ -301,7 +307,7 @@ def getDataType(name, typ):
 		incTab()
 		result += newLine() + '<xs:simpleType>'
 		incTab()
-		result += newLine() + '<xs:list itemType="' + namespacePrefix + ':' + name + '" />'
+		result += newLine() + '<xs:list itemType="' + getSimpleDataType(typ.type.arrayType.type.type) + '" />'
 		decTab()
 		result += newLine() + '</xs:simpleType>'
 		decTab()
@@ -509,44 +515,6 @@ def getAction(action):
 
 # Properties
 
-
-def exportProperties(path, moduleName, properties):
-	if len(properties) == 0:	# Nothing to do when there are no properties
-		return
-
-	fileName = sanitizeName(moduleName, False)
-	fullFileName = getVersionedFilename(fileName, path=str(path), isProperty=True)
-	outputFile = None
-	try:
-		outputFile = open(fullFileName, 'w')
-		outputFile.write(getProperties(properties))		
-	except IOError as err:
-		print(err)
-	finally:
-		if outputFile != None:
-			outputFile.close()
-
-
-def getProperties(properties):
-	global flexContainerResourceTemplate
-	result = ''
-	result += addModuleClassHeader()
-	result += flexContainerResourceTemplate.format(name=sanitizeName('XXX', False),
-												   specificAttributes=getSpecificPropertiesXSD(properties, annc=False),
-						 						   specificAttributesAnnc=getSpecificPropertiesXSD(properties, annc=True),
-												   actionElements='')
-	result += addModuleClassFooter()
-	return result
-
-
-def getSpecificPropertiesXSD(properties, annc=False):
-	result = ''
-	incTab(5)
-	for prop in properties:
-		result += getSpecificPropertyXSD(prop, annc)
-	decTab(5)
-	return result
-
 def getSpecificPropertyXSD(prop, annc):
 	result = ''
 	result += newLine() + '<xs:element name="' + sanitizeName(prop.name, False) + '"'
@@ -592,6 +560,7 @@ flexContainerDeviceResourceTemplate = '''
 					<xs:sequence>
 					
 						<!-- Resource Specific Attributes -->
+{deviceProperties}						
 
 						<!-- Child Resources -->
 						
@@ -617,7 +586,7 @@ flexContainerDeviceResourceTemplate = '''
 					<xs:sequence>
 
 						<!-- Resource Specific Attributes -->		
-
+{devicePropertiesAnnc}
 						<!-- Child Resources -->
 
 						<xs:choice minOccurs="0" maxOccurs="1">
@@ -654,9 +623,6 @@ def exportDevice(device, package, path):
 		if outputFile != None:
 			outputFile.close()
 
-	# Export the properties of the Device in an XSD
-	exportProperties(path, name, device.properties)
-
 
 def getDeviceXSD(device, package, deviceName, path):
 	result  = ''
@@ -689,6 +655,8 @@ def addDevice(device, deviceName):
 	global flexContainerDeviceResourceTemplate
 	incTab(5)
 	result = flexContainerDeviceResourceTemplate.format(deviceName=deviceName, 
+														deviceProperties=getDeviceProperties(device),
+														devicePropertiesAnnc=getDeviceProperties(device, annc=True),
 													    moduleClasses=getDeviceModuleClasses(device))
 	decTab(5)
 	return result
@@ -696,13 +664,10 @@ def addDevice(device, deviceName):
 
 def getDeviceSchemas(device):
 	result = ''
-	# Properties
-	for prop in device.properties:
-		name = getVersionedFilename(prop.name, isProperty=True)
-		result += newLine() + '<xs:include schemaLocation="' + name + '" />'
+
 	# Referenced modules
 	for module in device.modules:
-		name = getVersionedFilename(module.name)
+		name = getVersionedFilename(module.name, isModule=True)
 		result += newLine() + '<xs:include schemaLocation="' + name + '" />'
 	return result
 
@@ -711,10 +676,7 @@ def getModuleClassSchemas(module):
 	if module == None:
 		return ''
 	result = ''
-	# Properties
-	for prop in module.properties:
-		name = getVersionedFilename(prop.name, isProperty=True)
-		result += newLine() + '<xs:include schemaLocation="' + name + '" />'
+
 	# Referenced Actions
 	for action in module.actions:
 		name = getVersionedFilename(action.name, isAction=True)
@@ -730,6 +692,15 @@ def getDeviceModuleClasses(device):
 		result += newLine() + '<xs:element ref="' + namespacePrefix + ':' + sanitizeName(module.name, False) + '" />'
 	decTab(2)
 	return result;
+
+
+def getDeviceProperties(device, annc=False):
+	result = ''
+	# Properties
+	for prop in device.properties:
+		result += getSpecificPropertyXSD(prop, annc)
+	return result
+
 
 
 #############################################################################
@@ -815,7 +786,7 @@ def sanitizeName(name, isClass):
 	
 	return result
 
-# Sanitize the package name for SVG
+# Sanitize the package name for XSD
 
 def sanitizePackage(package):
 	result = package.replace('/', '.')
@@ -823,7 +794,7 @@ def sanitizePackage(package):
 
 # get a versioned filename
 
-def getVersionedFilename(fileName, name=None, path=None, isAction=False, isProperty=False):
+def getVersionedFilename(fileName, name=None, path=None, isModule=False, isAction=False):
 	global modelVersion, namespacePrefix
 
 	prefix  = ''
@@ -832,11 +803,11 @@ def getVersionedFilename(fileName, name=None, path=None, isAction=False, isPrope
 		prefix += sanitizeName(name, False) + '_'
 	else:
 		if namespacePrefix != None:
-			prefix += namespacePrefix.upper() + '_'
+			prefix += namespacePrefix.upper() + '-'
 		if isAction:
-			prefix += 'Act-'
-		if isProperty:
-			prefix += 'Prop_'
+			prefix += 'act-'
+		if isModule:
+			prefix += 'mod-'
 
 	if modelVersion != None:
 		postfix += '-v' + modelVersion.replace('.', '_')
