@@ -72,8 +72,7 @@ def exportModuleClass(module, package, path, name=None):
 		prefix = sanitizeName(name, False) + '_'
 
 	name = sanitizeName(module.name, False)
-	fileName = str(path) + os.sep + prefix + name + '.svg'
-	fileName = getVersionedFilename(name, path=str(path))
+	fileName = getVersionedFilename(name, path=str(path), isModule=True)
 	outputFile = None
 	try:
 		outputFile = open(fileName, 'w')
@@ -95,6 +94,13 @@ def getModuleClassSVG(module, package, name, path):
 	# TODO: events?
 
 	addModuleClassHeaderToResource(res)
+
+	# Add properties
+	for prop in module.properties:
+		pr = Attribute(sanitizeName(prop.name, False))
+		pr.cardinality = cardinality01 if prop.optional == "true" else cardinality1
+		res.add(pr)
+
 
 	# DataPoints 
 	getDataPoints(res, module.data, name, path)
@@ -175,6 +181,13 @@ def getDeviceSVG(device, package, name):
 
 	addDeviceHeaderToResource(res)
 
+	# Add properties
+	for prop in device.properties:
+		pr = Attribute(sanitizeName(prop.name, False))
+		pr.cardinality = cardinality01 if prop.optional == "true" else cardinality1
+		res.add(pr)
+
+	# Add modules
 	for module in device.modules:
 		mod = Resource(sanitizeName(module.name, False))
 		mod.cardinality = cardinality01 if module.optional == 'true' else cardinality1
@@ -205,10 +218,6 @@ def addDeviceHeaderToResource(resource):
 	ontologyRef.cardinality = cardinality01
 	resource.add(ontologyRef)
 
-	deviceProperty = Resource('deviceProperty')
-	deviceProperty.cardinality = cardinality01
-	deviceProperty.specialization = True
-	resource.add(deviceProperty)
 
 
 
@@ -425,15 +434,20 @@ def sanitizePackage(package):
 
 # get a versioned filename
 
-def getVersionedFilename(fileName, path=None, isAction=False):
+def getVersionedFilename(fileName, name=None, path=None, isModule=False, isAction=False):
 	global modelVersion, namespacePrefix
 
 	prefix  = ''
 	postfix = ''
-	if namespacePrefix != None:
-		prefix += namespacePrefix.upper() + '_'
-	if isAction:
-		prefix += 'Act-'
+	if name != None:
+		prefix += sanitizeName(name, False) + '_'
+	else:
+		if namespacePrefix != None:
+			prefix += namespacePrefix.upper() + '-'
+		if isAction:
+			prefix += 'act-'
+		if isModule:
+			prefix += 'mod-'
 
 	if modelVersion != None:
 		postfix += '-v' + modelVersion.replace('.', '_')
@@ -444,4 +458,3 @@ def getVersionedFilename(fileName, path=None, isAction=False):
 	fullFilename += prefix + sanitizeName(fileName, False) + postfix + '.svg'
 
 	return fullFilename
-
