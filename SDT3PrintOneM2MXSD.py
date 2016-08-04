@@ -152,8 +152,8 @@ xsdSchemaTemplateHeader = '''<?xml version="1.0" encoding="UTF-8"?>
 	xmlns:m2m="http://www.onem2m.org/xml/protocols" xmlns:{namespace}="http://www.onem2m.org/xml/protocols/{domain}" elementFormDefault="unqualified" attributeFormDefault="unqualified"
 	xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
-	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-subscription-v2_6_0.xsd" />
-	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v2_6_0.xsd" />
+	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-subscription-v2_7_0.xsd" />
+	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v2_7_0.xsd" />
 
 	<xs:include schemaLocation="HD-enumerationTypes-v1_0_0.xsd" />{schemas}
 '''
@@ -540,8 +540,8 @@ xsdSchemaTemplateDeviceHeader = '''<?xml version="1.0" encoding="UTF-8"?>
 	xmlns:m2m="http://www.onem2m.org/xml/protocols" xmlns:{namespace}="http://www.onem2m.org/xml/protocols/{domain}" elementFormDefault="unqualified" attributeFormDefault="unqualified"
 	xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
-	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-subscription-v2_6_0.xsd" />
-	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v2_6_0.xsd" />
+	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-subscription-v2_7_0.xsd" />
+	<xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v2_7_0.xsd" />
 
 	<xs:include schemaLocation="HD-enumerationTypes-v1_0_0.xsd" />{schemas}
 
@@ -568,6 +568,7 @@ flexContainerDeviceResourceTemplate = '''
 							<xs:element name="childResource" type="m2m:childResourceRef" minOccurs="1" maxOccurs="unbounded" />
 							<xs:choice minOccurs="1" maxOccurs="unbounded">
 {moduleClasses}
+
 								<xs:element ref="m2m:subscription"  />
 							</xs:choice>
 						</xs:choice>
@@ -593,6 +594,7 @@ flexContainerDeviceResourceTemplate = '''
 							<xs:element name="childResource" type="m2m:childResourceRef" minOccurs="1" maxOccurs="unbounded" />
 							<xs:choice minOccurs="1" maxOccurs="unbounded">
 {moduleClasses}
+
 								<xs:element ref="m2m:subscription"  />
 							</xs:choice>
 						</xs:choice>
@@ -666,9 +668,43 @@ def getDeviceSchemas(device):
 	result = ''
 
 	# Referenced modules
+	parentModuleClasses = {}
+	parentModuleClassNames = []
 	for module in device.modules:
-		name = getVersionedFilename(module.name, isModule=True)
-		result += newLine() + '<xs:include schemaLocation="' + name + '" />'
+		parentModuleClassName = module.extends.domain + '.' + module.extends.clazz
+		if module.name == module.extends.clazz:
+			name = getVersionedFilename(module.name, isModule=True)
+			result += newLine() + '<xs:include schemaLocation="' + name + '" />'
+		else:
+			parentModuleClasses[module.name] = module
+			if parentModuleClassName not in parentModuleClassNames:
+				name = getVersionedFilename(module.extends.clazz, isModule=True)
+				result += newLine() + '<xs:include schemaLocation="' + name + '" />'
+				parentModuleClassNames.append(parentModuleClassName)
+
+	# Special handling when the extended class is actually different from the parent class 
+	extraElements = ''
+	if len(parentModuleClasses) > 0:
+		extraElements += newLine()
+		for name in parentModuleClasses:
+			module = parentModuleClasses[name]
+			# For now, we only check for a different name. Here we need to create a new XSD but with the same content as the orignal class.
+			if module.name != module.extends.clazz:
+				extraElements += newLine() + '<xs:element name="' + module.name + '" type="' + module.extends.clazz + '" />'
+				extraElements += newLine() + '<xs:element name="' + module.name + 'Annc" type="' + module.extends.clazz + 'Annc" />'
+
+			#	Future improvement to add more elements when extending the inherited ModuleClass
+			#   <xs:element name="freshTemperature">
+            #		<xs:complexType>
+			#			<xs:complexContent>
+			#				<xs:extension base="hd:temperature">
+			#
+			#				</xs:extension>
+			#			</xs:complexContent>
+			#		</xs:complexType>
+			#	</xs:element>
+
+	result += extraElements
 	return result
 
 
