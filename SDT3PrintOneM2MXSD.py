@@ -593,7 +593,7 @@ flexContainerDeviceResourceTemplate = '''
 						<xs:choice minOccurs="0" maxOccurs="1">
 							<xs:element name="childResource" type="m2m:childResourceRef" minOccurs="1" maxOccurs="unbounded" />
 							<xs:choice minOccurs="1" maxOccurs="unbounded">
-{moduleClasses}
+{moduleClassesAnnc}
 
 								<xs:element ref="m2m:subscription"  />
 							</xs:choice>
@@ -659,12 +659,15 @@ def addDevice(device, deviceName):
 	result = flexContainerDeviceResourceTemplate.format(deviceName=deviceName, 
 														deviceProperties=getDeviceProperties(device),
 														devicePropertiesAnnc=getDeviceProperties(device, annc=True),
-													    moduleClasses=getDeviceModuleClasses(device))
+													    moduleClasses=getDeviceModuleClasses(device),
+													    moduleClassesAnnc=getDeviceModuleClasses(device, withAnnc=True))
 	decTab(5)
 	return result
 
 
 def getDeviceSchemas(device):
+	global namespacePrefix
+
 	result = ''
 
 	# Referenced modules
@@ -690,8 +693,8 @@ def getDeviceSchemas(device):
 			module = parentModuleClasses[name]
 			# For now, we only check for a different name. Here we need to create a new XSD but with the same content as the orignal class.
 			if module.name != module.extends.clazz:
-				extraElements += newLine() + '<xs:element name="' + module.name + '" type="' + module.extends.clazz + '" />'
-				extraElements += newLine() + '<xs:element name="' + module.name + 'Annc" type="' + module.extends.clazz + 'Annc" />'
+				extraElements += newLine() + '<xs:element name="' + module.name + '" type="' + namespacePrefix + ':' + module.extends.clazz + '" />'
+				extraElements += newLine() + '<xs:element name="' + module.name + 'Annc" type="' + namespacePrefix + ':' + module.extends.clazz + 'Annc" />'
 
 			#	Future improvement to add more elements when extending the inherited ModuleClass
 			#   <xs:element name="freshTemperature">
@@ -720,12 +723,14 @@ def getModuleClassSchemas(module):
 	return result
 
 
-def getDeviceModuleClasses(device):
+def getDeviceModuleClasses(device, withAnnc=False):
 	global namespacePrefix
 	result = ''
 	incTab(2)
 	for module in device.modules:
 		result += newLine() + '<xs:element ref="' + namespacePrefix + ':' + sanitizeName(module.name, False) + '" />'
+		if withAnnc:
+			result += newLine() + '<xs:element ref="' + namespacePrefix + ':' + sanitizeName(module.name, False) + 'Annc" />'
 	decTab(2)
 	return result;
 
