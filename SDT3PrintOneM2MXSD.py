@@ -184,65 +184,64 @@ def addModuleClassFooter(module=None):
 # The main resource definition
 
 flexContainerResourceTemplate = '''
-	<xs:element name="{name}">
-		<xs:complexType>
-			<xs:complexContent>
-				<!-- Inherit Common Attributes from data type "flexContainerResource" -->
-				<xs:extension base="m2m:flexContainerResource">
-					<xs:sequence>
-					
-						<!-- Resource Specific Attributes -->
+	<xs:element name="{name}" type="{namespacePrefix}:{name}" />
+	<xs:complexType name="{name}">
+		<xs:complexContent>
+			<!-- Inherit Common Attributes from data type "flexContainerResource" -->
+			<xs:extension base="m2m:flexContainerResource">
+				<xs:sequence>
+				
+					<!-- Resource Specific Attributes -->
 {specificAttributes}
 
-						<!-- Child Resources -->
+					<!-- Child Resources -->
 
-						<xs:choice minOccurs="0" maxOccurs="1">
-							<xs:element name="childResource" type="m2m:childResourceRef" minOccurs="1" maxOccurs="unbounded" />
-							<xs:choice minOccurs="1" maxOccurs="unbounded">
+					<xs:choice minOccurs="0" maxOccurs="1">
+						<xs:element name="childResource" type="m2m:childResourceRef" minOccurs="1" maxOccurs="unbounded" />
+						<xs:choice minOccurs="1" maxOccurs="unbounded">
 {actionElements}
 
-								<xs:element ref="m2m:subscription"  />
-							</xs:choice>
+							<xs:element ref="m2m:subscription"  />
 						</xs:choice>
+					</xs:choice>
 
-					</xs:sequence>
-				</xs:extension>
-			</xs:complexContent>
-		</xs:complexType>
-	</xs:element>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
 
-	<xs:element name="{name}Annc">
-		<xs:complexType>
-			<xs:complexContent>
-				<!-- Inherit Common Attributes from data type "announcedFlexContainerResource" -->
-				<xs:extension base="m2m:announcedFlexContainerResource">
-					<xs:sequence>
+	<xs:element name="{name}Annc" type="{namespacePrefix}:{name}Annc" />
+	<xs:complexType name="{name}Annc">
+		<xs:complexContent>
+			<!-- Inherit Common Attributes from data type "announcedFlexContainerResource" -->
+			<xs:extension base="m2m:announcedFlexContainerResource">
+				<xs:sequence>
 
-						<!-- Resource Specific Attributes -->		
+					<!-- Resource Specific Attributes -->		
 {specificAttributesAnnc}
 
-						<!-- Child Resources -->
+					<!-- Child Resources -->
 
-						<xs:choice minOccurs="0" maxOccurs="1">
-							<xs:element name="childResource" type="m2m:childResourceRef" minOccurs="1" maxOccurs="unbounded" />
-							<xs:choice minOccurs="1" maxOccurs="unbounded">
+					<xs:choice minOccurs="0" maxOccurs="1">
+						<xs:element name="childResource" type="m2m:childResourceRef" minOccurs="1" maxOccurs="unbounded" />
+						<xs:choice minOccurs="1" maxOccurs="unbounded">
 {actionElements}
 
-								<xs:element ref="m2m:subscription"  />
-							</xs:choice>
+							<xs:element ref="m2m:subscription"  />
 						</xs:choice>
+					</xs:choice>
 
-					</xs:sequence>
-				</xs:extension>
-			</xs:complexContent>
-		</xs:complexType>
-	</xs:element>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
 '''
 
 def addModuleClass(module, name):
 	global flexContainerResourceTemplate, namespacePrefix
 	name = sanitizeName(name, False)
 	return flexContainerResourceTemplate.format(name=name,
+												namespacePrefix=namespacePrefix,
 												specificAttributes=getSpecificAttributes(module, annc=False),
 						 						specificAttributesAnnc=getSpecificAttributes(module, annc=True),
 												actionElements=getSpecificActions(module))
