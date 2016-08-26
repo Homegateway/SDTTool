@@ -184,7 +184,7 @@ def addModuleClassFooter(module=None):
 # The main resource definition
 
 flexContainerResourceTemplate = '''
-	<xs:element name="{name}" type="{namespacePrefix}:{name}" />
+	<xs:element name="{name}" type="{namespacePrefix}:{name}" substitutionGroup="m2m:sg_flexContainerResource"/>
 	<xs:complexType name="{name}">
 		<xs:complexContent>
 			<!-- Inherit Common Attributes from data type "flexContainerResource" -->
@@ -210,7 +210,7 @@ flexContainerResourceTemplate = '''
 		</xs:complexContent>
 	</xs:complexType>
 
-	<xs:element name="{name}Annc" type="{namespacePrefix}:{name}Annc" />
+	<xs:element name="{name}Annc" type="{namespacePrefix}:{name}Annc" substitutionGroup="m2m:sg_announcedFlexContainerResource"/>
 	<xs:complexType name="{name}Annc">
 		<xs:complexContent>
 			<!-- Inherit Common Attributes from data type "announcedFlexContainerResource" -->
@@ -240,11 +240,17 @@ flexContainerResourceTemplate = '''
 def addModuleClass(module, name):
 	global flexContainerResourceTemplate, namespacePrefix
 	name = sanitizeName(name, False)
-	return flexContainerResourceTemplate.format(name=name,
-												namespacePrefix=namespacePrefix,
-												specificAttributes=getSpecificAttributes(module, annc=False),
-						 						specificAttributesAnnc=getSpecificAttributes(module, annc=True),
-												actionElements=getSpecificActions(module))
+	result = flexContainerResourceTemplate.format(name=name,
+												  namespacePrefix=namespacePrefix,
+												  specificAttributes=getSpecificAttributes(module, annc=False),
+						 						  specificAttributesAnnc=getSpecificAttributes(module, annc=True),
+												  actionElements=getSpecificActions(module))
+
+	# small hack: add the announced device name to the abbreviated list
+	sanitizeName(name, False, annc=True)
+
+	return result
+
 
 
 def getSpecificAttributes(module, annc=False):
@@ -432,7 +438,7 @@ def getEnumType(enumName):
 # Actions
 
 xsdActionTemplate = '''
-	<xs:element name="{name}">
+	<xs:element name="{name}" substitutionGroup="m2m:sg_flexContainerResource">
 		<xs:complexType>
 			<xs:complexContent>
 				<!-- Inherit Common Attributes from data type "flexContainerResource" -->
@@ -455,7 +461,7 @@ xsdActionTemplate = '''
 		</xs:complexType>
 	</xs:element>
 
-	<xs:element name="{name}Annc">
+	<xs:element name="{name}Annc" substitutionGroup="m2m:sg_announcedFlexContainerResource">
 		<xs:complexType>
 			<xs:complexContent>
 				<!-- Inherit Common Attributes from data type "announcedFlexContainerResource" -->
@@ -507,6 +513,10 @@ def getAction(action):
 	result += addModuleClassHeader()
 	result += xsdActionTemplate.format(name=sanitizeName(action.name, False))
 	result += addModuleClassFooter()
+
+	# small hack: add the announced device name to the abbreviated list
+	sanitizeName(action.name, False, annc=True)
+
 	return result
 
 
@@ -551,7 +561,7 @@ xsdSchemaTemplateDeviceFooter = '''
 '''
 
 flexContainerDeviceResourceTemplate = '''
-	<xs:element name="{deviceName}">
+	<xs:element name="{deviceName}" substitutionGroup="m2m:sg_flexContainerResource">
 		<xs:complexType>
 			<xs:complexContent>
 				<!-- Inherit Common Attributes from data type "flexContainerResource" -->
@@ -578,7 +588,7 @@ flexContainerDeviceResourceTemplate = '''
 		</xs:complexType>
 	</xs:element>
 
-	<xs:element name="{deviceName}Annc">
+	<xs:element name="{deviceName}Annc" substitutionGroup="m2m:sg_announcedFlexContainerResource">
 		<xs:complexType>
 			<xs:complexContent>
 				<!-- Inherit Common Attributes from data type "announcedFlexContainerResource" -->
@@ -660,6 +670,10 @@ def addDevice(device, deviceName):
 														devicePropertiesAnnc=getDeviceProperties(device, annc=True),
 													    moduleClasses=getDeviceModuleClasses(device),
 													    moduleClassesAnnc=getDeviceModuleClasses(device, withAnnc=True))
+
+	# small hack: add the announced device name to the abbreviated list
+	sanitizeName(deviceName, False, annc=True)
+
 	decTab(5)
 	return result
 
@@ -727,9 +741,11 @@ def getDeviceModuleClasses(device, withAnnc=False):
 	result = ''
 	incTab(2)
 	for module in device.modules:
-		result += newLine() + '<xs:element ref="' + namespacePrefix + ':' + sanitizeName(module.name, False) + '" />'
+		name = sanitizeName(module.name, False, annc=withAnnc) # Side effect: add abbreviated annc resource
+		result += newLine() + '<xs:element ref="' + namespacePrefix + ':' + name + '" />'
+		# if this is an announced ressource, then add an extra line for it
 		if withAnnc:
-			result += newLine() + '<xs:element ref="' + namespacePrefix + ':' + sanitizeName(module.name, False) + 'Annc" />'
+			result += newLine() + '<xs:element ref="' + namespacePrefix + ':' + name + 'Annc" />'
 	decTab(2)
 	return result;
 
@@ -803,7 +819,7 @@ def getAbbreviations(abbreviations):
 
 # Sanitize the name for SVG
 
-def sanitizeName(name, isClass):
+def sanitizeName(name, isClass, annc=False):
 	if (name == None or len(name) == 0):
 		return ''
 	result = name
@@ -822,8 +838,15 @@ def sanitizeName(name, isClass):
 	result = result.replace(')', '_')
 	result = result.replace('-', '_')
 
-	SDTAbbreviate.abbreviate(result)
-	
+	# If this name is an announced resource, add "Annc" Postfix to both the
+	# name as well as the abbreviation.
+	if annc:
+		abbr = SDTAbbreviate.abbreviate(result)
+		SDTAbbreviate.addAbbreviation(result + 'Annc', abbr + 'Annc')
+	else:
+		abbr = SDTAbbreviate.abbreviate(result)
+		SDTAbbreviate.addAbbreviation(result, abbr)
+
 	return result
 
 # Sanitize the package name for XSD

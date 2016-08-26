@@ -70,8 +70,13 @@ def abbreviate(name, length=5):
 		abbr = prf[:len(prf)-len(pof)] + pof
 		#print('resolution: ' + abbr)
 
-	abbreviations[name] = abbr
-	return abbreviations[name]
+	return abbr
+
+
+# Add a single abbreviation
+def addAbbreviation(name, abbreviation):
+	abbreviations[name] = abbreviation
+
 
 # Return abbreviations
 

@@ -5,7 +5,7 @@ xx.xx.xxxx
 
 - Added *--modelversion** 
 - Adopted to new naming scheme for oneM2M XSD and SVG files
-- Various fixes for XSD schemas
+- Various fixes for XSD schemas. Support oneM2M Version 2 XSD
 
 
 ## Version 0.7
