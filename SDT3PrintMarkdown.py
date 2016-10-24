@@ -586,7 +586,8 @@ def printConstraint(constraint):
 	return result
 
 def printBoolean(value):
-	return 'Yes' if value else 'No'
+	v = value.lower()
+	return 'Yes' if (v == "yes" or v == "true") else 'No'
 
 #
 #	Doc
