@@ -135,6 +135,7 @@ def main(argv):
 	parser.add_argument('-of', '--outputformat', choices=('plain', 'opml', 'markdown', 'sdt3', 'java', 'vorto-dsl', 'onem2m-svg', 'onem2m-xsd'), action='store', dest='outputFormat', default='markdown', help='The output format for the result. The default is markdown')
 	parser.add_argument('--hidedetails',  action='store_true', help='Hide the details of module classes and devices when printing documentation')
 	parser.add_argument('--markdowntables',  action='store_true', help='Format markdown output as tables for markdown')
+	parser.add_argument('--markdownpagebreak',  action='store_true', help='Insert page breaks before ModuleClasse and Device definitions.')
 	parser.add_argument('--licensefile',  action='store', dest='licensefile', help='Add the text of license file to output files')
 
 	oneM2MArgs = parser.add_argument_group('oneM2M sepcific')
@@ -159,15 +160,16 @@ def main(argv):
 	outputFormat = args.outputFormat
 	
 	moreOptions = {}
-	moreOptions['hideDetails'] = args.hidedetails
-	moreOptions['markdowntables'] = args.markdowntables
-	moreOptions['licensefile'] = args.licensefile
-	moreOptions['domain'] = args.domain
-	moreOptions['namespaceprefix'] = args.namespaceprefix
-	moreOptions['abbreviationsinfile'] = args.abbreviationsinfile
-	moreOptions['abbreviationlength'] = args.abbreviationlength
-	moreOptions['xsdtargetnamespace'] = args.xsdtargetnamespace
-	moreOptions['modelversion'] = args.modelversion
+	moreOptions['hideDetails'] 					= args.hidedetails
+	moreOptions['markdowntables'] 				= args.markdowntables
+	moreOptions['pageBreakBeforeMCandDevices'] 	= args.markdownpagebreak
+	moreOptions['licensefile'] 					= args.licensefile
+	moreOptions['domain'] 						= args.domain
+	moreOptions['namespaceprefix'] 				= args.namespaceprefix
+	moreOptions['abbreviationsinfile'] 			= args.abbreviationsinfile
+	moreOptions['abbreviationlength'] 			= args.abbreviationlength
+	moreOptions['xsdtargetnamespace'] 			= args.xsdtargetnamespace
+	moreOptions['modelversion'] 				= args.modelversion
 
 
 	# Read input file. Check for correct format

@@ -4,8 +4,11 @@
 
 
 
-hideDetails = False
-tables = False
+hideDetails 				= False
+tables 						= False
+pageBreakBeforeMCandDevices = False
+
+pageBreakToken				= '<!--BREAK-->'
 
 # tabulator level
 tab = 0
@@ -53,9 +56,11 @@ def markdownHeader(text):
 #
 
 def print2DomainMarkdown(domain, options):
-	global hideDetails
-	hideDetails = options['hideDetails']
-	tables = options['markdowntables']
+	global hideDetails, pageBreakToken, pageBreakBeforeMCandDevices
+	hideDetails 				= options['hideDetails']
+	tables 						= options['markdowntables']
+	pageBreakBeforeMCandDevices = options['pageBreakBeforeMCandDevices']
+	print(pageBreakBeforeMCandDevices)
 
 	if tables:
 		print('Tables are not supported for input format "sdt2"')
@@ -73,6 +78,8 @@ def print2DomainMarkdown(domain, options):
 		incHeaderLevel()
 		result += markdownHeader('ModuleClasses')
 		for module in domain.modules:
+			if pageBreakBeforeMCandDevices:
+				result += newLine() + pageBreakToken
 			result +=  newLine() + printModuleClass(module)
 		decHeaderLevel()
 
@@ -80,6 +87,8 @@ def print2DomainMarkdown(domain, options):
 		incHeaderLevel()
 		result += markdownHeader('RootDevices')
 		for rootDevice in domain.rootDevices:
+			if pageBreakBeforeMCandDevices:
+				result += newLine() + pageBreakToken
 			result += newLine() + printRootDevice(rootDevice)
 		decHeaderLevel()
 
