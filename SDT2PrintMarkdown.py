@@ -60,7 +60,6 @@ def print2DomainMarkdown(domain, options):
 	hideDetails 				= options['hideDetails']
 	tables 						= options['markdowntables']
 	pageBreakBeforeMCandDevices = options['pageBreakBeforeMCandDevices']
-	print(pageBreakBeforeMCandDevices)
 
 	if tables:
 		print('Tables are not supported for input format "sdt2"')
