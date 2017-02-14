@@ -603,7 +603,7 @@ def printBoolean(value):
 
 def printDoc(doc):
 	result = doc.content.strip()
-	for ch in ['*','#', '-']:
+	for ch in ['*','#']:
 		if ch in result:
 			result = result.replace(ch,"\\"+ch)
 	return result
