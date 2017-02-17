@@ -2,7 +2,10 @@
 #
 #	Print SDT2 to OPML
 
+
 import cgi
+
+from .SDT2Classes import *
 
 hideDetails = False
 

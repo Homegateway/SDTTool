@@ -4,8 +4,8 @@
 
 
 import datetime, os, pathlib, string
-from SDT3Classes import *
-from SDTSVG import *
+from .SDT3Classes import *
+from common.SDTSVG import *
 
 # definition of cardinality constants
 cardinality1 = '1'

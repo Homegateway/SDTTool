@@ -4,17 +4,17 @@
 
 import os, pathlib
 
-from SDT2PrintMarkdown import print2DomainMarkdown
-from SDT2PrintOPML import print2DomainOPML
-from SDT2PrintPlain import print2DomainPlain
-from SDT2PrintSDT3 import print2DomainSDT3
-from SDT3PrintMarkdown import print3DomainMarkdown
-from SDT3PrintOPML import print3DomainOPML
-from SDT3PrintPlain import print3DomainPlain
-from SDT3PrintJava import print3JavaClasses
-from SDT3PrintVortoDSL import print3VortoDSL
-from SDT3PrintOneM2MSVG import print3OneM2MSVG
-from SDT3PrintOneM2MXSD import print3OneM2MXSD
+from sdtv2.SDT2PrintMarkdown import print2DomainMarkdown
+from sdtv2.SDT2PrintOPML import print2DomainOPML
+from sdtv2.SDT2PrintPlain import print2DomainPlain
+from sdtv2.SDT2PrintSDT3 import print2DomainSDT3
+from sdtv3.SDT3PrintMarkdown import print3DomainMarkdown
+from sdtv3.SDT3PrintOPML import print3DomainOPML
+from sdtv3.SDT3PrintPlain import print3DomainPlain
+from sdtv3.SDT3PrintJava import print3JavaClasses
+from sdtv3.SDT3PrintVortoDSL import print3VortoDSL
+from sdtv3.SDT3PrintOneM2MSVG import print3OneM2MSVG
+from sdtv3.SDT3PrintOneM2MXSD import print3OneM2MXSD
 
 
 def printPlain(domain, options):
@@ -85,6 +85,7 @@ def printOneM2MSVG(domain, inputFormat, directory, options):
 		return
 
 	_makeDir(directory)
+	#SDT3PrintOneM2MSVG.print3OneM2MSVG(domain, directory, options)
 	print3OneM2MSVG(domain, directory, options)
 
 

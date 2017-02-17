@@ -3,8 +3,8 @@
 #	Main module for the SDTTool
 
 from xml.etree.ElementTree import XMLParser, ParseError
-from SDT2Parser import SDT2Parser
-from SDT3Parser import SDT3Parser
+from sdtv2 import *
+from sdtv3 import *
 from SDTPrinter import *
 
 

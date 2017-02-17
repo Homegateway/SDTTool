@@ -1,10 +1,11 @@
-#	SDT3PrintOneM2MSVG.py
+#	SDT3PrintOneM2MXSD.py
 #
 #	Generate XSD for oneM2M
 
 import csv, datetime, os, pathlib, re, string
-from SDT3Classes import *
-import SDTAbbreviate 
+from .SDT3Classes import *
+from common.SDTAbbreviate import *
+from common import SDTAbbreviate
 
 
 # variable that holds an optional header text

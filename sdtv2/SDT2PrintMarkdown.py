@@ -2,7 +2,7 @@
 #
 #	Print SDT2 to markdown
 
-
+from .SDT2Classes import *
 
 hideDetails 				= False
 tables 						= False

@@ -3,6 +3,8 @@
 #	Print SDT2 to Plain text
 
 
+from .SDT2Classes import *
+
 hideDetails = False
 
 # tabulator level
