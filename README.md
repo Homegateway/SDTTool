@@ -107,12 +107,23 @@ or to mix command line arguments and configuration files:
 
 ## Changelog
 
+### Version 0.8
+xx.xx.xxxx
+
+- Added *--modelversion** 
+- Adopted to new naming scheme for oneM2M XSD and SVG files
+- Various fixes for XSD schemas. Support oneM2M Version 2 XSD
+- Refactored script directory structure
+- Added *--markdownpagebreak* option
+ 
+
 ### Version 0.7
-xx.XX.2016
+09.04.2016
 
 - Export to Eclipse Vorto, first version
 - First version of export to SVG in oneM2M resource format
 - First version of export to oneM2M XSD
+- First version of abbreviation support (for oneM2M)
 - Fixed errors in Java export
 - Fixed errors in OPML export
 - Improved markdown export
