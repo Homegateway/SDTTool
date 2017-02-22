@@ -81,6 +81,8 @@ In addition to the XSD files the following files are generated as well
 
 ### Markdown Specific Arguments
 - ``--markdowntables``: Generate tables instead of the usual list output style for markdown.
+- ``--markdownpagebreak``: Insert page breaks before ModuleClasse and Device definitions.
+
 
 ### Other Arguments
 - ``--hidedetails``: Hide the details of module classes and devices when generating the documentation.
