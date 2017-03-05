@@ -8,7 +8,7 @@ hideDetails 				= False
 tables 						= False
 pageBreakBeforeMCandDevices = False
 
-pageBreakToken				= '<!--BREAK-->'
+pageBreakToken				= '\n<!--BREAK-->'
 
 # tabulator level
 tab = 0
