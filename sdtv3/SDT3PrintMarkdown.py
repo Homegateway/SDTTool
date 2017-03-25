@@ -8,7 +8,7 @@ hideDetails 				= False
 tables 						= False
 pageBreakBeforeMCandDevices = False
 
-pageBreakToken				= '<!--BREAK-->'
+pageBreakToken				= '\n<!--BREAK-->'
 
 # variable that hold an optional header text
 headerText = ''
