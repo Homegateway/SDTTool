@@ -2,6 +2,7 @@
 #
 #	Print SDT2 to SDT3
 
+from .SDT2Classes import *
 
 # tabulator level
 tab = 0

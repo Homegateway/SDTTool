@@ -5,7 +5,7 @@
 # TODO export properties
 
 import datetime, os, pathlib, string
-from SDT3Classes import *
+from .SDT3Classes import *
 
 # Define the version of the Vorto import model
 vortoModelVersion = '1.0.0'

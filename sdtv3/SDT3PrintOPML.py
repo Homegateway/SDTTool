@@ -4,7 +4,7 @@
 
 import cgi
 
-from SDT3Classes import *
+from .SDT3Classes import *
 
 hideDetails = False
 

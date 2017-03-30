@@ -16,6 +16,7 @@ preDefinedAbbreviations = {}
 
 def abbreviate(name, length=5):
 	global abbreviations
+	result = ''
 
 	if name in abbreviations:			# return abbreviation if already in dictionary
 		return abbreviations[name]
@@ -23,36 +24,39 @@ def abbreviate(name, length=5):
 		return preDefinedAbbreviations[name]
 
 	l = len(name)
+
+	# name is less of equal the max allowed length
 	if l <= length:
 		result = name
-		while l < length:
-			for i in range(length - l):
-				result += result[i]
-			l = len(result)
-		return result
-	
-	# First char
-	result  = name[0]
-	
-	# Last char
-	result += name[-1]
+		#Fill up to the length by repeating
+		#while l < length:
+		#	for i in range(length - l):
+		#		result += result[i]
+		#	l = len(result)
 
-	if len(result) < length:
-		mask = name[1:l-1]
-		# Camel case chars
-		camels = ''
-		for i in range(1,l-1):
-			c = name[i]
-			if c.isupper():
-				camels += c
-				mask = mask[:i-1] + mask[i:]
-		result = result[:1] + camels + result[1:]
+	else:	# length of the name is longer than the allowed name. So do some shortening
+		# First char
+		result  = name[0]
+		# Last char
+		result += name[-1]
 
-		# Fill with remaining chars of the mask, starting from the back
-		lm = len(mask)
-		for i in range(0, length - len(result)):
-			pos = i + 1
-			result = result[:pos] + mask[i] + result[pos:] 
+		# Fill up the abbreviation
+		if len(result) < length:
+			mask = name[1:l-1]
+			# Camel case chars
+			camels = ''
+			for i in range(1,l-1):
+				c = name[i]
+				if c.isupper():
+					camels += c
+					mask = mask[:i-1] + mask[i:]
+			result = result[:1] + camels + result[1:]
+
+			# Fill with remaining chars of the mask, starting from the back
+			lm = len(mask)
+			for i in range(0, length - len(result)):
+				pos = i + 1
+				result = result[:pos] + mask[i] + result[pos:] 
 
 	# put the new abbreviation into the global dictionary.
 	# resolve clashes
@@ -66,8 +70,13 @@ def abbreviate(name, length=5):
 		abbr = prf[:len(prf)-len(pof)] + pof
 		#print('resolution: ' + abbr)
 
-	abbreviations[name] = abbr
-	return abbreviations[name]
+	return abbr
+
+
+# Add a single abbreviation
+def addAbbreviation(name, abbreviation):
+	abbreviations[name] = abbreviation
+
 
 # Return abbreviations
 
@@ -78,7 +87,8 @@ def getAbbreviations():
 
 # Read existing abbreviations
 
-def readAbbreviations(infile):
+def readAbbreviations(infile, predefined=True):
+	global preDefinedAbbreviations, abbreviations
 	if infile == None:
 		return
 	try:
@@ -86,14 +96,16 @@ def readAbbreviations(infile):
 			reader = csv.reader(csvfile, delimiter=',', quotechar='\\')
 			for row in reader:
 				if len(row) == 2:
-					preDefinedAbbreviations[row[0]] = row[1]
+					if predefined:
+						preDefinedAbbreviations[row[0]] = row[1]
+					else:
+						abbreviations[row[0]] = row[1]
 				else:
 					print('Unknwon row found (ignored): ' + ', '.join(row))
 	except FileNotFoundError as e:
 		print(str(e) + ' (abbreviation input file ignored)')
 	except Exception as e:
 		raise
-
 
 
 

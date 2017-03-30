@@ -2,10 +2,13 @@
 #
 #	Print SDT3 to markdown
 
-from SDT3Classes import *
+from .SDT3Classes import *
 
-hideDetails = False
-tables = False
+hideDetails 				= False
+tables 						= False
+pageBreakBeforeMCandDevices = False
+
+pageBreakToken				= '\n<!--BREAK-->'
 
 # variable that hold an optional header text
 headerText = ''
@@ -48,7 +51,6 @@ def decHeaderLevel():
 	global headerLevel
 	headerLevel -= 1
 
-
 def markdownHeader(text):
 	global headerLevel
 	result = '\n\n'
@@ -66,9 +68,11 @@ def markdownHeader(text):
 #
 
 def print3DomainMarkdown(domain, options):
-	global hideDetails, tables, headerText
-	hideDetails = options['hideDetails']
-	tables = options['markdowntables']
+	global hideDetails, tables, headerText, pageBreakBeforeMCandDevices, pageBreakToken
+	hideDetails					= options['hideDetails']
+	tables						= options['markdowntables']
+	pageBreakBeforeMCandDevices	= options['pageBreakBeforeMCandDevices']
+
 
 	# read the optional licensefile into the header
 	lfile = options['licensefile']
@@ -88,12 +92,16 @@ def print3DomainMarkdown(domain, options):
 		incHeaderLevel()
 		result += markdownHeader('ModuleClasses')
 		for module in domain.modules:
+			if pageBreakBeforeMCandDevices:
+				result += newLine() + pageBreakToken
 			result +=  newLine() + printModuleClass(module)
 		decHeaderLevel()
 	if (len(domain.devices) > 0):
 		incHeaderLevel()
 		result += markdownHeader('Devices')
 		for device in domain.devices:
+			if pageBreakBeforeMCandDevices:
+				result += newLine() + pageBreakToken
 			result += newLine() + printDevice(device)
 		decHeaderLevel()
 	if headerText != None and len(headerText) > 0:
@@ -586,7 +594,8 @@ def printConstraint(constraint):
 	return result
 
 def printBoolean(value):
-	return 'Yes' if value else 'No'
+	v = value.lower()
+	return 'Yes' if (v == "yes" or v == "true") else 'No'
 
 #
 #	Doc
@@ -594,7 +603,7 @@ def printBoolean(value):
 
 def printDoc(doc):
 	result = doc.content.strip()
-	for ch in ['*','#', '-']:
+	for ch in ['*','#']:
 		if ch in result:
 			result = result.replace(ch,"\\"+ch)
 	return result

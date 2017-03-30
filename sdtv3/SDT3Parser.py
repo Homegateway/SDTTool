@@ -2,7 +2,7 @@
 #
 #	Callback target class for the ElementTree parser to parse a SDT3
 
-from SDT3Classes import *
+from .SDT3Classes import *
 
 class SDT3Parser:
 

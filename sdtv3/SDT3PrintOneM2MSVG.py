@@ -4,8 +4,8 @@
 
 
 import datetime, os, pathlib, string
-from SDT3Classes import *
-from SDTSVG import *
+from .SDT3Classes import *
+from common.SDTSVG import *
 
 # definition of cardinality constants
 cardinality1 = '1'
@@ -15,19 +15,33 @@ cardinality0n = '0..n'
 # variable that hold an optional header text
 headerText = ''
 
+# variable that holds the domain prefix for the oneM2M XSD
+namespacePrefix = ''
+
+
+# variable that holds the version of the data model
+modelVersion = ''
 
 def print3OneM2MSVG(domain, directory, options):
-	global headerText
+	global headerText, modelVersion, namespacePrefix
 
 	lfile = options['licensefile']
 	if lfile != None:
 		with open(lfile, 'rt') as f:
 			headerText = f.read()
 
+	# get the version of the data model
+	modelVersion = options['modelversion']
+
+	namespacePrefix = options['namespaceprefix']
+	if namespacePrefix == None:			# ERROR
+		print('Error: name space prefix not set')
+		return
+
 	# Create package path and make directories
 
-	packagePath = directory + os.sep + domain.id.replace('.', os.sep)
-	path = pathlib.Path(packagePath)
+	#packagePath = directory + os.sep + domain.id.replace('.', os.sep)
+	path = pathlib.Path(directory)
 	try:
 		path.mkdir(parents=True)
 	except FileExistsError as e:
@@ -58,7 +72,7 @@ def exportModuleClass(module, package, path, name=None):
 		prefix = sanitizeName(name, False) + '_'
 
 	name = sanitizeName(module.name, False)
-	fileName = str(path) + os.sep + prefix + name + '.svg'
+	fileName = getVersionedFilename(name, path=str(path), isModule=True)
 	outputFile = None
 	try:
 		outputFile = open(fileName, 'w')
@@ -80,6 +94,13 @@ def getModuleClassSVG(module, package, name, path):
 	# TODO: events?
 
 	addModuleClassHeaderToResource(res)
+
+	# Add properties
+	for prop in module.properties:
+		pr = Attribute(sanitizeName(prop.name, False))
+		pr.cardinality = cardinality01 if prop.optional == "true" else cardinality1
+		res.add(pr)
+
 
 	# DataPoints 
 	getDataPoints(res, module.data, name, path)
@@ -127,7 +148,7 @@ def addModuleClassFooterToResource(resource):
 
 def exportDevice(device, package, path):
 	name = sanitizeName(device.id, False)
-	packagePath = str(path) + os.sep + name.lower()
+	packagePath = str(path) + os.sep + name
 	path = pathlib.Path(packagePath)
 
 	try:
@@ -135,7 +156,7 @@ def exportDevice(device, package, path):
 	except FileExistsError as e:
 		pass # on purpose. We override files for now
 
-	fileName = str(path) + os.sep + name + '.svg'
+	fileName = getVersionedFilename(name, path=str(path))
 	outputFile = None
 	try:
 		outputFile = open(fileName, 'w')
@@ -160,6 +181,13 @@ def getDeviceSVG(device, package, name):
 
 	addDeviceHeaderToResource(res)
 
+	# Add properties
+	for prop in device.properties:
+		pr = Attribute(sanitizeName(prop.name, False))
+		pr.cardinality = cardinality01 if prop.optional == "true" else cardinality1
+		res.add(pr)
+
+	# Add modules
 	for module in device.modules:
 		mod = Resource(sanitizeName(module.name, False))
 		mod.cardinality = cardinality01 if module.optional == 'true' else cardinality1
@@ -190,10 +218,6 @@ def addDeviceHeaderToResource(resource):
 	ontologyRef.cardinality = cardinality01
 	resource.add(ontologyRef)
 
-	deviceProperty = Resource('deviceProperty')
-	deviceProperty.cardinality = cardinality01
-	deviceProperty.specialization = True
-	resource.add(deviceProperty)
 
 
 
@@ -214,7 +238,7 @@ def addDeviceFooterToResource(resource):
 def exportDataPoint(dataPoint, moduleName, path):
 	name = sanitizeName(dataPoint.name, False)
 	mName = sanitizeName(moduleName, False)
-	fileName = str(path) + os.sep + mName + '_' + name + '.svg'
+	fileName = getVersionedFilename(mName + '_' + name, path=str(path))
 	outputFile = None
 	try:
 		outputFile = open(fileName, 'w')
@@ -297,7 +321,7 @@ def addDataPointFooterToResource(resource):
 def exportAction(action, moduleName, path):
 	name = sanitizeName(action.name, False)
 	mName = sanitizeName(moduleName, False)
-	fileName = str(path) + os.sep + mName + '_Action_' + name + '.svg'
+	fileName = getVersionedFilename(name, path=str(path), isAction=True)
 	outputFile = None
 	try:
 		outputFile = open(fileName, 'w')
@@ -408,4 +432,29 @@ def sanitizePackage(package):
 	result = package.replace('/', '.')
 	return result
 
+# get a versioned filename
 
+def getVersionedFilename(fileName, name=None, path=None, isModule=False, isAction=False):
+	global modelVersion, namespacePrefix
+
+	prefix  = ''
+	postfix = ''
+	if name != None:
+		prefix += sanitizeName(name, False) + '_'
+	else:
+		if namespacePrefix != None:
+			prefix += namespacePrefix.upper() + '-'
+		if isAction:
+			prefix += 'act-'
+		if isModule:
+			prefix += 'mod-'
+
+	if modelVersion != None:
+		postfix += '-v' + modelVersion.replace('.', '_')
+
+	fullFilename = ''
+	if path != None:
+		fullFilename = path + os.sep
+	fullFilename += prefix + sanitizeName(fileName, False) + postfix + '.svg'
+
+	return fullFilename

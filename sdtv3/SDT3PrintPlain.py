@@ -2,7 +2,7 @@
 #
 #	Print SDT3 to Plain text
 
-from SDT3Classes import *
+from .SDT3Classes import *
 
 hideDetails = False
 

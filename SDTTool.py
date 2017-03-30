@@ -3,14 +3,14 @@
 #	Main module for the SDTTool
 
 from xml.etree.ElementTree import XMLParser, ParseError
-from SDT2Parser import SDT2Parser
-from SDT3Parser import SDT3Parser
+from sdtv2 import *
+from sdtv3 import *
 from SDTPrinter import *
 
 
 import io, sys, traceback, argparse, textwrap
 
-version = '0.7'
+version = '0.8'
 description = 'SDTTool ' + version + ' - A tool to read and convert Smart Device Templates.'
 epilog = 'Read arguments from one or more configuration files: @file1 @file2 ...|n |n See https://github.com/Homegateway for further information.'
 
@@ -135,14 +135,16 @@ def main(argv):
 	parser.add_argument('-of', '--outputformat', choices=('plain', 'opml', 'markdown', 'sdt3', 'java', 'vorto-dsl', 'onem2m-svg', 'onem2m-xsd'), action='store', dest='outputFormat', default='markdown', help='The output format for the result. The default is markdown')
 	parser.add_argument('--hidedetails',  action='store_true', help='Hide the details of module classes and devices when printing documentation')
 	parser.add_argument('--markdowntables',  action='store_true', help='Format markdown output as tables for markdown')
+	parser.add_argument('--markdownpagebreak',  action='store_true', help='Insert page breaks before ModuleClasse and Device definitions.')
 	parser.add_argument('--licensefile',  action='store', dest='licensefile', help='Add the text of license file to output files')
 
 	oneM2MArgs = parser.add_argument_group('oneM2M sepcific')
 	oneM2MArgs.add_argument('--domain',  action='store', dest='domain', help='Set the domain for the model')
-	oneM2MArgs.add_argument('--namespaceprefix',  action='store', dest='namespaceprefix', help='Specify the XSD name space prefix for the model')
+	oneM2MArgs.add_argument('--namespaceprefix',  action='store', dest='namespaceprefix', help='Specify the name space prefix for the model')
 	oneM2MArgs.add_argument('--abbreviationsinfile',  action='store', dest='abbreviationsinfile', help='Specify the file that contains a CSV table of alreadys existing abbreviations.')
 	oneM2MArgs.add_argument('--abbreviationlength',  action='store', dest='abbreviationlength', default='5', help='Specify the maximum length for abbreviations. The default is 5.')
 	oneM2MArgs.add_argument('--xsdtargetnamespace',  action='store', dest='xsdtargetnamespace', help='Specify the target namespace for the oneM2M XSD (a URI).')
+	oneM2MArgs.add_argument('--modelversion',  action='store', dest='modelversion', help='Specify the version of the model.')
 
 	requiredNamed = parser.add_argument_group('required arguments')
 	requiredNamed.add_argument('-i', '--infile', action='store', dest='inFile', required=True, help='The SDT input file to parse')
@@ -158,14 +160,16 @@ def main(argv):
 	outputFormat = args.outputFormat
 	
 	moreOptions = {}
-	moreOptions['hideDetails'] = args.hidedetails
-	moreOptions['markdowntables'] = args.markdowntables
-	moreOptions['licensefile'] = args.licensefile
-	moreOptions['domain'] = args.domain
-	moreOptions['namespaceprefix'] = args.namespaceprefix
-	moreOptions['abbreviationsinfile'] = args.abbreviationsinfile
-	moreOptions['abbreviationlength'] = args.abbreviationlength
-	moreOptions['xsdtargetnamespace'] = args.xsdtargetnamespace
+	moreOptions['hideDetails'] 					= args.hidedetails
+	moreOptions['markdowntables'] 				= args.markdowntables
+	moreOptions['pageBreakBeforeMCandDevices'] 	= args.markdownpagebreak
+	moreOptions['licensefile'] 					= args.licensefile
+	moreOptions['domain'] 						= args.domain
+	moreOptions['namespaceprefix'] 				= args.namespaceprefix
+	moreOptions['abbreviationsinfile'] 			= args.abbreviationsinfile
+	moreOptions['abbreviationlength'] 			= args.abbreviationlength
+	moreOptions['xsdtargetnamespace'] 			= args.xsdtargetnamespace
+	moreOptions['modelversion'] 				= args.modelversion
 
 
 	# Read input file. Check for correct format
