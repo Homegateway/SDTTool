@@ -6,6 +6,7 @@
 import datetime, os, pathlib, string
 from .SDT3Classes import *
 from common.SDTSVG import *
+from common.SDTHelper import *
 
 # definition of cardinality constants
 cardinality1 = '1'
@@ -65,14 +66,12 @@ def print3OneM2MSVG(domain, directory, options):
 # Export a ModuleClass definition to a file
 
 def exportModuleClass(module, package, path, name=None):
+	global modelVersion, namespacePrefix
 
 	# export the module class itself
-	prefix = ''
-	if name != None:
-		prefix = sanitizeName(name, False) + '_'
 
 	name = sanitizeName(module.name, False)
-	fileName = getVersionedFilename(name, path=str(path), isModule=True)
+	fileName = getVersionedFilename(name, 'svg', path=str(path), isModule=True, modelVersion=modelVersion, namespacePrefix=namespacePrefix)
 	outputFile = None
 	try:
 		outputFile = open(fileName, 'w')
@@ -147,6 +146,8 @@ def addModuleClassFooterToResource(resource):
 # Export a Device definition to a file
 
 def exportDevice(device, package, path):
+	global modelVersion, namespacePrefix
+
 	name = sanitizeName(device.id, False)
 	packagePath = str(path) + os.sep + name
 	path = pathlib.Path(packagePath)
@@ -156,7 +157,7 @@ def exportDevice(device, package, path):
 	except FileExistsError as e:
 		pass # on purpose. We override files for now
 
-	fileName = getVersionedFilename(name, path=str(path))
+	fileName = getVersionedFilename(name, 'svg', path=str(path), modelVersion=modelVersion, namespacePrefix=namespacePrefix)
 	outputFile = None
 	try:
 		outputFile = open(fileName, 'w')
@@ -236,9 +237,11 @@ def addDeviceFooterToResource(resource):
 # Export a DataPoint definiton to a file
 
 def exportDataPoint(dataPoint, moduleName, path):
+	global modelVersion, namespacePrefix
+
 	name = sanitizeName(dataPoint.name, False)
 	mName = sanitizeName(moduleName, False)
-	fileName = getVersionedFilename(mName + '_' + name, path=str(path))
+	fileName = getVersionedFilename(mName + '_' + name, 'svg', path=str(path), modelVersion=modelVersion, namespacePrefix=namespacePrefix)
 	outputFile = None
 	try:
 		outputFile = open(fileName, 'w')
@@ -319,9 +322,11 @@ def addDataPointFooterToResource(resource):
 # Export an action definiton to a file
 
 def exportAction(action, moduleName, path):
+	global modelVersion, namespacePrefix
+
 	name = sanitizeName(action.name, False)
 	mName = sanitizeName(moduleName, False)
-	fileName = getVersionedFilename(name, path=str(path), isAction=True)
+	fileName = getVersionedFilename(name, 'svg', path=str(path), isAction=True, modelVersion=modelVersion, namespacePrefix=namespacePrefix)
 	outputFile = None
 	try:
 		outputFile = open(fileName, 'w')
@@ -395,66 +400,3 @@ def addActionFooterToResource(resource):
 	subscription.specialization = False
 	resource.add(subscription)
 
-
-########################################################################
-
-
-#
-#	Helpers
-#
-
-# Sanitize the name for SVG
-
-def sanitizeName(name, isClass):
-	if (name == None or len(name) == 0):
-		return ''
-	result = name
-	if (isClass):
-		result = result[0].upper() + name[1:]
-	else:
-		result = result[0].lower() + name[1:]
-	result = result.replace(' ', '')
-	result = result.replace('/', '')
-	result = result.replace('.', '')
-	result = result.replace(' ', '')
-	result = result.replace("'", '')
-	result = result.replace('´', '')
-	result = result.replace('`', '')
-	result = result.replace('(', '_')
-	result = result.replace(')', '_')
-	result = result.replace('-', '_')
-
-	return result
-
-# Sanitize the package name for SVG
-
-def sanitizePackage(package):
-	result = package.replace('/', '.')
-	return result
-
-# get a versioned filename
-
-def getVersionedFilename(fileName, name=None, path=None, isModule=False, isAction=False):
-	global modelVersion, namespacePrefix
-
-	prefix  = ''
-	postfix = ''
-	if name != None:
-		prefix += sanitizeName(name, False) + '_'
-	else:
-		if namespacePrefix != None:
-			prefix += namespacePrefix.upper() + '-'
-		if isAction:
-			prefix += 'act-'
-		if isModule:
-			prefix += 'mod-'
-
-	if modelVersion != None:
-		postfix += '-v' + modelVersion.replace('.', '_')
-
-	fullFilename = ''
-	if path != None:
-		fullFilename = path + os.sep
-	fullFilename += prefix + sanitizeName(fileName, False) + postfix + '.svg'
-
-	return fullFilename

@@ -58,7 +58,7 @@ class SDT3Property(SDT3Element):
 		self.name = None
 		self.optional = None
 		self.doc = None
-		self.type = None
+		self.type = None	# This is always a simpleType
 		self.value = None
 
 #

@@ -15,6 +15,7 @@ from sdtv3.SDT3PrintJava import print3JavaClasses
 from sdtv3.SDT3PrintVortoDSL import print3VortoDSL
 from sdtv3.SDT3PrintOneM2MSVG import print3OneM2MSVG
 from sdtv3.SDT3PrintOneM2MXSD import print3OneM2MXSD
+from sdtv3.SDT3PrintSwagger import print3Swagger
 
 
 def printPlain(domain, options):
@@ -99,6 +100,19 @@ def printOneM2MXSD(domain, inputFormat, directory, options):
 
 	_makeDir(directory)
 	print3OneM2MXSD(domain, directory, options)
+
+
+def printSwagger(domain, inputFormat, directory, options):
+	if (inputFormat != 'sdt3'):
+		print('Only the input format "sdt3" is supported yet')
+		return
+	if (directory == None):
+		print('-o <directory> must be specified')
+		return
+
+	_makeDir(directory)
+	print3Swagger(domain, directory, options)
+
 
 
 ##############################################################################
