@@ -1,7 +1,7 @@
 # SDTTool
 Version 0.8
 
-*SDTTool* is a tool to read and convert XML files that conform to the *Smart Device Template* schema definition.
+*SDTTool* is a utility to read and convert *Smart Device Template* (*SDT*) definitions.
 
 ## Introduction
 The [Smart Device Template](https://github.com/Homegateway/SmartDeviceTemplate) (SDT) schema defined by the Home Gateway Initiative (HGI) is a format to describe concrete and abstract devices as well as capabilities, data models and functions of those devices. See [SDT Introduction](https://github.com/Homegateway/SmartDeviceTemplate/blob/master/SDT/schema3.0/docs/Introduction.md) and [SDT Components](https://github.com/Homegateway/SmartDeviceTemplate/blob/master/SDT3.0/docs/SDT_Components.md) for an introduction to the SDT.
