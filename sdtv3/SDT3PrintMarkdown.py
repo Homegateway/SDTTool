@@ -3,6 +3,7 @@
 #	Print SDT3 to markdown
 
 from .SDT3Classes import *
+from common.SDTHelper import *
 
 hideDetails 				= False
 tables 						= False
@@ -12,25 +13,6 @@ pageBreakToken				= '\n<!--BREAK-->'
 
 # variable that hold an optional header text
 headerText = ''
-
-# tabulator level
-tab = 0
-
-def incTab():
-	global tab
-	tab += 1
-
-def decTab():
-	global tab
-	if (tab > 0):
-		tab -= 1
-
-def newLine():
-	global tab
-	result = '\n'
-	for i in range(tab):
-		result += '\t'
-	return result
 
 def tableNewLine():
 	global tab

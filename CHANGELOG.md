@@ -8,6 +8,8 @@ xx.xx.xxxx
 - Various fixes for XSD schemas. Support oneM2M Version 2 XSD
 - Refactored script directory structure
 - Added *--markdownpagebreak* option
+- Added first support to generate Swagger files for ModuleClasses and Devices. Not complete yet. 
+- Added *-of swagger* option.
  
 
 ## Version 0.7
