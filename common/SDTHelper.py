@@ -40,18 +40,18 @@ def getVersionedFilename(fileName, extension, name=None, path=None, isModule=Fal
 	if name != None:
 		prefix += sanitizeName(name, False) + '_'
 	else:
-		if namespacePrefix != None:
+		if namespacePrefix:
 			prefix += namespacePrefix.upper() + '-'
 		if isAction:
 			prefix += 'act-'
 		if isModule:
 			prefix += 'mod-'
 
-	if modelVersion != None:
+	if modelVersion:
 		postfix += '-v' + modelVersion.replace('.', '_')
 
 	fullFilename = ''
-	if path != None:
+	if path:
 		fullFilename = path + os.sep
 	fullFilename += prefix + sanitizeName(fileName, False) + postfix + '.' + extension
 
@@ -70,7 +70,7 @@ def getPackage(directory, domain):
 
 # Export the content for a ModuleClass or Device
 def exportArtifactToFile(name, path, extension, content, isModule=True):
-	fileName = getVersionedFilename(name, extension, path=str(path), isModule=isModule)
+	fileName = getVersionedFilename(name, extension, path=str(path), isModule=isMo)
 	outputFile = None
 	try:
 		outputFile = open(fileName, 'w')

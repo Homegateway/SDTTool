@@ -9,7 +9,8 @@ xx.xx.xxxx
 - Refactored script directory structure
 - Added *--markdownpagebreak* option
 - Added first support to generate Swagger files for ModuleClasses and Devices. Not complete yet. 
-- Added *-of swagger* option.
+- Added *-of swagger* option
+- Beautified OPML/Mindmanager output
  
 
 ## Version 0.7

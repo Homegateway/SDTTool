@@ -5,27 +5,9 @@
 import cgi
 
 from .SDT3Classes import *
+from common.SDTHelper import *
 
 hideDetails = False
-
-# tabulator level
-tab = 0
-
-def incTab():
-	global tab
-	tab += 1
-
-def decTab():
-	global tab
-	if (tab > 0):
-		tab -= 1
-
-def newLine():
-	global tab
-	result = '\n'
-	for i in range(tab):
-		result += '\t'
-	return result
 
 
 #
@@ -34,6 +16,10 @@ def newLine():
 
 def print3DomainOPML(domain, options):
 	global hideDetails
+	
+	# set double white space as an indention for ompl files
+	setTabChar('\t')
+	
 	hideDetails = options['hideDetails']
 
 	result  = '<?xml version="1.0" encoding="ISO-8859-1"?>\n'
@@ -41,10 +27,10 @@ def print3DomainOPML(domain, options):
 	result += '<head>\n'
 	result += '</head>\n'
 	result += '<body>\n'
-	result += '<outline text="Domain [id=&quot;' + domain.id + '&quot;]" >'
+	result += '<outline text="' + domain.id + '" >'
 	incTab()
 
-	if (len(domain.includes) > 0):
+	if len(domain.includes) > 0:
 		result += newLine() + '<outline text="Includes">'
 		incTab()
 		for include in domain.includes:
@@ -52,10 +38,10 @@ def print3DomainOPML(domain, options):
 		decTab()
 		result += newLine() + '</outline>'
 
-	if (domain.doc and hideDetails == False):
+	if domain.doc and hideDetails == False:
 		result += newLine() + printDoc(domain.doc)
 
-	if (len(domain.modules) > 0):
+	if len(domain.modules) > 0:
 		result += newLine() + '<outline text="ModuleClasses">'
 		incTab()
 		for module in domain.modules:
@@ -63,7 +49,7 @@ def print3DomainOPML(domain, options):
 		decTab()
 		result += newLine() + '</outline>'
 
-	if (len(domain.devices) > 0):
+	if len(domain.devices) > 0:
 		result += newLine() + '<outline text="Devices">'
 		incTab()
 		for device in domain.devices:
@@ -78,7 +64,7 @@ def print3DomainOPML(domain, options):
 	return result
 
 def printInclude(include):
-	return '<outline text="Include [parse=&quot;' + include.parse + '&quot; href=&quot;' + include.href + '&quot;]" />'
+	return '<outline text="' + include.href + ' (' + include.parse + ')" />'
 
 
 #
@@ -88,33 +74,30 @@ def printInclude(include):
 def printDevice(device):
 	global hideDetails
 
-	result = '<outline text="Device [id=&quot;' + device.id + '&quot;]" >'
+	result = '<outline text="' + device.id + '">'
 	incTab()
 
-	if (device.doc and hideDetails == False):
+	if device.doc and hideDetails == False:
 		result += newLine() + printDoc(device.doc)
-
-	if (len(device.modules) > 0):
+	if len(device.properties) > 0:
+		result += newLine() + '<outline text="Properties">'
+		incTab()
+		for prop in device.properties:
+			result += newLine() + printProperty(prop)
+		decTab()
+		result += newLine() + '</outline>'
+	if len(device.modules) > 0:
 		result += newLine() + '<outline text="Modules">'
 		incTab()
 		for module in device.modules:
 			result += newLine() + printModule(module)
 		decTab()
 		result += newLine() + '</outline>'
-	
-	if (len(device.subDevices) > 0):
+	if len(device.subDevices) > 0:
 		result += newLine() + '<outline text="SubDevices">'
 		incTab()
 		for subDevice in device.subDevices:
 			result += newLine() + printSubDevice(subDevice)
-		decTab()
-		result += newLine() + '</outline>'
-
-	if (len(device.properties) > 0):
-		result += newLine() + '<outline text="Properties">'
-		incTab()
-		for prop in device.properties:
-			result += newLine() + printProperty(prop)
 		decTab()
 		result += newLine() + '</outline>'
 
@@ -126,23 +109,23 @@ def printDevice(device):
 def printSubDevice(subDevice):
 	global hideDetails
 
-	result = '<outline text="SubDevice [id=&quot;' + subDevice.id + '&quot;]">'
+	result = '<outline text="' + subDevice.id + '">'
 	incTab()
 
-	if (subDevice.doc and hideDetails == False):
+	if subDevice.doc and hideDetails == False:
 		result += newLine() + printDoc(subDevice.doc)
-	if (len(subDevice.modules) > 0):
-		result += newLine() + '<outline text="Modules">'
-		incTab()
-		for module in subDevice.modules:
-			result += newLine() + printModule(module)
-		decTab()
-		result += newLine() + '</outline>'
-	if (len(subDevice.properties) > 0):
+	if len(subDevice.properties) > 0:
 		result += newLine() + '<outline text="Properties">'
 		incTab()
 		for prop in subDevice.properties:
 			result += newLine() + printProperty(prop)
+		decTab()
+		result += newLine() + '</outline>'
+	if len(subDevice.modules) > 0:
+		result += newLine() + '<outline text="Modules">'
+		incTab()
+		for module in subDevice.modules:
+			result += newLine() + printModule(module)
 		decTab()
 		result += newLine() + '</outline>'
 	decTab()
@@ -155,28 +138,20 @@ def printSubDevice(subDevice):
 #
 
 def printProperty(prop):
-	result = '<outline text="Property ['
-	attr =''
-	if prop.name != None:
-		if len(attr) > 0:
-			attr += ' '
-		result += 'name=&quot;' + prop.name + '&quot;'
-	if prop.type != None:
-		if len(attr) > 0:
-			attr += ' '
-		result += 'type=&quot;' + printSimpleTypeProperty(prop.type) + '&quot;'
-	if prop.value != None:
-		if len(attr) > 0:
-			attr += ' '
-		result += 'value=&quot;' + prop.value + '&quot;'
-	if prop.optional != None:
-		if len(attr) > 0:
-			attr += ' '
-		result += 'optional=&quot;' + prop.optional + '&quot;'
-	result += attr + ']">'
+	result = '<outline text="' + prop.name + '" >'
 	incTab()
-	if (prop.doc):
+	if prop.doc:
 		result += newLine() + printDoc(prop.doc)
+	if prop.type:
+		result += newLine() + '<outline text="' + printSimpleTypeProperty(prop.type) + '" />'
+	opt = []
+	if prop.value:
+		result += newLine() +  '<outline text="value: ' + prop.value + '" />'
+	presult = printOptional(prop.optional)
+	if len(presult) > 0:
+		opt.append(presult)
+	if len(opt) > 0:
+		result += '<outline text="' + '&lt;br /&gt;'.join(opt) + '" />'
 	decTab()
 	result += newLine() + '</outline>'
 	return result
@@ -189,11 +164,8 @@ def printProperty(prop):
 def printModule(module):
 	global hideDetails
 
-	result =  '<outline text="Module [name=&quot;' + module.name + '&quot;'
-	if (module.optional != None):
-		result += ' optional=&quot;' + module.optional + '&quot;'
-	result += ']">'
-	if (hideDetails == False):
+	result =  '<outline text="' + module.name + '">'
+	if hideDetails == False:
 		result += printModuleDetails(module)
 	result += newLine() + '</outline>'
 	return result
@@ -202,11 +174,8 @@ def printModule(module):
 def printModuleClass(moduleClass):
 	global hideDetails
 
-	result =  '<outline text="ModuleClass [name=&quot;' + moduleClass.name + '&quot;'
-	if (moduleClass.optional != None):
-		result += ' optional=&quot;' + module.optional + '&quot;'
-	result += ']">'
-	if (hideDetails == False):
+	result =  '<outline text="' + moduleClass.name + '" >'
+	if hideDetails == False:
 		result += printModuleDetails(moduleClass)
 	result += newLine() + '</outline>'
 	return result
@@ -215,37 +184,34 @@ def printModuleClass(moduleClass):
 def printModuleDetails(module):
 	incTab()
 	result = ''
-	if (module.extends != None):
-		result += newLine() + printExtends(module.extends)
-	
-	if (module.doc != None):
+	if module.doc:
 		result += newLine() + printDoc(module.doc)
-
-	if (len(module.actions) > 0):
+	if module.extends:
+		result += newLine() + printExtends(module.extends)
+	if module.optional:
+		result += newLine() + '<outline text="optional: ' + module.optional + '" />'
+	if len(module.data) > 0:
+		result += newLine() + '<outline text="DataPoints">'
+		incTab()
+		for data in module.data:
+			result += newLine() + printDataPoint(data)
+		decTab()
+		result += newLine() + '</outline>'
+	if len(module.actions) > 0:
 		result += newLine() + '<outline text="Actions">'
 		incTab()
 		for action in module.actions:
 			result += newLine() + printAction(action)
 		decTab()
 		result += newLine() + '</outline>'
-
-	if (len(module.data) > 0):
-		result += newLine() + '<outline text="Data">'
-		incTab()
-		for data in module.data:
-			result += newLine() + printDataPoint(data)
-		decTab()
-		result += newLine() + '</outline>'
-
-	if (len(module.events) > 0):
+	if len(module.events) > 0:
 		result += newLine() + '<outline text="Events">'
 		incTab()
 		for event in module.events:
 			result += newLine() + printEvent(event)
 		decTab()
 		result += newLine() + '</outline>'
-
-	if (len(module.properties) > 0):
+	if len(module.properties) > 0:
 		result += newLine() + '<outline text="Properties">'
 		incTab()
 		for prop in module.properties:
@@ -258,7 +224,7 @@ def printModuleDetails(module):
 
 
 def printExtends(extends):
-	return '<outline text="Extends [domain=&quot;' + extends.domain + '&quot; class=&quot;' + extends.clazz + '&quot;]" />'
+	return '<outline text="Extends&lt;br /&gt;&lt;br /&gt;domain: ' + extends.domain + '&lt;br /&gt;class: ' + extends.clazz + '" />'
 
 
 #
@@ -266,19 +232,15 @@ def printExtends(extends):
 #
 
 def printAction(action):
-	result = '<outline text="Action [name=&quot;' + action.name + '&quot;'
-	if (action.optional != None):
-		result += ' optional=&quot;' + action.optional + '&quot;'
-	result += ']">'
-
+	result = '<outline text="' + action.name + '">'
 	incTab()
-	if (action.doc != None): 
+	if action.doc: 
 		result += newLine() + printDoc(action.doc)
-
-	if (action.type != None):
-		result += newLine() + printDataType(action.type)
-
-	if (len(action.args) > 0):
+	if action.optional:
+		result += newLine() + '<outline text="optional: ' + action.optional + '" />'
+	if action.type:
+		result += newLine() + printDataType(action.type, "Returns&lt;br /&gt;&lt;br /&gt;")
+	if len(action.args) > 0:
 		result += newLine() + '<outline text="Args">'
 		incTab()
 		for argument in action.args:
@@ -292,12 +254,9 @@ def printAction(action):
 
 
 def printArgument(action):
-	result = '<outline text="Arg ['
-	if (action.name != None):
-		result += 'name=&quot;' + action.name + '&quot;'
-	result += ']">'
+	result = '<outline text="' + action.name + '">'
 	incTab()
-	if (action.type != None):
+	if action.type:
 		result += newLine() + printDataType(action.type)
 	decTab()
 	result += newLine() + '</outline>'
@@ -305,19 +264,18 @@ def printArgument(action):
 
 
 #
-#             Event
+#   Event
 #
 
 def printEvent(event):
-	result = '<outline text="Event [name=&quot;' + event.name + '&quot;'
-	if (event.optional != None):
-		result += ' optional=&quot;' + event.optional + '&quot;'
-	result += ']">'
+	result = '<outline text="' + event.name + '" >'
 	incTab()
-	if (event.doc != None):
+	if event.doc:
 		result += newLine() + printDoc(event.doc)
-	if (len(event.data) > 0):
-		result += newLine() + '<outline text="Data">'
+	if event.optional:
+		result += '<outline text="optional: ' + event.optional + '" />'
+	if len(event.data) > 0:
+		result += newLine() + '<outline text="DataPoints">'
 		incTab()
 		for dataPoint in event.data:
 			result += newLine() + printDataPoint(dataPoint)
@@ -334,21 +292,29 @@ def printEvent(event):
 #
 
 def printDataPoint(datapoint):
-	result = '<outline text="DataPoint [name=&quot;' + datapoint.name + '&quot;'
-	if (datapoint.optional != None):
-		result += ' optional=&quot;' + datapoint.optional + '&quot;'
-	if (datapoint.writable != None):
-		result += ' writable=&quot;' + datapoint.writable + '&quot;'
-	if (datapoint.readable != None):
-		result += ' readable=&quot;' + datapoint.readable + '&quot;'
-	if (datapoint.eventable != None):
-		result += ' eventable=&quot;' + datapoint.eventable + '&quot;'
-	result += ']">'
+	result = '<outline text="' + datapoint.name + '">'
 	incTab()
-	if (datapoint.doc != None):
+	if datapoint.doc:
 		result += newLine() + printDoc(datapoint.doc)
-	if (datapoint.type != None):
+	if datapoint.type:
 		result += newLine() + printDataType(datapoint.type)
+
+	# Handle some optional attributes
+	opt = []
+	presult = printOptional(datapoint.optional)
+	if len(presult) > 0:
+		opt.append(presult)
+	presult = printReadable(datapoint.readable)
+	if len(presult) > 0:
+		opt.append(presult)
+	presult = printWritable(datapoint.writable)
+	if len(presult) > 0:
+		opt.append(presult)
+	presult = printEventable(datapoint.eventable)
+	if len(presult) > 0:
+		opt.append(presult)
+	if len(opt) > 0:
+		result += '<outline text="' + '&lt;br /&gt;'.join(opt) + '" />'
 	decTab()
 	result += newLine() + '</outline>'
 	return result
@@ -358,24 +324,23 @@ def printDataPoint(datapoint):
 #	DataTypes
 #
 
-def printDataType(dataType):
-	if (isinstance(dataType.type, SDT3SimpleType)):
-		result = printSimpleType(dataType)
-	elif (isinstance(dataType.type, SDT3StructType)):
-		result = printStructType(dataType)
-	elif (isinstance(dataType.type, SDT3ArrayType)):
-		result = printArrayType(dataType)
+def printDataType(dataType, prefixtext=""):
+	if isinstance(dataType.type, SDT3SimpleType):
+		result = printSimpleType(dataType, prefixtext)
+	elif isinstance(dataType.type, SDT3StructType):
+		result = printStructType(dataType, prefixtext)
+	elif isinstance(dataType.type, SDT3ArrayType):
+		result = printArrayType(dataType, prefixtext)
 	return result
 
 
-def printSimpleType(dataType):
+def printSimpleType(dataType, prefixtext=''):
 	simpleType = dataType.type
-	result  = '<outline text="SimpleType [type=&quot;' + simpleType.type + '&quot;'
-	result += printDataTypeAttributes(dataType)
-	result += ']">'
+	result  = '<outline text="' + prefixtext + simpleType.type + '">'
 	incTab()
-	if (dataType.doc != None):
+	if dataType.doc:
 		result += newLine() + printDoc(dataType.doc)
+	result += printDataTypeAttributes(dataType)
 	for constraint in dataType.constraints:
 		result += newLine() + printConstraint(constraint)
 	decTab()
@@ -385,44 +350,41 @@ def printSimpleType(dataType):
 
 def printSimpleTypeProperty(simpleType):
 	result = ''
-	if (len(result) > 0):
+	if len(result) > 0:
 		result += ' '
 	result += simpleType.type
 	return result
 
 
-def printStructType(dataType):
-	result = '<outline text="Struct'
-	attr = printDataTypeAttributes(dataType)
-	if (len(attr) > 0):
-		result += ' [' + attr + ']'
-	result += '">'
-
+def printStructType(dataType, prefixtext=""):
+	result = '<outline text="' + prefixtext
+	if dataType.name:
+		result += dataType.name + ': '
+	result += 'Struct">'
 	incTab()
+	if dataType.doc:
+		result += newLine() + printDoc(dataType.doc)
+	result += printDataTypeAttributes(dataType)
 	for element in dataType.type.structElements:
 		result += newLine() + printDataType(element)
-	decTab()
-	if (dataType.doc != None):
-		result += newLine() + printDoc(dataType.doc)
-	incTab()
 	for constraint in dataType.constraints:
 		result += newLine() + printConstraint(constraint)
 	decTab()
 	result += newLine() + '</outline>'
 	return result
 
-def printArrayType(dataType):
-	arrayType = dataType.type
-	result = '<outline text="Array'
-	attr = printDataTypeAttributes(dataType)
-	if (len(attr) > 0):
-		result += ' [' + attr + ']'
-	result += '">'
+
+def printArrayType(dataType, prefixtext):
+	result = '<outline text="' + prefixtext
+	if dataType.name:
+		result += dataType.name + ': '
+	result += 'Array">'
 	incTab()
-	if (arrayType.arrayType != None):
-		result += newLine() + printDataType(arrayType.arrayType)
-	if (dataType.doc != None):
+	if dataType.doc:
 		result += newLine() + printDoc(dataType.doc)
+	result += printDataTypeAttributes(dataType)
+	if dataType.type.arrayType:
+		result += newLine() + printDataType(dataType.type.arrayType)
 	for constraint in dataType.constraints:
 		result += newLine() + printConstraint(constraint)
 	decTab()
@@ -431,33 +393,26 @@ def printArrayType(dataType):
 
 def printDataTypeAttributes(dataType):
 	result = ''
-	if (dataType.name != None):
-		result += 'name=&quot;' + dataType.name + '&quot;'
-	if (dataType.unitOfMeasure != None):
-		if (len(result) > 0):
-			result += ' '
-		result += 'unitOfMeasure=&quot;' + dataType.unitOfMeasure + '&quot;'
+#	if dataType.name:
+#		result += newLine() + '<outline text="name: ' + dataType.name + '" />'
+	if dataType.unitOfMeasure:
+		result += newLine() + '<outline text="unitOfMeasure: ' + dataType.unitOfMeasure + '" />'
 	return result
 
 
 def printConstraint(constraint):
-	result = '<outline text="Constraint ['
-	attr   = ''
-	if (constraint.name != None):
-		attr += 'name=&quot;' + constraint.name + '&quot;'
-	if (constraint.type != None):
-		if (len(attr) > 0):
-			attr += ' '
-		attr += 'type=&quot;' + constraint.type + '&quot;'
-	if (constraint.value != None):
-		if (len(attr) > 0):
-			attr += ' '
-		attr += 'value=&quot;' + constraint.value + '&quot;'
-	if (len(attr) > 0):
-		result += attr
-	result += ']">'
+	attr   = []
+	result = ''
+	if constraint.name:
+		attr.append('name: ' + constraint.name)
+	if constraint.type:
+		attr.append('type: ' + constraint.type)
+	if constraint.value:
+		attr.append('value: ' + constraint.value)
+	if len(attr) > 0:
+		result += '<outline text="Constraint&lt;br /&gt;&lt;br /&gt;' + '&lt;br /&gt;'.join(attr) + '">'
 	incTab()
-	if (constraint.doc != None):
+	if constraint.doc:
 		attr += newLine() + printDoc(constraint.doc)
 	decTab()
 	result += newLine() + '</outline>'
@@ -467,13 +422,40 @@ def printConstraint(constraint):
 #
 #	Doc
 #
-
 def printDoc(doc):
+	result = ''
 	incTab()
-	result = '<outline text="Doc">'
 	s = cgi.escape(doc.content.strip())
 	s = s.replace('"', '&quot;')
 	result += newLine() + '<outline text="' + s + '" />'
 	decTab()
-	result += newLine() + '</outline>'
 	return result
+
+#
+#	various attribute
+#
+def printOptional(optional):
+	result = ''
+	if optional:
+		result += 'optional: ' + optional
+	return result
+
+def printWritable(writable):
+	result = ''
+	if writable:
+		result += 'writable: ' + writable
+	return result
+
+def printReadable(readable):
+	result = ''
+	if readable:
+		result += 'readable: ' + readable
+	return result
+
+def printEventable(eventable):
+	result = ''
+	if eventable:
+		result += 'eventable: ' + eventable
+	return result
+
+
