@@ -70,7 +70,7 @@ def getPackage(directory, domain):
 
 # Export the content for a ModuleClass or Device
 def exportArtifactToFile(name, path, extension, content, isModule=True):
-	fileName = getVersionedFilename(name, extension, path=str(path), isModule=isMo)
+	fileName = getVersionedFilename(name, extension, path=str(path), isModule=isModule)
 	outputFile = None
 	try:
 		outputFile = open(fileName, 'w')
