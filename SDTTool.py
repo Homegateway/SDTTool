@@ -131,7 +131,7 @@ def main(argv):
 	parser.convert_arg_line_to_args = convertArgLineToArgs
 
 	parser.add_argument('-o', '--outfile', action='store', dest='outFile', help='The output file or directory for the result. The default is stdout')
-	parser.add_argument('-if', '--inputformat', choices=('sdt2', 'sdt3', ''), action='store', dest='inputFormat', default='sdt3', help='The input format to read. The default is sdt3')
+	parser.add_argument('-if', '--inputformat', choices=('sdt2', 'sdt3'), action='store', dest='inputFormat', default='sdt3', help='The input format to read. The default is sdt3')
 	parser.add_argument('-of', '--outputformat', choices=('plain', 'opml', 'markdown', 'sdt3', 'java', 'vorto-dsl', 'onem2m-svg', 'onem2m-xsd', 'swagger'), action='store', dest='outputFormat', default='markdown', help='The output format for the result. The default is markdown')
 	parser.add_argument('--hidedetails',  action='store_true', help='Hide the details of module classes and devices when printing documentation')
 	parser.add_argument('--markdowntables',  action='store_true', help='Format markdown output as tables for markdown')
