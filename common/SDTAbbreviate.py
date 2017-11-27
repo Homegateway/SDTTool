@@ -81,7 +81,6 @@ def addAbbreviation(name, abbreviation):
 # Return abbreviations
 
 def getAbbreviations():
-	global abbreviations
 	return abbreviations.copy()
 
 
@@ -108,4 +107,29 @@ def readAbbreviations(infile, predefined=True):
 		raise
 
 
+def exportAbbreviations(csvFile, mapFile, abbreviations):
+
+	# Export as python map
+	outputFile = None
+	try:
+		outputFile = open(mapFile, 'w')
+		outputFile.write(str(abbreviations))
+	except IOError as err:
+		print(err)
+	finally:
+		if outputFile != None:
+			outputFile.close()
+
+	# Export as CSV
+	outputFile = None
+	try:
+		outputFile = open(csvFile, 'w', newline='')
+		writer = csv.writer(outputFile)
+		for key, value in abbreviations.items():
+			writer.writerow([key, value])
+	except IOError as err:
+		print(err)
+	finally:
+		if outputFile != None:
+			outputFile.close()
 

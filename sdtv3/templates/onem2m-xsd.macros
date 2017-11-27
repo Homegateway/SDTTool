@@ -1,0 +1,331 @@
+{##### Define CDT version to use #####}
+{% set CDTVersion = '3_5_0' %}
+
+
+
+{% macro renderActionSchemas(module) %}
+{% for action in module.actions %}
+    <xs:include schemaLocation="{{getVersionedFilename(action.name, 'xsd', isAction=True, namespacePrefix=namespaceprefix)}}" />'
+{% endfor %}
+{% endmacro %}
+
+
+{##### Print General DataType #####}
+{% macro _arrayType(type) %}
+>
+    <xs:simpleType>
+        <xs:list itemType="{{ getSimpleDataType(type.type.arrayType.type.type) }}" />
+    </xs:simpleType>
+</xs:element>
+{% endmacro %}
+
+{% macro getDataType(name, type, level) %}
+{% if instanceType(type.type) == 'SDT3ArrayType' %}
+{{ _arrayType(type) | indent(4*level, indentfirst=False) }}
+{% else %}
+{% if instanceType(type.type) == 'SDT3SimpleType' %}
+ type="{{ getSimpleDataType(type.type.type) -}}" />
+{% else %}
+ type="{{ getSimpleDataType(type.type) -}}" />
+{% endif %}
+{% endif %}
+{% endmacro %}
+
+
+
+{##### Print SimpleDataTypes #####}
+{% macro getSimpleDataType(type) -%}
+{%- if type == 'boolean' %}
+xs:boolean
+{%- elif type == 'integer' %}
+xs:integer
+{%- elif type == 'float' %}
+xs:float
+{%- elif type == 'string' %}
+xs:string
+{%- elif type == 'datetime' %}
+m2m:timestamp
+{%- elif type == 'date' %}
+m2m:timestamp
+{%- elif type == 'time' %}
+m2m:timestamp
+{%- elif type =='uri' %}
+xs:anyURI
+{%- elif type == 'blob' %}
+xs:base64Binary
+{%- elif match('.+:.+', type) %}
+{{- addToEnums(type) }}
+{{- type }}
+{%- else %}
+unknown
+{%- endif %}
+{%- endmacro %}
+
+
+{##### Print Properties and DataPoints #####}
+{% macro renderSpecificAttributes(objs, annc, level) %}
+{% for o in objs %}
+{{_indent(level)}}<xs:element name="{{ sanitizeName(o.name, False) }}"
+{%- if annc %} minOccurs="0"
+{%- else %}
+{%- if o.optional == 'true' %} minOccurs="0"
+{%- endif -%}
+{%- endif -%}
+{{- getDataType(o.name, o.type, 5)}}
+{%- endfor %}
+{% endmacro %}
+
+
+{% macro renderSpecificActions(actions) %}
+{% for action in actions %}
+{{_indent(7)}}<xs:element ref="{{ namespaceprefix }}:{{ action.name }}" />
+{{- addToActions(action) }}
+{% endfor %}
+{% endmacro %}
+
+
+{% macro renderDeviceModuleClasses(moduleClasses, withAnnc) %}
+{% for module in moduleClasses %}
+{{_indent(8)}}<xs:element ref="{{ namespaceprefix }}:{{ sanitizeName(module.name, False, annc=withAnnc) }}" />
+{% if withAnnc %}
+{{_indent(8)}}<xs:element ref="{{ namespaceprefix }}:{{ sanitizeName(module.name, False, annc=withAnnc) }}Annc" />
+{% endif %}
+{% endfor %}
+{% endmacro %}
+
+
+{% macro renderDeviceSubDevices(subDevices, withAnnc) %}
+{% for sd in subDevices %}
+{{_indent(8)}}<xs:element ref="{{ namespaceprefix }}:{{ sanitizeName(sd.id, False, annc=withAnnc) }}" />
+{% if withAnnc %}
+{{_indent(8)}}<xs:element ref="{{ namespaceprefix }}:{{ sanitizeName(sd.id, False, annc=withAnnc) }}Annc" />
+{% endif %}
+{% endfor %}
+{% endmacro %}
+
+
+{% macro renderModuleClass(object) %}
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+{{ license }}
+-->
+
+<xs:schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="{{ xsdtargetnamespace }}"
+    xmlns:m2m="http://www.onem2m.org/xml/protocols" xmlns:{{namespaceprefix}}="http://www.onem2m.org/xml/protocols/{{ domaindefinition }}" elementFormDefault="unqualified" attributeFormDefault="unqualified"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+    <xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-subscription-v{{CDTVersion}}.xsd" />
+    <xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v{{CDTVersion}}.xsd" />
+
+    <xs:include schemaLocation="HD-enumerationTypes-v{{modelversion}}.xsd" />
+
+{{ renderActionSchemas(object)}}
+
+    <xs:element name="{{ object.name }}" type="{{ namespaceprefix }}:{{ object.name }}" substitutionGroup="m2m:sg_flexContainerResource"/>
+    <xs:complexType name="{{ object.name }}">
+        <xs:complexContent>
+            <!-- Inherit Common Attributes from data type "flexContainerResource" -->
+            <xs:extension base="m2m:flexContainerResource">
+                <xs:sequence>
+
+                    <!-- Resource Specific Attributes -->
+{{ renderSpecificAttributes(object.properties, False, 5) }}
+{{ renderSpecificAttributes(object.data, False, 5) }}
+
+                    <!-- Child Resources -->
+
+                    <xs:choice minOccurs="0" maxOccurs="1">
+                        <xs:element name="childResource" type="m2m:childResourceRef" minOccurs="1" maxOccurs="unbounded" />
+                        <xs:choice minOccurs="1" maxOccurs="unbounded">
+{{ renderSpecificActions(object.actions) }}
+                            <xs:element ref="m2m:subscription" />
+                        </xs:choice>
+                    </xs:choice>
+
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:element name="{{ object.name }}Annc" type="{{ namespaceprefix }}:{{ object.name }}Annc" substitutionGroup="m2m:sg_announcedFlexContainerResource"/>
+    <xs:complexType name="{{ object.name }}Annc">
+        <xs:complexContent>
+            <!-- Inherit Common Attributes from data type "announcedFlexContainerResource" -->
+            <xs:extension base="m2m:announcedFlexContainerResource">
+                <xs:sequence>
+
+                    <!-- Resource Specific Attributes -->
+{{ renderSpecificAttributes(object.properties, True, 5) }}
+{{ renderSpecificAttributes(object.data, True, 5) }}
+
+                    <!-- Child Resources -->
+
+                    <xs:choice minOccurs="0" maxOccurs="1">
+                        <xs:element name="childResource" type="m2m:childResourceRef" minOccurs="1" maxOccurs="unbounded" />
+                        <xs:choice minOccurs="1" maxOccurs="unbounded">
+{{ renderSpecificActions(object.actions) }}
+                            <xs:element ref="m2m:subscription" />
+                        </xs:choice>
+                    </xs:choice>
+
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+</xs:schema>
+{% endmacro %}
+
+
+
+{% macro renderDevice(object) %}
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+{{ license }}
+-->
+
+<xs:schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="{{ xsdtargetnamespace }}"
+    xmlns:m2m="http://www.onem2m.org/xml/protocols" xmlns:{{namespaceprefix}}="http://www.onem2m.org/xml/protocols/{{ domaindefinition }}" elementFormDefault="unqualified" attributeFormDefault="unqualified"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+    <xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-subscription-v{{CDTVersion}}.xsd" />
+    <xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v{{CDTVersion}}.xsd" />
+
+    <xs:include schemaLocation="HD-enumerationTypes-v{{modelversion}}.xsd" />
+
+{{ renderActionSchemas(object)}}
+
+    <xs:element name="{{ object.id }}" type="{{ namespaceprefix }}:{{ object.id }}" substitutionGroup="m2m:sg_flexContainerResource">
+        <xs:complexType>
+            <xs:complexContent>
+                <!-- Inherit Common Attributes from data type "flexContainerResource" -->
+                <xs:extension base="m2m:flexContainerResource">
+                    <xs:sequence>
+                    
+                        <!-- Resource Specific Attributes -->
+
+                        <xs:element name="mgmtLink" type="m2m:mgmtLinkRef" minOccurs="1" maxOccurs="1"/>
+
+                        <!-- Child Resources -->
+                        
+                        <xs:choice minOccurs="0" maxOccurs="1">
+                            <xs:element name="childResource" type="m2m:childResourceRef" minOccurs="1" maxOccurs="unbounded" />
+                            <xs:choice minOccurs="1" maxOccurs="unbounded">
+{{ renderDeviceModuleClasses(object.modules, False)}}
+{{ renderDeviceSubDevices(object.subDevices, False)}}
+                                <xs:element ref="m2m:subscription"  />
+                            </xs:choice>
+                        </xs:choice>
+
+                    </xs:sequence>
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="{{ object.id }}Annc" type="{{ namespaceprefix }}:{{ object.id }}" substitutionGroup="m2m:sg_announcedFlexContainerResource">
+        <xs:complexType>
+            <xs:complexContent>
+                <!-- Inherit Common Attributes from data type "announcedFlexContainerResource" -->
+                <xs:extension base="m2m:announcedFlexContainerResource">
+                    <xs:sequence>
+
+                        <!-- Resource Specific Attributes -->
+
+                        <xs:element name="mgmtLink" type="m2m:mgmtLinkRef" minOccurs="1" maxOccurs="1"/>
+
+                        <!-- Child Resources -->
+
+                        <xs:choice minOccurs="0" maxOccurs="1">
+                            <xs:element name="childResource" type="m2m:childResourceRef" minOccurs="1" maxOccurs="unbounded" />
+                            <xs:choice minOccurs="1" maxOccurs="unbounded">
+{{ renderDeviceModuleClasses(object.modules, True) }}
+{{ renderDeviceSubDevices(object.subDevices, True)}}
+                                <xs:element ref="m2m:subscription"  />
+                            </xs:choice>
+                        </xs:choice>
+
+                    </xs:sequence>
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>
+{% endmacro %}
+
+
+{% macro renderAction(object) %}
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+{{ license }}
+-->
+
+<xs:schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="{{ xsdtargetnamespace }}"
+    xmlns:m2m="http://www.onem2m.org/xml/protocols" xmlns:{{namespaceprefix}}="http://www.onem2m.org/xml/protocols/{{ domaindefinition }}" elementFormDefault="unqualified" attributeFormDefault="unqualified"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+    <xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-subscription-v{{CDTVersion}}.xsd" />
+    <xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v{{CDTVersion}}.xsd" />
+
+    <xs:include schemaLocation="HD-enumerationTypes-v{{modelversion}}.xsd" />
+
+    <xs:element name="{{ object.name }}" substitutionGroup="m2m:sg_flexContainerResource">
+        <xs:complexType>
+            <xs:complexContent>
+                <!-- Inherit Common Attributes from data type "flexContainerResource" -->
+                <xs:extension base="m2m:flexContainerResource">
+                    <xs:sequence>
+
+                        <!-- Resource Specific Attributes -->
+                    
+                        <!-- Child Resources -->
+
+                        <xs:choice minOccurs="0" maxOccurs="1">
+                            <xs:element name="childResource" type="m2m:childResourceRef" maxOccurs="unbounded" />
+                            <xs:choice minOccurs="1" maxOccurs="unbounded">
+                                <xs:element ref="m2m:subscription" />
+                            </xs:choice>
+                        </xs:choice>
+                    </xs:sequence>
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="{{ object.name }}Annc" substitutionGroup="m2m:sg_announcedFlexContainerResource">
+        <xs:complexType>
+            <xs:complexContent>
+                <!-- Inherit Common Attributes from data type "announcedFlexContainerResource" -->
+                <xs:extension base="m2m:announcedFlexContainerResource">
+                    <xs:sequence>
+
+                        <!-- Resource Specific Attributes -->
+                                        
+                        <!-- Child Resources -->
+
+                        <xs:choice minOccurs="0" maxOccurs="1">
+                            <xs:element name="childResource" type="m2m:childResourceRef" maxOccurs="unbounded" />
+                            <xs:choice minOccurs="1" maxOccurs="unbounded">
+                                <xs:element ref="m2m:subscription" />
+                            </xs:choice>
+                        </xs:choice>    
+                    </xs:sequence>
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>
+{% endmacro %}
+
+
+{% macro renderEnum(object) %}
+TODO: Enum {{object.name}}
+{% endmacro %}
+
+
+{##### Print Indention #####}
+{% macro _indent(level) %}
+{{''|indent(level*4, indentfirst=True)-}}
+{% endmacro %}

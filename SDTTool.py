@@ -157,7 +157,6 @@ def main(argv):
 	inFile = args.inFile
 	outFile = args.outFile
 	inputFormat = args.inputFormat
-	outputFormat = args.outputFormat
 	
 	moreOptions = {}
 	moreOptions['hideDetails'] 					= args.hidedetails
@@ -170,6 +169,7 @@ def main(argv):
 	moreOptions['abbreviationlength'] 			= args.abbreviationlength
 	moreOptions['xsdtargetnamespace'] 			= args.xsdtargetnamespace
 	moreOptions['modelversion'] 				= args.modelversion
+	moreOptions['outputFormat']					= args.outputFormat
 
 
 	# Read input file. Check for correct format
@@ -188,23 +188,23 @@ def main(argv):
 
 	# Output to destination format
 
-	if (outputFormat == 'plain'):
+	if (args.outputFormat == 'plain'):
 		outputResult(outFile, printPlain(domain, moreOptions))
-	elif (outputFormat == 'opml'):
+	elif (args.outputFormat == 'opml'):
 		outputResult(outFile, printOPML(domain, moreOptions))
-	elif (outputFormat == 'markdown'):
+	elif (args.outputFormat == 'markdown'):
 		outputResult(outFile, printMarkdown(domain, moreOptions))
-	elif (outputFormat == 'sdt3'):
+	elif (args.outputFormat == 'sdt3'):
 		outputResult(outFile, printSDT3(domain, inputFormat, moreOptions))
-	elif (outputFormat == 'java'):
+	elif (args.outputFormat == 'java'):
 		printJava(domain, inputFormat, outFile, moreOptions)
-	elif (outputFormat == 'vorto-dsl'):
+	elif (args.outputFormat == 'vorto-dsl'):
 		printVortoDSL(domain, inputFormat, outFile, moreOptions)
-	elif (outputFormat == 'onem2m-svg'):
+	elif (args.outputFormat == 'onem2m-svg'):
 		printOneM2MSVG(domain, inputFormat, outFile, moreOptions)
-	elif (outputFormat == 'onem2m-xsd'):
+	elif (args.outputFormat == 'onem2m-xsd'):
 		printOneM2MXSD(domain, inputFormat, outFile, moreOptions)
-	elif (outputFormat == 'swagger'):
+	elif (args.outputFormat == 'swagger'):
 		printSwagger(domain, inputFormat, outFile, moreOptions)
 
 

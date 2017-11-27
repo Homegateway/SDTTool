@@ -33,7 +33,7 @@ def sanitizePackage(package):
 	return result
 
 # get a versioned filename
-def getVersionedFilename(fileName, extension, name=None, path=None, isModule=False, isAction=False, modelVersion=None, namespacePrefix=None):
+def getVersionedFilename(fileName, extension, name=None, path=None, isModule=False, isAction=False, isEnum=False, modelVersion=None, namespacePrefix=None):
 
 	prefix  = ''
 	postfix = ''
@@ -42,10 +42,14 @@ def getVersionedFilename(fileName, extension, name=None, path=None, isModule=Fal
 	else:
 		if namespacePrefix:
 			prefix += namespacePrefix.upper() + '-'
+			if fileName.startswith(namespacePrefix+':'):
+				fileName = fileName[len(namespacePrefix)+1:]
 		if isAction:
 			prefix += 'act-'
 		if isModule:
 			prefix += 'mod-'
+		if isEnum:
+			prefix += 'enu-'
 
 	if modelVersion:
 		postfix += '-v' + modelVersion.replace('.', '_')
