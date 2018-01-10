@@ -41,9 +41,8 @@ class MultilineFormatter(argparse.HelpFormatter):
 
 def readDataFromFile(inFile):
 	# Read the input file
-	inputFile = open(inFile, 'r')
-	data = inputFile.read()
-	inputFile.close()
+	with open(inFile, 'r') as inputFile:
+		data = inputFile.read()
 	return data
 
 #
@@ -96,20 +95,16 @@ def readSDT3XML(inFile):
 #	Print the output to stdout or to a file
 #
 def outputResult(outFile, result):
-	if (result == None):
+	if result == None:
 		return
-	if (outFile == None):
+	if outFile == None:
 		print(result)
 	else:
-		outputFile = None
 		try:
-			outputFile = open(outFile, 'w')
-			outputFile.write(result)
+			with open(outFile, 'w') as outputFile:
+				outputFile.write(result)
 		except IOError as err:
 			print(err)
-		finally:
-			if (outputFile != None):
-				outputFile.close()
 
 
 #
@@ -174,37 +169,36 @@ def main(argv):
 
 	# Read input file. Check for correct format
 
-	if (inputFormat == 'sdt2'):
+	if inputFormat == 'sdt2':
 		domain, nameSpaces = readSDT2XML(inFile)
-		if (checkForNamespace(nameSpaces, 'http://homegatewayinitiative.org/xml/dal/2.0') == False):
+		if not checkForNamespace(nameSpaces, 'http://homegatewayinitiative.org/xml/dal/2.0'):
 			print('ERROR: Namespace "http://homegatewayinitiative.org/xml/dal/2.0" not found in input file.')
 			return
 
-	elif (inputFormat == 'sdt3'):
+	elif inputFormat == 'sdt3':
 		domain, nameSpaces = readSDT3XML(inFile)
-		if (checkForNamespace(nameSpaces, 'http://homegatewayinitiative.org/xml/dal/3.0') == False):
+		if not checkForNamespace(nameSpaces, 'http://homegatewayinitiative.org/xml/dal/3.0'):
 			print('ERROR: Namespace "http://homegatewayinitiative.org/xml/dal/3.0" not found in input file.')
 			return
 
 	# Output to destination format
-
-	if (args.outputFormat == 'plain'):
+	if args.outputFormat == 'plain':
 		outputResult(outFile, printPlain(domain, moreOptions))
-	elif (args.outputFormat == 'opml'):
+	elif args.outputFormat == 'opml':
 		outputResult(outFile, printOPML(domain, moreOptions))
-	elif (args.outputFormat == 'markdown'):
+	elif args.outputFormat == 'markdown':
 		outputResult(outFile, printMarkdown(domain, moreOptions))
-	elif (args.outputFormat == 'sdt3'):
+	elif args.outputFormat == 'sdt3':
 		outputResult(outFile, printSDT3(domain, inputFormat, moreOptions))
-	elif (args.outputFormat == 'java'):
+	elif args.outputFormat == 'java':
 		printJava(domain, inputFormat, outFile, moreOptions)
-	elif (args.outputFormat == 'vorto-dsl'):
+	elif args.outputFormat == 'vorto-dsl':
 		printVortoDSL(domain, inputFormat, outFile, moreOptions)
-	elif (args.outputFormat == 'onem2m-svg'):
+	elif args.outputFormat == 'onem2m-svg':
 		printOneM2MSVG(domain, inputFormat, outFile, moreOptions)
-	elif (args.outputFormat == 'onem2m-xsd'):
+	elif args.outputFormat == 'onem2m-xsd':
 		printOneM2MXSD(domain, inputFormat, outFile, moreOptions)
-	elif (args.outputFormat == 'swagger'):
+	elif args.outputFormat == 'swagger':
 		printSwagger(domain, inputFormat, outFile, moreOptions)
 
 

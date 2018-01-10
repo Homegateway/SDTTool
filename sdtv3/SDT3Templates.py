@@ -29,10 +29,10 @@ constAbbreviationMAPFile = '_Abbreviations.py'
 def print3SDT(domain, options, directory=None):
 	context = getContext(domain, options, directory)
 	if context['isSingleFile']:
-		result = render(context['templateFile'], context)
-		return result
+		return render(context['templateFile'], context)
 	else:
 		renderMultiple(context['templateFile'], context, domain, directory, context['extension'])
+	return None
 
 
 
@@ -144,12 +144,12 @@ def getContext(domain, options, directory=None):
 #
 
 
-def renderComponentToFile(context, name=None, isModule=False, isEnum=False, isAction=False, namespaceprefix=None):
+def renderComponentToFile(context, name=None, isModule=False, isEnum=False, isAction=False, isSubDevice=False, namespaceprefix=None):
 	""" Render a component. """
 	namespaceprefix = context['namespaceprefix'] if 'namespaceprefix' in context else None
 	fileName     	= sanitizeName(context['object'].name if isModule or isEnum or isAction else context['object'].id, False)
 	#print('---' + fileName)
-	fullFilename 	= getVersionedFilename(fileName, context['extension'], name=name, path=str(context['path']), isModule=isModule, isEnum=isEnum, isAction=isAction, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
+	fullFilename 	= getVersionedFilename(fileName, context['extension'], name=name, path=str(context['path']), isModule=isModule, isEnum=isEnum, isAction=isAction, isSubDevice=isSubDevice, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	outputFile   	= None
 	try:
 		outputFile = open(fullFilename, 'w')
@@ -242,9 +242,9 @@ def addToEnums(enum):
 @contextfunction
 def renderObject(context, object):
 	""" Recursively render another (sub)object while the other is till rendering. """
-	newContext = {key: value for key, value in context.items()}
+	newContext = {key: value for key, value in context.items()} # Copy the old context
 	if isinstance(object, SDT3SubDevice):
 		newContext['object'] = object
-		renderComponentToFile(newContext)
+		renderComponentToFile(newContext, isSubDevice=True)
 	return ''
 
