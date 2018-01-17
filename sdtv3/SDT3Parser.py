@@ -119,7 +119,7 @@ class SDT3Parser:
 				raise SyntaxError('<Module> definition is only allowed in <RootDevice> or <Device> element')
 
 		elif (ntag == SDT3Parser.extendsTag):
-			if (isinstance(lastElem, SDT3Module) or isinstance(lastElem, SDT3ModuleClass)):
+			if (isinstance(lastElem, SDT3Module) or isinstance(lastElem, SDT3ModuleClass) or isinstance(lastElem, SDT3SubDevice)):
 				extends = SDT3Extends()
 				extends.domain = attrib['domain'].strip() if 'domain' in attrib else None
 				extends.clazz = attrib['class'].strip() if 'class' in attrib else None

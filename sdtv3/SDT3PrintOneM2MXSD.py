@@ -97,7 +97,7 @@ def print3OneM2MXSD(domain, directory, options):
 		exportDevice(device, package, path)
 
 	# Export enum types
-	exportEnumTypes(path)
+	exportEnumTypes(path)	
 
 	# Export found Actions
 	exportActions(path)

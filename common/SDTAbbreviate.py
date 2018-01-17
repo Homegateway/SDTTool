@@ -79,13 +79,20 @@ def addAbbreviation(name, abbreviation):
 
 
 # Return abbreviations
-
 def getAbbreviations():
 	return abbreviations.copy()
 
 
-# Read existing abbreviations
+# Return an abbreviation for a longName
+def getAbbreviation(name):
+	if name in abbreviations:
+		return abbreviations[name]
+	if name in preDefinedAbbreviations:
+		return preDefinedAbbreviations[name]
+	return None
 
+
+# Read existing abbreviations
 def readAbbreviations(infile, predefined=True):
 	global preDefinedAbbreviations, abbreviations
 	if infile == None:

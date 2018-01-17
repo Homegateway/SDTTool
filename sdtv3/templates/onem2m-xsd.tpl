@@ -14,4 +14,6 @@
 {{ xsd.renderEnum(object) -}}
 {% elif instanceType(object) == 'SDT3Action' -%}
 {{ xsd.renderAction(object) -}}
+{% elif instanceType(object) == 'SDT3Commons' -%}
+{{ xsd.renderCommons(object) -}}
 {% endif -%}
