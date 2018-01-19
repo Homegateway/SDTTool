@@ -11,6 +11,9 @@ xx.xx.xxxx
 - Added first support to generate Swagger files for ModuleClasses and Devices. Not complete yet. 
 - Added *-of swagger* option
 - Beautified OPML/Mindmanager output
+- First work on replacing the hand-crafted output modules by a templating engine (Jinja2, [](http://jinja.pocoo.org/)).
+- Profided first templates for markdown and oneM2M XSD.
+- Added support for oneM2M release R3
  
 
 ## Version 0.7
