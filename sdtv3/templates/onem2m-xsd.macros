@@ -196,7 +196,7 @@ unknown
     <xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v{{CDTVersion}}.xsd" />
 
     <xs:include schemaLocation="HD-enumerationTypes-v{{ modelversion.replace('.', '_')}}.xsd" />
-    <xs:include schemaLocation="HD-commons-v{{modelversion.replace('.', '_')}}.xsd" />
+    <xs:include schemaLocation="HD-commonTypes-v{{modelversion.replace('.', '_')}}.xsd" />
 
 {{ renderActionSchemaLocations(object)}}
 
@@ -276,7 +276,7 @@ unknown
     <xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v{{CDTVersion}}.xsd" />
 
     <xs:include schemaLocation="HD-enumerationTypes-v{{modelversion.replace('.', '_')}}.xsd" />
-    <xs:include schemaLocation="HD-commons-v{{modelversion.replace('.', '_')}}.xsd" />
+    <xs:include schemaLocation="HD-commonTypes-v{{modelversion.replace('.', '_')}}.xsd" />
 
 {{ checkInheritedModules(object.modules) -}}
 {{ checkInheritedSubDevices(object.subDevices) -}}
@@ -355,7 +355,7 @@ unknown
     <xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v{{CDTVersion}}.xsd" />
 
     <xs:include schemaLocation="HD-enumerationTypes-v{{modelversion.replace('.', '_')}}.xsd" />
-    <xs:include schemaLocation="HD-commons-v{{modelversion.replace('.', '_')}}.xsd" />
+    <xs:include schemaLocation="HD-commonTypes-v{{modelversion.replace('.', '_')}}.xsd" />
 
 {{ renderModuleClassesSchemaLocations(object)}}
 

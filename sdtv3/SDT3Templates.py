@@ -98,7 +98,7 @@ def renderMultiple(templateFile, context, domain, directory, extension):
 		renderComponentToFile(context, isAction=True)
 
 	# Export extras
-	commons = SDT3Commons('commons-' + getTimeStamp())
+	commons = SDT3Commons('commonTypes-' + getTimeStamp())
 	commons.extendedModules = extendedModules
 	commons.extendedModulesExtends = extendedModulesExtends
 	commons.extendedSubDevices = extendedSubDevices
@@ -236,6 +236,22 @@ def printShortNames(context):
 						outputFile.write(dp.name +',' + mc.name + ',' + getAbbreviation(dp.name) + '\n')
 	deleteEmptyFile(fullFilename)
 
+	# Actions
+	fileName = sanitizeName('actions-' + getTimeStamp(), False)
+	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
+	with open(fullFilename, 'w') as outputFile:
+		for mc in domain.modules:
+			for ac in mc.actions:
+				outputFile.write(ac.name + ',' + getAbbreviation(ac.name) + '\n')
+		for device in domain.devices:
+			for mc in device.modules:
+				for ac in mc.actions:
+					outputFile.write(ac.name + ',' + getAbbreviation(ac.name) + '\n')
+			for subDevice in device.subDevices:
+				for mc in device.modules:
+					for ac in mc.actions:
+						outputFile.write(ac.name + ',' + getAbbreviation(ac.name) + '\n')
+	deleteEmptyFile(fullFilename)
 
 
 #############################################################################
