@@ -2,7 +2,7 @@
 #
 #	Helpers
 #
-import os, pathlib
+import os, pathlib, time, datetime
 
 
 # Sanitize a name 
@@ -33,7 +33,7 @@ def sanitizePackage(package):
 	return result
 
 # get a versioned filename
-def getVersionedFilename(fileName, extension, name=None, path=None, isModule=False, isAction=False, modelVersion=None, namespacePrefix=None):
+def getVersionedFilename(fileName, extension, name=None, path=None, isModule=False, isAction=False, isSubDevice=False, isEnum=False, isShortName=False, modelVersion=None, namespacePrefix=None):
 
 	prefix  = ''
 	postfix = ''
@@ -42,10 +42,16 @@ def getVersionedFilename(fileName, extension, name=None, path=None, isModule=Fal
 	else:
 		if namespacePrefix:
 			prefix += namespacePrefix.upper() + '-'
+			if fileName.startswith(namespacePrefix+':'):
+				fileName = fileName[len(namespacePrefix)+1:]
 		if isAction:
 			prefix += 'act-'
 		if isModule:
 			prefix += 'mod-'
+		if isEnum:
+			prefix += 'enu-'
+		if isShortName:
+			prefix += 'snm-'
 
 	if modelVersion:
 		postfix += '-v' + modelVersion.replace('.', '_')
@@ -81,6 +87,15 @@ def exportArtifactToFile(name, path, extension, content, isModule=True):
 		if (outputFile != None):
 			outputFile.close()
 
+
+# Get a timestamp
+def getTimeStamp():
+	return datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d-%H-%M-%S')
+
+
+def deleteEmptyFile(filename):
+	if os.stat(filename).st_size == 0:
+		os.remove(filename)  
 
 #############################################################################
 #

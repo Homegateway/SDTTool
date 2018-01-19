@@ -1,0 +1,245 @@
+
+{% macro header(name) %}
+{{''.rjust(getLevel(), '#')}} {{name}}
+{% endmacro %}
+
+{##### Print Documentation #####}
+{% macro doc(text) %}
+{% if text and text.content and text.content | length > 0 %}
+{{text.content | trim | replace("*", "\\*") | replace("#", "\\#") -}}
+{% endif %}
+{% endmacro %}
+
+
+{% macro boolean(val, dft) %}
+{% if val != None %}{% if val=='true' or val=='yes'%}true{% else %}false{% endif %}{% else %}{{dft}}{% endif %}
+{% endmacro %}
+
+
+{##### Print Includes #####}
+{%- macro printIncludes(includes) -%}
+{% if includes and includes | length > 0 %}
+
+- **Includes**
+{% for include in includes %}
+	- Parse: {{include.parse}}, Href: {{include.href}}
+{%- endfor %}
+{%- endif %} {# includes #}
+{% endmacro %}
+
+
+{##### Print DataType #####}
+{% macro printDataType(type) -%}
+{%- if type %}
+{% set it = instanceType(type.type) %}
+{%- if it == 'SDT3SimpleType' %}
+{{type.type.type}} {{printDataTypeAttributes(type.type)}}
+{%- elif it == 'SDT3StructType' %}
+SDT3StructType
+{%- elif it == 'SDT3ArrayType' %}
+Array {{printDataTypeAttributes(type.type)}}
+{%- if type.type.arrayType %}: <br/>{{printDataType(type.type.arrayType)}}{%- endif %}
+{%- if type.type.doc %}  <br />{{doc(type.type.doc)}}{%- endif %}
+{%- if type.type.constraints %}  <br />{{printConstraints(type.type.constraints)}}{%- endif %}
+{% else %}
+None
+{%- endif %}
+{% if type.doc and type.doc | length > 0 %}
+<br />{{doc(type.doc)}}
+{% endif %}
+{% else %}
+void
+{%- endif %}
+{% endmacro %}
+
+
+{##### Print DataType Attributes #####}
+{% macro printDataTypeAttributes(type) %}
+{%- if type and type.name %}
+*{{type.name}}* {{'{'}}
+{%- if type.unitOfMeasure %}UnitOfMeasure: "{{type.unitOfMeasure}}"{%- endif %}
+{{'}'}}
+{% endif %}
+{% endmacro %}
+
+
+{##### Print DataType Constraints #####}
+{% macro printConstraints(constraints) %}
+{%- if constraints %}
+{%- for constraint in constraints %}
+   ' {Constraint: '
+{%- if constraint.name %}{{constraint.name}}{%- endif %}
+{%- if constraint.type %}({{constraint.type}}){%- endif %}
+{%- if constraint.value %}="{{constraint.value}}"{%- endif %}
+{%- if constraint.doc %};{{doc(constraint.doc)}}{%- endif %}
+}
+{%- endfor %}
+{%- endif %}
+{% endmacro %}
+
+
+{##### Print Properties #####}
+{% macro printProperties(properties) %}
+{% if properties and properties | length > 0 %}
+
+{{incLevel('Properties')}}
+
+|Name |Type |Value |Optional |Documentation |
+|:----|:----|:-----|:--------|:-------------|
+{% for prop in properties %}
+| {{ prop.name }} | {{prop.type.type}} | {% if prop.value %}{{ prop.value }}{% else %} {% endif %} | {{boolean(prop.optional, 'false') }} | {{doc(prop.doc)}} |
+{% endfor %}
+{{decLevel()-}}
+{% endif %}
+{% endmacro %}
+
+
+{##### print Actions #####}
+{% macro printActions(actions) %}
+{% if actions and actions | length > 0 %}
+{{incLevel('Actions')}}
+
+|Return Type |Name |Arguments |Optional |Documentation |
+|:-----------|:----|:---------|:--------|:-------------|
+{% for action in actions %}
+| {{ printDataType(action.type) -}} | {{action.name}} |
+{%- if action.args | length == 1 %}{{printArgument(action.args[0])}}
+{%- elif action.args | length > 1 %}{% for arg in action.args %}{{printArgument(arg)}}<br /><br />{% endfor %}
+{%- else %}None{% endif -%}
+ | {{boolean(action.optional, 'false')}} | {{doc(action.doc)}} |
+{% endfor -%}
+{{decLevel()-}}
+{% endif -%}
+{% endmacro %}
+
+
+{##### Print Argument #####}
+{% macro printArgument(argument) %}
+{{argument.name}}:&nbsp;{{printDataType(argument.type)}}
+{%- endmacro %}
+
+
+{##### Print Data #####}
+{% macro printData(data) %}
+{% if data and data | length > 0 %}
+{{incLevel('Data Points')}}
+
+|Name |Type |Optional |Writable |Readable |Eventable |Documentation |
+|:----|:----|:--------|:--------|:--------|:---------|:-------------|
+{% for dp in data %}
+| {{dp.name}} | {{printDataType(dp.type)}} | {{boolean(dp.optional, 'false')}} | {{boolean(dp.writable, 'true')}} | {{boolean(dp.readable, 'true')}} | {{boolean(dp.eventable, 'false')}} | {{doc(dp.doc)}} |
+{% endfor -%}
+{{decLevel()-}}
+{% endif -%}
+{% endmacro %}
+
+
+{##### Print Events #####}
+{%- macro printEvents(events) %}
+{% if events and events | length > 0 %}
+{{incLevel('Events')}}
+
+|Name |Data |Optional |Documentation |
+|:----|:----|:--------|:-------------|
+{% for event in events %}
+| {{event.name}} | {% for dp in event.data %}{{dp.name}}: {{printDataType(dp.type)}}<br />{% endfor %} | {{event.optional}} | {{doc(event.doc)}} |
+{% endfor %}
+{{decLevel()}}
+{% endif %}
+{% endmacro %}
+
+
+{##### Print Modules #####}
+{%- macro printModules(modules, isModuleClass=False) %}
+{%- if modules | length > 0 %}
+{% if pageBreakBeforeMCandDevices %}
+<!--BREAK-->
+
+{% endif %}
+
+{% if isModuleClass %}{{incLevel('ModuleClasses')}}{% else %}{{incLevel('Modules')}}{% endif %}
+
+{% for module in modules %}
+{% if pageBreakBeforeMCandDevices %}
+<!--BREAK-->
+
+{% endif %}
+
+{{incLevel(module.name)}}
+
+{% if not hideDetails %}
+{{ doc(module.doc) }}
+{% if module.optional %}
+
+- **Optional**: {{module.optional}}
+
+{% endif %} {# module optional #}
+{% if extends %}
+|Domain |Class |
+|:------|:-----|
+| {{extends.domain}} | {{extends.clazz}} |
+{% endif %}
+{{ printProperties(module.properties)}}
+{{ printActions(module.actions)}}
+{{ printData(module.data)}}
+{{ printEvents(module.events)}}
+{% endif %} {# hideDetails #}
+{{decLevel()-}}
+{% endfor %} {# domain.modules #}
+{{decLevel()-}}
+{% endif %} {# domain.modules #}
+{% endmacro %}
+
+
+{##### Print SubDevices #####}
+{% macro printSubDevices(subdevices) %}
+{% if subdevices and subdevices | length > 0 %}
+#### SubDevices
+{% for sd in subdevices %}
+{{incLevel('SubDevice ' + sd.id)}}
+{{doc(sd.doc)}}
+{{printProperties(sd.properties)}}
+{{printModules(sd.modules)}}
+{{decLevel()}}
+{% endfor %}
+{% endif %}
+{% endmacro %}
+
+
+{##### Print Devices #####}
+{% macro printDevices(devices) %}
+{% if devices | length > 0 %}
+{% if pageBreakBeforeMCandDevices %}<!--BREAK-->{% endif %}
+
+{{incLevel('Devices')}}
+{% for device in devices %}
+{% if pageBreakBeforeMCandDevices %}<!--BREAK-->{% endif %}
+
+{% if not hideDetails %}
+
+{{incLevel(device.id)}}
+
+{{ doc(device.doc) }}
+{% if not hideDetails %}{{ printProperties(device.properties)}}{% endif %}
+
+{{ printModules(device.modules)}}
+{{ printSubDevices(device.subDevices)}}
+{% endif %}
+{{decLevel()-}}
+{% endfor %}
+{{decLevel()-}}
+{% endif %}
+
+{% endmacro %}
+
+
+{##### Print License #####}
+{%- macro printLicense(license) %}
+{% if license %}
+{{incLevel('License')}}
+{{license}}
+{{decLevel()}}
+{% endif %}
+{% endmacro %}
+
+

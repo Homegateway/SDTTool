@@ -2,7 +2,6 @@
 #
 #	Generate SVG in oneM2M's Resource format 
 
-
 import datetime, os, pathlib, string
 from .SDT3Classes import *
 from common.SDTSVG import *
@@ -19,7 +18,6 @@ headerText = ''
 # variable that holds the domain prefix for the oneM2M XSD
 namespacePrefix = ''
 
-
 # variable that holds the version of the data model
 modelVersion = ''
 
@@ -33,15 +31,12 @@ def print3OneM2MSVG(domain, directory, options):
 
 	# get the version of the data model
 	modelVersion = options['modelversion']
-
 	namespacePrefix = options['namespaceprefix']
 	if namespacePrefix == None:			# ERROR
 		print('Error: name space prefix not set')
 		return
 
 	# Create package path and make directories
-
-	#packagePath = directory + os.sep + domain.id.replace('.', os.sep)
 	path = pathlib.Path(directory)
 	try:
 		path.mkdir(parents=True)
@@ -50,223 +45,149 @@ def print3OneM2MSVG(domain, directory, options):
 	package = sanitizePackage(domain.id)
 
 	# Export ModuleClasses
-
 	for module in domain.modules:
 		exportModuleClass(module, package, path)
 
 	# Export Devices
-
 	for device in domain.devices:
 		exportDevice(device, package, path)
+		for subDevice in device.subDevices:
+			exportDevice(subDevice, package, path, parent=device)
 
 
 #############################################################################
 
-
 # Export a ModuleClass definition to a file
-
 def exportModuleClass(module, package, path, name=None):
-	global modelVersion, namespacePrefix
-
 	# export the module class itself
 
 	name = sanitizeName(module.name, False)
 	fileName = getVersionedFilename(name, 'svg', path=str(path), isModule=True, modelVersion=modelVersion, namespacePrefix=namespacePrefix)
-	outputFile = None
 	try:
-		outputFile = open(fileName, 'w')
-		outputFile.write(getModuleClassSVG(module, package, name, path))		
+		with open(fileName, 'w') as outputFile:
+			outputFile.write(getModuleClassSVG(module, package, name, path))		
 	except IOError as err:
 		print(err)
-	finally:
-		if (outputFile != None):
-			outputFile.close()
 
 
 # Get the ModuleClass resource
-
 def getModuleClassSVG(module, package, name, path):
-	res = Resource(sanitizeName(name, False))
-	res.specialization = True
+	res = Resource(sanitizeName(name, False), specialization=True)
 
 	# TODO: Extends?
 	# TODO: events?
-
 	addModuleClassHeaderToResource(res)
 
 	# Add properties
 	for prop in module.properties:
-		pr = Attribute(sanitizeName(prop.name, False))
-		pr.cardinality = cardinality01 if prop.optional == "true" else cardinality1
-		res.add(pr)
-
+		res.add(Attribute(sanitizeName(prop.name, False), cardinality=cardinality01 if prop.optional == "true" else cardinality1))
 
 	# DataPoints 
 	getDataPoints(res, module.data, name, path)
-
 	# Actions
 	getActions(res, module.actions, name, path)
-
 	addModuleClassFooterToResource(res)
-
-	result  = svgStart(res.width(), res.height(), headerText)
-	result += res.draw()
-	result += svgFinish()
-	return result
+	return svgStart(res.width(), res.height(), headerText) + res.draw() + svgFinish()
 
 
 # Add standard header attributes to a module class resource
-
 def addModuleClassHeaderToResource(resource):
-
-	contDefinition = Attribute('containerDefinition')
-	contDefinition.cardinality = cardinality1
-	resource.add(contDefinition)
-
-	creator = Attribute('creator')
-	creator.cardinality = cardinality01
-	resource.add(creator)
-
-	ontologyRef = Attribute('ontologyRef')
-	ontologyRef.cardinality = cardinality01
-	resource.add(ontologyRef)
+	resource.add(Attribute('containerDefinition', cardinality=cardinality1))
+	resource.add(Attribute('creator', cardinality=cardinality01))
+	resource.add(Attribute('ontologyRef', cardinality=cardinality01))
 
 
 # Add standard footer to a module class resource
-
 def addModuleClassFooterToResource(resource):
-
-	subscription = Resource('subscription')
-	subscription.cardinality = cardinality0n
-	resource.add(subscription)
+	resource.add(Resource('subscription', cardinality=cardinality0n))
 
 #############################################################################
 
-
 # Export a Device definition to a file
-
-def exportDevice(device, package, path):
-	global modelVersion, namespacePrefix
-
+def exportDevice(device, package, path, parent=None):
 	name = sanitizeName(device.id, False)
-	packagePath = str(path) + os.sep + name
-	path = pathlib.Path(packagePath)
+	pth = None
+	if isinstance(device, SDT3Device):
+		pth = pathlib.Path(str(path) + os.sep + name)
+	elif isinstance(device, SDT3SubDevice) and parent is not None and isinstance(parent, SDT3Device):
+		pth = pathlib.Path(str(path) + os.sep + sanitizeName(parent.id, False) + os.sep + name)
+	else:
+		return
 
 	try:
-		path.mkdir(parents=True)
+		pth.mkdir(parents=True)
 	except FileExistsError as e:
 		pass # on purpose. We override files for now
 
-	fileName = getVersionedFilename(name, 'svg', path=str(path), modelVersion=modelVersion, namespacePrefix=namespacePrefix)
-	outputFile = None
+	fileName = getVersionedFilename(name, 'svg', path=str(pth), modelVersion=modelVersion, namespacePrefix=namespacePrefix)
 	try:
-		outputFile = open(fileName, 'w')
-		outputFile.write(getDeviceSVG(device, package, name))
+		with open(fileName, 'w') as outputFile:
+			outputFile.write(getDeviceSVG(device, package, name))
 	except IOError as err:
 		print(err)
-	finally:
-		if (outputFile != None):
-			outputFile.close()
 
 	# export module classes of the device
-
 	for module in device.modules:
-		exportModuleClass(module, package, path, name)
+		exportModuleClass(module, package, pth, name)
 
 
 # Get the Device resource
 
 def getDeviceSVG(device, package, name):
-	res = Resource(sanitizeName(name, False))
-	res.specialization = True
-
+	res = Resource(sanitizeName(name, False), specialization=True)
 	addDeviceHeaderToResource(res)
 
 	# Add properties
 	for prop in device.properties:
-		pr = Attribute(sanitizeName(prop.name, False))
-		pr.cardinality = cardinality01 if prop.optional == "true" else cardinality1
-		res.add(pr)
+		res.add( Attribute(sanitizeName(prop.name, False), cardinality=cardinality01 if prop.optional == "true" else cardinality1))
 
 	# Add modules
 	for module in device.modules:
-		mod = Resource(sanitizeName(module.name, False))
-		mod.cardinality = cardinality01 if module.optional == 'true' else cardinality1
-		mod.specialization = True
-		res.add(mod)
+		res.add(Resource(sanitizeName(module.name, False), cardinality=cardinality01 if module.optional == 'true' else cardinality1, specialization=True))
+
+	# Add sub-devices
+	if isinstance(device, SDT3Device):
+		for subDevice in device.subDevices:
+			res.add(Resource(sanitizeName(subDevice.id, False), cardinality=cardinality1, specialization=True))
 
 	addDeviceFooterToResource(res)
+	return svgStart(res.width(), res.height(), headerText) + res.draw() + svgFinish()
 
-	result  = svgStart(res.width(), res.height(), headerText)
-	result += res.draw()
-	result += svgFinish()
-	return result
 
 
 # Add standard header attributes to a device resource
-
 def addDeviceHeaderToResource(resource):
-
-	contDefinition = Attribute('contDefinition')
-	contDefinition.cardinality = cardinality1
-	resource.add(contDefinition)
-
-	creator = Attribute('creator')
-	creator.cardinality = cardinality01
-	resource.add(creator)
-
-	ontologyRef = Attribute('ontologyRef')
-	ontologyRef.cardinality = cardinality01
-	resource.add(ontologyRef)
-
-
+	resource.add(Attribute('contDefinition', cardinality=cardinality1))
+	resource.add(Attribute('creator', cardinality=cardinality01))
+	resource.add(Attribute('ontologyRef', cardinality=cardinality01))
 
 
 # Add standard footer to a device resource
-
 def addDeviceFooterToResource(resource):
-
-	subscription = Resource('subscription')
-	subscription.cardinality = cardinality0n
-	subscription.specialization = False
-	resource.add(subscription)
+	resource.add(Resource('subscription', cardinality=cardinality0n))
 
 
 #############################################################################
 
 # Export a DataPoint definiton to a file
-
 def exportDataPoint(dataPoint, moduleName, path):
-	global modelVersion, namespacePrefix
-
 	name = sanitizeName(dataPoint.name, False)
 	mName = sanitizeName(moduleName, False)
 	fileName = getVersionedFilename(mName + '_' + name, 'svg', path=str(path), modelVersion=modelVersion, namespacePrefix=namespacePrefix)
-	outputFile = None
 	try:
-		outputFile = open(fileName, 'w')
-		outputFile.write(getDataPointSVG(dataPoint))		
+		with open(fileName, 'w') as outputFile:
+			outputFile.write(getDataPointSVG(dataPoint))		
 	except IOError as err:
 		print(err)
-	finally:
-		if (outputFile != None):
-			outputFile.close()
 
 
 # Get the DataPoint resource
-
 def getDataPointSVG(dataPoint):
-	res = Resource(sanitizeName(dataPoint.name, False))
-	res.specialization = True
-
+	res = Resource(sanitizeName(dataPoint.name, False), specialization=True)
 	addDataPointHeaderToResource(res)
 	# Nothing in between
 	addDataPointFooterToResource(res)
-
-	result  = svgStart(res.width(), res.height(), headerText)
-	result += res.draw()
-	result += svgFinish()
-	return result
+	return svgStart(res.width(), res.height(), headerText) + res.draw() + svgFinish()
 
 
 # Construct data points export
@@ -274,129 +195,68 @@ def getDataPoints(resource, dataPoints, moduleName, path):
 	if (dataPoints == None or len(dataPoints) == 0):
 		return
 	for dataPoint in dataPoints:
-
 		# First add it to the resource
-
-		dp = Attribute(sanitizeName(dataPoint.name, False))
-
-		if (dataPoint.optional == 'true'):
-			dp.cardinality = cardinality01
-		else:
-			dp.cardinality = cardinality1
-		resource.add(dp)
-
+		resource.add(Attribute(sanitizeName(dataPoint.name, False), \
+			cardinality=cardinality01 if dataPoint.optional == 'true' else cardinality1))
 		# write out to a file
 		exportDataPoint(dataPoint, moduleName, path)
 
 
-
 # Add standard header attributes to a data point resource
-
 def addDataPointHeaderToResource(resource):
-
-	contDefinition = Attribute('contDefinition')
-	contDefinition.cardinality = cardinality1
-	resource.add(contDefinition)
-
-	creator = Attribute('creator')
-	creator.cardinality = cardinality01
-	resource.add(creator)
-
-	ontologyRef = Attribute('ontologyRef')
-	ontologyRef.cardinality = cardinality01
-	resource.add(ontologyRef)
+	resource.add(Attribute('contDefinition', cardinality=cardinality1))
+	resource.add(Attribute('creator', cardinality=cardinality01))
+	resource.add(Attribute('ontologyRef', cardinality=cardinality01))
 
 
 # Add standard footer to a data point resource
-
 def addDataPointFooterToResource(resource):
-
-	subscription = Resource('subscription')
-	subscription.cardinality    = cardinality0n
-	subscription.specialization = False
-	resource.add(subscription)
+	resource.add(Resource('subscription', cardinality=cardinality0n, specialization=False))
 
 
 ########################################################################
 
 # Export an action definiton to a file
-
 def exportAction(action, moduleName, path):
-	global modelVersion, namespacePrefix
-
-	name = sanitizeName(action.name, False)
-	mName = sanitizeName(moduleName, False)
-	fileName = getVersionedFilename(name, 'svg', path=str(path), isAction=True, modelVersion=modelVersion, namespacePrefix=namespacePrefix)
-	outputFile = None
+	fileName = getVersionedFilename(sanitizeName(action.name, False), \
+		'svg', path=str(path), isAction=True, modelVersion=modelVersion, \
+		namespacePrefix=namespacePrefix)
 	try:
-		outputFile = open(fileName, 'w')
-		outputFile.write(getActionSVG(action))		
+		with open(fileName, 'w') as outputFile:
+			outputFile.write(getActionSVG(action))
 	except IOError as err:
-		print(err)
-	finally:
-		if (outputFile != None):
-			outputFile.close()
+	 	print(err)
 
 
 # Get the Action resource
-
 def getActionSVG(action):
-	res = Resource(sanitizeName(action.name, False))
-	res.specialization = True
-
+	res = Resource(sanitizeName(action.name, False), specialization=True)
 	addActionHeaderToResource(res)
 	# Nothing in between
 	addActionFooterToResource(res)
-
-	result  = svgStart(res.width(), res.height(), headerText)
-	result += res.draw()
-	result += svgFinish()
-	return result
+	return svgStart(res.width(), res.height(), headerText) + res.draw() + svgFinish()
 
 
 # Construct actions export
 def getActions(resource, actions, moduleName, path):
-	if (actions == None or len(actions) == 0):
+	if actions == None or len(actions) == 0:
 		return
 	for action in actions:
-
 		# First add it to the resource
-
-		dp = Attribute(sanitizeName(action.name, False))
-
-		if (action.optional == 'true'):
-			dp.cardinality = cardinality01
-		else:
-			dp.cardinality = cardinality1
-		resource.add(dp)
-
+		resource.add(Attribute(sanitizeName(action.name, False), \
+				cardinality=cardinality01 if action.optional == 'true' else cardinality1))
 		# write out to a file
 		exportAction(action, moduleName, path)
 
 
 # Add standard header attributes to a device resource
-
 def addActionHeaderToResource(resource):
-
-	contDefinition = Attribute('contDefinition')
-	contDefinition.cardinality = cardinality1
-	resource.add(contDefinition)
-
-	creator = Attribute('creator')
-	creator.cardinality = cardinality01
-	resource.add(creator)
-
-	ontologyRef = Attribute('ontologyRef')
-	ontologyRef.cardinality = cardinality01
-	resource.add(ontologyRef)
+	resource.add(Attribute('contDefinition', cardinality=cardinality1))
+	resource.add(Attribute('creator', cardinality=cardinality01))
+	resource.add(Attribute('ontologyRef', cardinality=cardinality01))
 
 
 # Add standard footer to an  resource
-
 def addActionFooterToResource(resource):
-
-	subscription = Resource('subscription')
-	subscription.cardinality    = cardinality0n
-	subscription.specialization = False
-	resource.add(subscription)
+	resource.add(Resource('subscription', cardinality=cardinality0n))
 

@@ -97,7 +97,7 @@ def print3OneM2MXSD(domain, directory, options):
 		exportDevice(device, package, path)
 
 	# Export enum types
-	exportEnumTypes(path)
+	exportEnumTypes(path)	
 
 	# Export found Actions
 	exportActions(path)
@@ -772,7 +772,7 @@ def exportAbbreviations(path, abbreviations):
 	outputFile = None
 	try:
 		outputFile = open(fullFilename, 'w')
-		outputFile.write(getAbbreviations(abbreviations))	
+		outputFile.write(abbreviations)
 	except IOError as err:
 		print(err)
 	finally:

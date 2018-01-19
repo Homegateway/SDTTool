@@ -4,7 +4,7 @@
 
 
 stdHeight      =  30
-stdWidth       = 200
+stdWidth       = 220
 sdtBorderSpace =  10
 stdGapH        =  50
 stdGapV        =  20
@@ -20,7 +20,7 @@ stdFillColor   = 'white'
 
 class Resource(object):
 	"""docstring for Resource"""
-	def __init__(self, name, x=sdtBorderSpace, y=sdtBorderSpace, cardinality='1'):
+	def __init__(self, name, x=sdtBorderSpace, y=sdtBorderSpace, cardinality='1', specialization=False):
 		super(Resource, self).__init__()
 		self.x              = x
 		self.y              = y
@@ -28,15 +28,13 @@ class Resource(object):
 		self.cardinality    = cardinality
 		self.parent         = None
 		self.children  	    = []
-		self.specialization = False
+		self.specialization = specialization
 
 	def add(self, obj):
-		global stdWidth, stdHeight, stdGapH, stdGapV
 		self.children.append(obj)
 		obj.x = self.x + stdWidth/2 + stdGapH
 		obj.y = self.y + (stdHeight + stdGapV) * len(self.children)
 		obj.parent = self
-		pass
 
 	def draw(self):
 		result = drawResource(self.x, self.y, self.name, self.specialization)
@@ -47,7 +45,6 @@ class Resource(object):
 		return result
 
 	def height(self):
-		global stdHeight
 		max = self.y + stdHeight + sdtBorderSpace
 		if len(self.children) == 0:
 			return max
@@ -59,7 +56,6 @@ class Resource(object):
 			return max
 
 	def width(self):
-		global stdWidth
 		max = self.x + stdWidth + sdtBorderSpace
 		if len(self.children) == 0:
 			return max
@@ -70,7 +66,6 @@ class Resource(object):
 					max = w
 			return max
 
-		
 
 class Attribute(object):
 	"""docstring for Attribute"""
@@ -89,11 +84,9 @@ class Attribute(object):
 		return result
 
 	def height(self):
-		global stdHeight, sdtBorderSpace
 		return self.y + stdHeight + sdtBorderSpace
 
 	def width(self):
-		global stdWidth, sdtBorderSpace
 		return self.x + stdWidth + sdtBorderSpace
 
 ###############################################################################
@@ -101,14 +94,10 @@ class Attribute(object):
 # SVG Stuff
 
 def svgStart(width=0, height=0, header=None):
-	global stdFillColor
 	result  = '<?xml version="1.0"?>\n'
 
 	if header != None:
-		result += '\n<!--\n'
-		result += sanitizeText(header)
-		result += '\n-->\n\n'
-
+		result += '\n<!--\n' + sanitizeText(header) + '\n-->\n\n'
 	if width > 0 and height > 0:
 		result += '<svg height="' + str(height) + '" width="' + str(width) + '" xmlns="http://www.w3.org/2000/svg">\n'
 	else:
@@ -122,7 +111,6 @@ def svgFinish():
 
 
 def svgRect(x, y, w, h, rxy=0):
-	global stdStrokeColor, stdFillColor, stdStrokeWidth
 	result  = '<rect '
 	result += 'x="' + str(x) + '" y="' + str(y) + '" '
 	result += 'width="' + str(w) + '" height="' + str(h) + '" '
@@ -134,7 +122,6 @@ def svgRect(x, y, w, h, rxy=0):
 
 
 def svgText(x, y, text, anchor=None, fontsize=-1):
-	global stdFontColor, stdFontFamily, stdFontSize
 	if fontsize == -1:
 		fontsize = stdFontSize
 	result  = '<text '
@@ -149,7 +136,6 @@ def svgText(x, y, text, anchor=None, fontsize=-1):
 
 
 def svgLine(x1, y1, x2, y2, color='black'):
-	global stdStrokeWidth
 	result  = '<line '
 	result += 'x1="' + str(x1) + '" y1="' + str(y1) + '" '
 	result += 'x2="' + str(x2) + '" y2="' + str(y2) + '" '
@@ -159,14 +145,12 @@ def svgLine(x1, y1, x2, y2, color='black'):
 
 
 def drawAttribute(x, y, text):
-	global stdWidth, stdHeight, stdRound, stdFontSize
 	result  = svgRect(x, y, stdWidth, stdHeight, stdRound)
 	result += svgText(x+(stdWidth/2), y+((stdHeight+stdFontSize)/2-2), text, 'middle')
 	return result
 
 
 def drawResource(x, y, text, isSpecialization):
-	global stdWidth, stdHeight, stdFontSize
 	label = '[' + text + ']' if isSpecialization else '&lt;' + text + '&gt;'
 	result  = svgRect(x, y, stdWidth, stdHeight)
 	result += svgText(x+(stdWidth/2), y+((stdHeight+stdFontSize)/2-2), label, 'middle')
@@ -175,8 +159,6 @@ def drawResource(x, y, text, isSpecialization):
 
 
 def drawLine(x1, y1, x2, y2, label):
-	global sdtStrokeColor, stdFontSize
-
 	# Draw line to parent
 	xs = x1 + stdWidth/2
 	ys = y1 + stdHeight
@@ -188,16 +170,11 @@ def drawLine(x1, y1, x2, y2, label):
 	result += svgLine(xm, ym, xe, ye, stdStrokeColor)
 
 	# Draw cardinality
-	fs = sdtFontSizeLine
-	result += svgText(xe-5, ye-fs/2, label, 'end', fs)
+	result += svgText(xe-5, ye-sdtFontSizeLine/2, label, 'end', sdtFontSizeLine)
 	return result
-
 
 
 def sanitizeText(text):
 	if (text == None or len(text) == 0):
 		return ''
-	result = text
-	result = result.replace('<', '&lt;')
-	result = result.replace('>', '&gt;')
-	return result
+	return text.replace('<', '&lt;').replace('>', '&gt;')
