@@ -1,5 +1,5 @@
 {##### Define CDT version to use #####}
-{% set CDTVersion = '3_5_0' %}
+{% set CDTVersion = '3_7_0' %}
 
 
 {##### Set some global variables to hold extended module classes #####}
