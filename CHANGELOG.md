@@ -1,7 +1,7 @@
 # Changelog
 
 ## Version 0.8
-xx.xx.xxxx
+15.05.2018
 
 - Added *--modelversion** 
 - Adopted to new naming scheme for oneM2M XSD and SVG files

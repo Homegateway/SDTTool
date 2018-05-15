@@ -122,8 +122,8 @@ or to mix command line arguments and configuration files:
 
 ## Changelog
 
-### Version 0.8
-xx.xx.xxxx
+## Version 0.8
+15.05.2018
 
 - Added *--modelversion** 
 - Adopted to new naming scheme for oneM2M XSD and SVG files
@@ -131,8 +131,11 @@ xx.xx.xxxx
 - Refactored script directory structure
 - Added *--markdownpagebreak* option
 - Added first support to generate Swagger files for ModuleClasses and Devices. Not complete yet. 
-- Added *-of swagger* option.
+- Added *-of swagger* option
 - Beautified OPML/Mindmanager output
+- First work on replacing the hand-crafted output modules by a templating engine (Jinja2, [](http://jinja.pocoo.org/)).
+- Profided first templates for markdown and oneM2M XSD.
+- Added support for oneM2M release R3
  
 
 ### Version 0.7
