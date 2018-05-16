@@ -98,7 +98,8 @@ def renderMultiple(templateFile, context, domain, directory, extension):
 		renderComponentToFile(context, isAction=True)
 
 	# Export extras
-	commons = SDT3Commons('commonTypes-' + getTimeStamp())
+	# commons = SDT3Commons('commonTypes-' + getTimeStamp())
+	commons = SDT3Commons('commonTypes')
 	commons.extendedModules = extendedModules
 	commons.extendedModulesExtends = extendedModulesExtends
 	commons.extendedSubDevices = extendedSubDevices
@@ -305,7 +306,9 @@ def sanitizeName(name, isClass, annc=False):
 	# name as well as the abbreviation.
 	if ':' not in name:	# ignore, for example, type/enum definitions
 		abbr = abbreviate(result)
-		if not annc:
+		if annc:
+			addAbbreviation(result + 'Annc', abbr + 'Annc')
+		else:
 			addAbbreviation(result, abbr)
 		# if annc:
 		# 	abbr = abbreviate(result)

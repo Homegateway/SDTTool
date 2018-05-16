@@ -93,8 +93,8 @@ def getModuleClassSVG(module, package, name, path):
 # Add standard header attributes to a module class resource
 def addModuleClassHeaderToResource(resource):
 	resource.add(Attribute('containerDefinition', cardinality=cardinality1))
-	resource.add(Attribute('creator', cardinality=cardinality01))
 	resource.add(Attribute('ontologyRef', cardinality=cardinality01))
+	resource.add(Attribute('contentSize', cardinality=cardinality1))
 
 
 # Add standard footer to a module class resource
@@ -157,9 +157,10 @@ def getDeviceSVG(device, package, name):
 
 # Add standard header attributes to a device resource
 def addDeviceHeaderToResource(resource):
-	resource.add(Attribute('contDefinition', cardinality=cardinality1))
-	resource.add(Attribute('creator', cardinality=cardinality01))
+	resource.add(Attribute('containerDefinition', cardinality=cardinality1))
 	resource.add(Attribute('ontologyRef', cardinality=cardinality01))
+	resource.add(Attribute('contentSize', cardinality=cardinality1))
+	resource.add(Attribute('nodeLink', cardinality=cardinality01))
 
 
 # Add standard footer to a device resource
@@ -204,9 +205,9 @@ def getDataPoints(resource, dataPoints, moduleName, path):
 
 # Add standard header attributes to a data point resource
 def addDataPointHeaderToResource(resource):
-	resource.add(Attribute('contDefinition', cardinality=cardinality1))
-	resource.add(Attribute('creator', cardinality=cardinality01))
+	resource.add(Attribute('containerDefinition', cardinality=cardinality1))
 	resource.add(Attribute('ontologyRef', cardinality=cardinality01))
+	resource.add(Attribute('contentSize', cardinality=cardinality1))
 
 
 # Add standard footer to a data point resource
@@ -251,9 +252,9 @@ def getActions(resource, actions, moduleName, path):
 
 # Add standard header attributes to a device resource
 def addActionHeaderToResource(resource):
-	resource.add(Attribute('contDefinition', cardinality=cardinality1))
-	resource.add(Attribute('creator', cardinality=cardinality01))
+	resource.add(Attribute('containerDefinition', cardinality=cardinality1))
 	resource.add(Attribute('ontologyRef', cardinality=cardinality01))
+	resource.add(Attribute('contentSize', cardinality=cardinality1))
 
 
 # Add standard footer to an  resource

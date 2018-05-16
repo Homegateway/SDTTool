@@ -292,8 +292,6 @@ unknown
                 
                     <!-- Resource Specific Attributes -->
 
-                    <xs:element name="mgmtLink" type="m2m:mgmtLinkRef" minOccurs="1" maxOccurs="1"/>
-
                     <!-- Child Resources -->
                     
                     <xs:choice minOccurs="0" maxOccurs="1">
@@ -318,8 +316,6 @@ unknown
                 <xs:sequence>
 
                     <!-- Resource Specific Attributes -->
-
-                    <xs:element name="mgmtLink" type="m2m:mgmtLinkRef" minOccurs="1" maxOccurs="1"/>
 
                     <!-- Child Resources -->
 
