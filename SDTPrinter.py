@@ -17,6 +17,8 @@ from sdtv3.SDT3PrintOneM2MSVG import print3OneM2MSVG
 from sdtv3.SDT3PrintOneM2MXSD import print3OneM2MXSD
 from sdtv3.SDT3PrintSwagger import print3Swagger
 from sdtv3.SDT3Templates import print3SDT
+from sdtv3.SDT3PrintSDT4 import print2DomainSDT4
+
 
 
 def printPlain(domain, options):
@@ -53,6 +55,15 @@ def printSDT3(domain, inputFormat, options):
 	else:
 		print('Conversion is not supported')
 		return ''
+
+def printSDT4(domain, inputFormat, options):
+	if domain == None:
+		return
+	if domain._version == '3' and inputFormat == 'sdt3':
+		return print2DomainSDT4(domain, options)
+	else:
+		print('Conversion is not supported')
+		return
 
 
 def printJava(domain, inputFormat, directory, options):
