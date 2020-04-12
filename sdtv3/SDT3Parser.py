@@ -137,8 +137,6 @@ class SDT3Parser:
 				lastElem.actions.append(action)
 				self.elementStack.append(action)
 			else:
-				print(self.elementStack)
-
 				raise SyntaxError('<Action> definition is only allowed in <Module> or <ModuleClass> element')
 
 		elif (ntag == SDT3Parser.argTag):

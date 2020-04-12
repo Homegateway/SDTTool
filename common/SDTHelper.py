@@ -48,8 +48,8 @@ def getVersionedFilename(fileName, extension, name=None, path=None, isModule=Fal
 			prefix += 'act-'
 		if isModule:
 			prefix += 'mod-'
-		if isEnum:
-			prefix += 'enu-'
+		# if isEnum:
+		# 	prefix += 'enu-'
 		if isShortName:
 			prefix += 'snm-'
 

@@ -5,12 +5,13 @@
 from xml.etree.ElementTree import XMLParser, ParseError
 from sdtv2 import *
 from sdtv3 import *
+from sdtv4 import *
 from SDTPrinter import *
 
 
 import io, sys, traceback, argparse, textwrap
 
-version = '0.8'
+version = '0.9'
 description = 'SDTTool ' + version + ' - A tool to read and convert Smart Device Templates.'
 epilog = 'Read arguments from one or more configuration files: @file1 @file2 ...|n |n See https://github.com/Homegateway for further information.'
 
@@ -33,6 +34,23 @@ class MultilineFormatter(argparse.HelpFormatter):
 			formatted_paragraph = textwrap.fill(paragraph, width, initial_indent=indent, subsequent_indent=indent) + '\n'
 			multiline_text = multiline_text + formatted_paragraph
 		return multiline_text
+
+class LineNumberingParser(XMLParser):
+    def _start_list(self, *args, **kwargs):
+        # Here we assume the default XML parser which is expat
+        # and copy its element position attributes into output Elements
+        element = super(self.__class__, self)._start_list(*args, **kwargs)
+        element._start_line_number = self.parser.CurrentLineNumber
+        element._start_column_number = self.parser.CurrentColumnNumber
+        element._start_byte_index = self.parser.CurrentByteIndex
+        return element
+
+    def _end(self, *args, **kwargs):
+        element = super(self.__class__, self)._end(*args, **kwargs)
+        element._end_line_number = self.parser.CurrentLineNumber
+        element._end_column_number = self.parser.CurrentColumnNumber
+        element._end_byte_index = self.parser.CurrentByteIndex
+        return element
 
 
 #
@@ -92,6 +110,16 @@ def readSDT3XML(inFile):
 
 
 #
+# Read and parse an SDT4 XML
+#
+def readSDT4XML(inFile):
+	# open the file
+	data = readDataFromFile(inFile)
+	# Parse the data
+	return parseData(SDT4Parser(), data)
+
+
+#
 #	Print the output to stdout or to a file
 #
 def outputResult(outFile, result):
@@ -126,20 +154,21 @@ def main(argv):
 	parser.convert_arg_line_to_args = convertArgLineToArgs
 
 	parser.add_argument('-o', '--outfile', action='store', dest='outFile', help='The output file or directory for the result. The default is stdout')
-	parser.add_argument('-if', '--inputformat', choices=('sdt2', 'sdt3'), action='store', dest='inputFormat', default='sdt3', help='The input format to read. The default is sdt3')
-	parser.add_argument('-of', '--outputformat', choices=('plain', 'opml', 'markdown', 'sdt3', 'java', 'vorto-dsl', 'onem2m-svg', 'onem2m-xsd', 'swagger'), action='store', dest='outputFormat', default='markdown', help='The output format for the result. The default is markdown')
+	parser.add_argument('-if', '--inputformat', choices=('sdt2', 'sdt3', 'sdt4'), action='store', dest='inputFormat', default='sdt4', help='The input format to read. The default is sdt4')
+	parser.add_argument('-of', '--outputformat', choices=('plain', 'opml', 'markdown', 'sdt3', 'sdt4', 'java', 'vorto-dsl', 'onem2m-svg', 'onem2m-xsd', 'swagger'), action='store', dest='outputFormat', default='markdown', help='The output format for the result. The default is markdown')
 	parser.add_argument('--hidedetails',  action='store_true', help='Hide the details of module classes and devices when printing documentation')
 	parser.add_argument('--markdowntables',  action='store_true', help='Format markdown output as tables for markdown')
 	parser.add_argument('--markdownpagebreak',  action='store_true', help='Insert page breaks before ModuleClasse and Device definitions.')
-	parser.add_argument('--licensefile',  action='store', dest='licensefile', help='Add the text of license file to output files')
+	parser.add_argument('-lf', '--licensefile',  action='store', dest='licensefile', help='Add the text of license file to output files')
 
 	oneM2MArgs = parser.add_argument_group('oneM2M sepcific')
 	oneM2MArgs.add_argument('--domain',  action='store', dest='domain', help='Set the domain for the model')
-	oneM2MArgs.add_argument('--namespaceprefix',  action='store', dest='namespaceprefix', help='Specify the name space prefix for the model')
+	oneM2MArgs.add_argument('-ns', '--namespaceprefix',  action='store', dest='namespaceprefix', help='Specify the name space prefix for the model')
 	oneM2MArgs.add_argument('--abbreviationsinfile',  action='store', dest='abbreviationsinfile', help='Specify the file that contains a CSV table of alreadys existing abbreviations.')
 	oneM2MArgs.add_argument('--abbreviationlength',  action='store', dest='abbreviationlength', default='5', help='Specify the maximum length for abbreviations. The default is 5.')
 	oneM2MArgs.add_argument('--xsdtargetnamespace',  action='store', dest='xsdtargetnamespace', help='Specify the target namespace for the oneM2M XSD (a URI).')
-	oneM2MArgs.add_argument('--modelversion',  action='store', dest='modelversion', help='Specify the version of the model.')
+	oneM2MArgs.add_argument('-mv', '--modelversion',  action='store', dest='modelversion', help='Specify the version of the model.')
+	oneM2MArgs.add_argument('--svg-with-attributes',  action='store_true', dest='svgwithattributes', help='Generate SVG for ModuleClass attributes as well.')
 
 	requiredNamed = parser.add_argument_group('required arguments')
 	requiredNamed.add_argument('-i', '--infile', action='store', dest='inFile', required=True, help='The SDT input file to parse')
@@ -165,6 +194,7 @@ def main(argv):
 	moreOptions['xsdtargetnamespace'] 			= args.xsdtargetnamespace
 	moreOptions['modelversion'] 				= args.modelversion
 	moreOptions['outputFormat']					= args.outputFormat
+	moreOptions['svgwithattributes']			= args.svgwithattributes
 
 
 	# Read input file. Check for correct format
@@ -181,6 +211,12 @@ def main(argv):
 			print('ERROR: Namespace "http://homegatewayinitiative.org/xml/dal/3.0" not found in input file.')
 			return
 
+	elif inputFormat == 'sdt4':
+		domain, nameSpaces = readSDT4XML(inFile)
+		if not checkForNamespace(nameSpaces, 'http://www.onem2m.org/xml/sdt/4.0'):
+			print('ERROR: Namespace "http://www.onem2m.org/xml/sdt/4.0" not found in input file.')
+			return
+
 	# Output to destination format
 	if args.outputFormat == 'plain':
 		outputResult(outFile, printPlain(domain, moreOptions))
@@ -190,6 +226,8 @@ def main(argv):
 		outputResult(outFile, printMarkdown(domain, moreOptions))
 	elif args.outputFormat == 'sdt3':
 		outputResult(outFile, printSDT3(domain, inputFormat, moreOptions))
+	elif args.outputFormat == 'sdt4':
+		outputResult(outFile, printSDT4(domain, inputFormat, moreOptions))
 	elif args.outputFormat == 'java':
 		printJava(domain, inputFormat, outFile, moreOptions)
 	elif args.outputFormat == 'vorto-dsl':
