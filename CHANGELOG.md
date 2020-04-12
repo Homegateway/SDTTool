@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 0.9
+xx.xx.2020
+
+- Added support for SDT version 4.
+- Support for namespace prefix in markdown generation.
+- Added some short versions for command line arguments.
+
 ## Version 0.8
 15.05.2018
 

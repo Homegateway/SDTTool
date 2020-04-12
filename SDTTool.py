@@ -35,6 +35,23 @@ class MultilineFormatter(argparse.HelpFormatter):
 			multiline_text = multiline_text + formatted_paragraph
 		return multiline_text
 
+class LineNumberingParser(XMLParser):
+    def _start_list(self, *args, **kwargs):
+        # Here we assume the default XML parser which is expat
+        # and copy its element position attributes into output Elements
+        element = super(self.__class__, self)._start_list(*args, **kwargs)
+        element._start_line_number = self.parser.CurrentLineNumber
+        element._start_column_number = self.parser.CurrentColumnNumber
+        element._start_byte_index = self.parser.CurrentByteIndex
+        return element
+
+    def _end(self, *args, **kwargs):
+        element = super(self.__class__, self)._end(*args, **kwargs)
+        element._end_line_number = self.parser.CurrentLineNumber
+        element._end_column_number = self.parser.CurrentColumnNumber
+        element._end_byte_index = self.parser.CurrentByteIndex
+        return element
+
 
 #
 # Read data from the input file
@@ -142,15 +159,16 @@ def main(argv):
 	parser.add_argument('--hidedetails',  action='store_true', help='Hide the details of module classes and devices when printing documentation')
 	parser.add_argument('--markdowntables',  action='store_true', help='Format markdown output as tables for markdown')
 	parser.add_argument('--markdownpagebreak',  action='store_true', help='Insert page breaks before ModuleClasse and Device definitions.')
-	parser.add_argument('--licensefile',  action='store', dest='licensefile', help='Add the text of license file to output files')
+	parser.add_argument('-lf', '--licensefile',  action='store', dest='licensefile', help='Add the text of license file to output files')
 
 	oneM2MArgs = parser.add_argument_group('oneM2M sepcific')
 	oneM2MArgs.add_argument('--domain',  action='store', dest='domain', help='Set the domain for the model')
-	oneM2MArgs.add_argument('--namespaceprefix',  action='store', dest='namespaceprefix', help='Specify the name space prefix for the model')
+	oneM2MArgs.add_argument('-ns', '--namespaceprefix',  action='store', dest='namespaceprefix', help='Specify the name space prefix for the model')
 	oneM2MArgs.add_argument('--abbreviationsinfile',  action='store', dest='abbreviationsinfile', help='Specify the file that contains a CSV table of alreadys existing abbreviations.')
 	oneM2MArgs.add_argument('--abbreviationlength',  action='store', dest='abbreviationlength', default='5', help='Specify the maximum length for abbreviations. The default is 5.')
 	oneM2MArgs.add_argument('--xsdtargetnamespace',  action='store', dest='xsdtargetnamespace', help='Specify the target namespace for the oneM2M XSD (a URI).')
-	oneM2MArgs.add_argument('--modelversion',  action='store', dest='modelversion', help='Specify the version of the model.')
+	oneM2MArgs.add_argument('-mv', '--modelversion',  action='store', dest='modelversion', help='Specify the version of the model.')
+	oneM2MArgs.add_argument('--svg-with-attributes',  action='store_true', dest='svgwithattributes', help='Generate SVG for ModuleClass attributes as well.')
 
 	requiredNamed = parser.add_argument_group('required arguments')
 	requiredNamed.add_argument('-i', '--infile', action='store', dest='inFile', required=True, help='The SDT input file to parse')
@@ -176,6 +194,7 @@ def main(argv):
 	moreOptions['xsdtargetnamespace'] 			= args.xsdtargetnamespace
 	moreOptions['modelversion'] 				= args.modelversion
 	moreOptions['outputFormat']					= args.outputFormat
+	moreOptions['svgwithattributes']			= args.svgwithattributes
 
 
 	# Read input file. Check for correct format
@@ -194,8 +213,8 @@ def main(argv):
 
 	elif inputFormat == 'sdt4':
 		domain, nameSpaces = readSDT4XML(inFile)
-		if not checkForNamespace(nameSpaces, 'http://homegatewayinitiative.org/xml/dal/4.0'):
-			print('ERROR: Namespace "http://homegatewayinitiative.org/xml/dal/4.0" not found in input file.')
+		if not checkForNamespace(nameSpaces, 'http://www.onem2m.org/xml/sdt/4.0'):
+			print('ERROR: Namespace "http://www.onem2m.org/xml/sdt/4.0" not found in input file.')
 			return
 
 	# Output to destination format

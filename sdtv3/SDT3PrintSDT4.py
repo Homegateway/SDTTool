@@ -5,11 +5,6 @@
 from .SDT3Classes import *
 from common.SDTHelper import decTab, incTab, newLine
 
-# TODO enum
-# TODO extends class -> entity
-# TODO Product
-# TODO DataTypeRef
-
 #
 #	Print functions
 #
@@ -17,40 +12,30 @@ from common.SDTHelper import decTab, incTab, newLine
 def print2DomainSDT4(domain, options):
 	result  = printXMLHeader(domain)
 	incTab()
-	if len(domain.includes) > 0:
-		result += newLine() + printIncludes(domain.includes)
-	if len(domain.modules) > 0:
-		result += newLine() + printModules(domain.modules)
-	if len(domain.devices) > 0:
-		result += printDevices(domain.devices)
+	result += r(printIncludes(domain.includes)) if len(domain.includes) > 0 else ''
+	result += r(printModuleClasses(domain.modules)) if len(domain.modules) > 0 else ''
+	result += r(printDevices(domain.devices)) if len(domain.devices) > 0 else ''
 	decTab()
-	result += newLine() + printXMLFooter()
+	result += r(printXMLFooter())
 	return result
 
 
 def printXMLHeader(domain):
 	result  = '<?xml version="1.0" encoding="iso-8859-1"?>'
-	result += newLine() + '<Domain xmlns="http://homegatewayinitiative.org/xml/dal/4.0"'
+	result += r('<Domain xmlns="http://www.onem2m.org/xml/sdt/4.0"')
 	incTab()
-	result += newLine() + 'xmlns:xi="http://www.w3.org/2001/XInclude"'
-	result += newLine() + 'id="' + domain.id + '">'
+	result += r('xmlns:xi="http://www.w3.org/2001/XInclude"')
+	result += r('id="' + domain.id + '">')
 	decTab()
 	return result
 
 
 def printXMLFooter():
-	result = '</Domain>'
-	return result
+	return '</Domain>'
 
 
 def printIncludes(includes):
-	result  = newLine() + '<Imports>'
-	for include in includes:
-		incTab()
-		result += newLine() + '<xi:include href="' + include.href + '" parse="' + include.parse + '" />'
-		decTab()
-	result += newLine() + '</Imports>'
-	return result
+	return _printList(includes, 'Imports', lambda x: r('<xi:include href="' + x.href + '" parse="' + x.parse + '" />'))
 
 
 #
@@ -58,47 +43,29 @@ def printIncludes(includes):
 #
 
 def printDevices(devices):
-	result = newLine() + newLine() + '<DeviceClasses>'
-	incTab()
-	for device in devices:
-		result += printDevice(device)
-	decTab()
-	result += newLine() + '</DeviceClasses>'
-	return result
+	return _printList(devices, 'DeviceClasses', printDevice)
 
 
 def printDevice(device):
-	result  = newLine() + '<DeviceClass id="' + device.id + '">'
+	result  = r('<DeviceClass id="' + device.id + '">')
 	incTab()
-	if device.doc:
-		result += newLine() + printDoc(device.doc)
-	if device.properties != None:
-		result += newLine() + printProperties(device.properties)
-	if len(device.modules) > 0:
-		result += printModules(device.modules)
-	if len(device.subDevices) > 0:
-		result += newLine() + '<SubDevices>'
-		incTab()
-		for subDevice in device.subDevices:
-			result += printSubDevice(subDevice)
-		decTab()
-		result += newLine() + '</SubDevices>'
+	result += r(printDoc(device.doc)) if device.doc else ''
+	result += printProperties(device.properties) if len(device.properties) > 0 else ''
+	result += printModuleClasses(device.modules) if len(device.modules) > 0 else ''
+	result += _printList(device.subDevices, 'SubDevices', printSubDevice)
 	decTab()
-	result += newLine() + '</DeviceClass>'
+	result += r('</DeviceClass>')
 	return result
 
 
 def printSubDevice(subDevice):
-	result  = newLine() + '<SubDevice id="' + subDevice.id + '">'
+	result  = r('<SubDevice id="' + subDevice.id + '">')
 	incTab()
-	if subDevice.doc:
-		result += newLine() + printDoc(subDevice.doc)
-	if subDevice.properties != None:
-		result += newLine() + printProperties(subDevice.properties)
-	if len(subDevice.modules) > 0:
-		result += printModules(subDevice.modules)
+	result += r(printDoc(subDevice.doc)) if subDevice.doc else ''
+	result += printProperties(subDevice.properties) if len(subDevice.properties) > 0 else ''
+	result += printModuleClasses(subDevice.modules) if len(subDevice.modules) > 0 else ''
 	decTab()
-	result += newLine() + '</SubDevice>'
+	result += r('</SubDevice>')
 	return result
 
 
@@ -107,73 +74,43 @@ def printSubDevice(subDevice):
 #
 
 def printProperties(properties):
-	result  = '<Properties>'
+	return _printList(properties, 'Properties', printProperty)
+
+
+def printProperty(property):
+	result += r('<Property name="' + property.name + '"')
+	result += ' optional="true"' if property.optional is not None and property.optional == 'true' else ''
+	result += ' value="'+ property.value + '"' if property.value else ''
+	result += '>'
 	incTab()
-	for property in properties:
-		result += newLine() + '<Property name="' + property.name + '"'
-		if property.optional and property.optional == 'true':
-			result += ' optional="true"'
-		if property.value:
-			result += ' value="'+ property.value + '"'
-		result += '>'
-		incTab()
-		if property.doc:
-			result += newLine() + printDoc(property.doc)
-		result += newLine() + printSimpleType(property.type)
-		decTab()
-		result += newLine() + '</Property>'
+	result += r(printDoc(property.doc)) if property.doc else ''
+	result += r(printSimpleType(property.type))
 	decTab()
-	result += newLine() + '</Properties>'
-	return result
+	result += newLine() + '</Property>'
+
 
 
 #
 #	ModuleClass
 #
 
-def printModules(modules):
-	result  = newLine() + '<ModuleClasses>'
-	incTab()
-	for module in modules:
-		result += printModule(module)
-	decTab()
-	result += newLine() + '</ModuleClasses>'
-	return result
+def printModuleClasses(moduleClasses):
+	return _printList(moduleClasses, 'ModuleClasses', printModuleClass)
 
 
-def printModule(module):
-	result  = newLine() + '<ModuleClass name="' + module.name + '"'
-	if module.optional and module.optional == 'true':
-		result += ' optional="true"'
+
+def printModuleClass(moduleClass):
+	result  = r('<ModuleClass name="' + moduleClass.name + '"')
+	result += ' optional="true"' if moduleClass.optional is not None and moduleClass.optional == 'true' else ''
 	result += '>'
 	incTab()
-	if module.extends != None:
-		result += newLine() + '<extends domain="' + module.extends.domain + '" class="' + module.extends.clazz + '"/>'
-	if module.doc != None:
-		result += '  ' + newLine() + printDoc(module.doc)
-	if len(module.actions) > 0:
-		result += newLine() + '<Actions>'
-		incTab()
-		for action in module.actions:
-			result += printAction(action)
-		decTab()
-		result += newLine() + '</Actions>'
-	if len(module.data) > 0:
-		result += newLine() + '<Data>'
-		incTab()
-		for data in module.data:
-			result += printDataPoint(data)
-		decTab()
-		result += newLine() + '</Data>'
-	if len(module.events) > 0:
-		result += newLine() + '<Events>'
-		incTab()
-		for event in module.events:
-			result += printEvent(event)
-		decTab()
-		result += newLine() + '</Events>'
+	result += r(printDoc(moduleClass.doc)) if moduleClass.doc != None else ''
+	result += r('<Extend domain="' + moduleClass.extends.domain + '" entity="' + moduleClass.extends.clazz + '"/>') if moduleClass.extends != None else ''
+	result += _printList(moduleClass.actions, 'Actions', printAction)
+	result += _printList(moduleClass.data, 'Data', printDataPoint)
+	result += _printList(moduleClass.events, 'Events', printEvent)
 	decTab()
-	result += newLine() + '</ModuleClass>'
+	result += r('</ModuleClass>')
 	return result
 
 
@@ -182,34 +119,24 @@ def printModule(module):
 #
 
 def printAction(action):
-	result = newLine() + '<Action name="' + action.name + '"'
-	if action.optional and action.optional == 'true':
-		result += ' optional="true"'
+	result = r('<Action name="' + action.name + '"')
+	result += ' optional="true"' if action.optional is not None and action.optional == 'true' else ''
 	result += '>'
 	incTab()
-	if action.doc != None:
-		result += '  ' + newLine() + printDoc(action.doc)
-	if action.type != None:
-		result += newLine() + printDataType(action.type)
-	if len(action.args) > 0:
-		result += newLine() + '<Args>'
-		incTab()
-		for argument in action.args:
-			result += printArgument(argument)
-		decTab()
-		result += newLine() + '</Args>'
+	result += r(printDoc(action.doc)) if action.doc != None else ''
+	result += r(printDataType(action.type)) if action.type != None else ''
+	result += _printList(action.args, 'Args', printArgument)
 	decTab()
-	result += newLine() + '</Action>'
+	result += r('</Action>')
 	return result
 
 
 def printArgument(action):
-	result  = newLine() + '<Arg name="' + action.name + '">'
+	result  = r('<Arg name="' + action.name + '">')
 	incTab();
-	if (action.type):
-		result += newLine() + printDataType(action.type)
+	result += r(printDataType(action.type)) if (action.type) else ''
 	decTab()
-	result += newLine() + '</Arg>'
+	result += r('</Arg>')
 	return result
 
 
@@ -218,22 +145,14 @@ def printArgument(action):
 #
 
 def printEvent(event):
-	result = newLine() + '<Event name="' + event.name + '"'
-	if module.optional and module.optional == 'true':
-		result += ' optional="true"'
+	result = r('<Event name="' + event.name + '"')
+	result += ' optional="true"'  if module.optional is not None and module.optional == 'true' else ''
 	result += '>'
 	incTab()
-	if event.doc != None:
-		result += newLine() + printDoc(event.doc)
-	if len(event.data) > 0:
-		result += newLine() + '<Data>'
-		incTab()
-		for dataPoint in event.data:
-			result += printDataPoint(dataPoint)
-		decTab()
-		result += newLine() + '</Data>'
+	result += r(printDoc(event.doc)) if event.doc != None else ''
+	result += _printList(event.data, 'Data', printDataPoint)
 	decTab()
-	result += newLine() + '</Event>'
+	result += r('</Event>')
 	return result
 
 
@@ -242,24 +161,17 @@ def printEvent(event):
 #
 
 def printDataPoint(datapoint):
-	result = newLine() + '<DataPoint name="' + datapoint.name + '"'
-	if datapoint.optional and datapoint.optional == 'true':
-		result += ' optional="true"'
-	if datapoint.writable and datapoint.writable == 'false':
-		result += ' writable="false"'
-	if datapoint.readable and datapoint.readable == 'false':
-		result += ' readable="false"'
-	if datapoint.eventable and datapoint.eventable == 'true':
-		result += ' eventable="true"'
+	result = r('<DataPoint name="' + datapoint.name + '"')
+	result += ' optional="true"' if datapoint.optional is not None and datapoint.optional == 'true' else ''
+	result += ' writable="false"' if datapoint.writable is not None and datapoint.writable == 'false' else ''
+	result += ' readable="false"' if datapoint.readable is not None and datapoint.readable == 'false' else ''
+	result += ' eventable="true"' if datapoint.eventable is not None and datapoint.eventable == 'true' else ''
 	result += '>'
-
 	incTab()
-	if datapoint.doc != None:
-		result += newLine() + printDoc(datapoint.doc)
-	if datapoint.type != None:
-		result += newLine() + printDataType(datapoint.type)
+	result += r(printDoc(datapoint.doc)) if datapoint.doc != None else ''
+	result += r(printDataType(datapoint.type)) if datapoint.type != None else ''
 	decTab()
-	result += newLine() + '</DataPoint>'
+	result += r('</DataPoint>')
 	return result
 
 
@@ -267,70 +179,71 @@ def printDataPoint(datapoint):
 #	Print the data types
 #
 def printDataType(dataType):
+
+	# special handling for oneM2M enum definitions up to v3
+	name = dataType.type.type if isinstance(dataType.type, SDT3SimpleType) and dataType.type.type.startswith('hd:') else dataType.name
+
 	result = '<DataType'
-	if dataType.name:
-		result += ' name="' + dataType.name + '"'
-	if dataType.unitOfMeasure:
-		result += ' unitOfMeasure="' + dataType.unitOfMeasure + '"'
+	result += ' name="' + name + '"' if name is not None else ''
+	result += ' unitOfMeasure="' + dataType.unitOfMeasure + '"' if dataType.unitOfMeasure else ''
 	result += '>'
-	if dataType.doc != None:
-		result += newLine() + printDoc(dataType.doc)
+
 	incTab()
+	result += r(printDoc(dataType.doc)) if dataType.doc != None else ''
 	if isinstance(dataType.type, SDT3SimpleType):
 		result += newLine() + printSimpleType(dataType.type)
 	elif isinstance(dataType.type, SDT3StructType):
 		result += newLine() + printStructType(dataType.type)
 	elif isinstance(dataType.type, SDT3ArrayType):
 		result += newLine() + printArrayType(dataType.type)
-	if dataType.constraints:
-		result += newLine() + '<Constraints>'
-		incTab()
-		for constraint in dataType.constraints:
-			result += printConstraint(constraint)
-		decTab()
+	result += _printList(dataType.constraints, 'Constraints', printConstraint)
 	decTab()
-	result += newLine() + '</DataType>'
+	result += r('</DataType>')
 	return result
 
 
 def printSimpleType(dataType):
-	return '<SimpleType type="' + dataType.type + '" />'
+	result = '<Simple type="' + dataType.type + '" />'
+	# hack for oneM2M enums
+	if dataType.type.startswith('hd:'):
+		result  = '<Enum>'
+		incTab()
+		result += r('<!-- TODO: Add enum values -->')
+		result += r('<EnumValue name="name" value="1" />')
+		decTab()
+		result += r('</Enum>')
+	return result
 
 
 def printStructType(dataType):
-	result = '<StructType>'
+	result = '<Struct>'
 	incTab()
 	for element in dataType.type.structElements:
 		result += newLine() + printDataType(element)
 	decTab()
-	result += '</StructType>'
+	result += '</Struct>'
 	return result
 
 
 def printArrayType(dataType):
-	arrayType = dataType.type
-	result = '<ArrayType>'
+	result = '<Array>'
 	incTab()
-	result += newLine() + printDataType(dataType.arrayType)
+	result += r(printDataType(dataType.arrayType))
 	decTab()
-	result += newLine() + '</ArrayType>'
+	result += r('</Array>')
 	return result
 
 
 def printConstraint(constraint):
-	result = newLine() + '<Constraint name="' + containt.name + '"'
-	if constraint.type:
-		result += ' type="' + constraint.type + '"'
-	if constraint.value:
-		result += ' value="' + constraint.value + '"'
+	result = r('<Constraint name="' + containt.name + '"')
+	result += ' type="' + constraint.type + '"' if constraint.type else ''
+	result += ' value="' + constraint.value + '"' if constraint.value is not None else ''
 	result += '>'
 	incTab()
-	if constraint.doc != None:
-		result += newLine() + printDoc(constraint.doc)
+	result += r(printDoc(constraint.doc)) if constraint.doc != None else ''
 	decTab()
 	result += newLine() + '</Constraint>'
 	return result
-
 
 
 #
@@ -338,6 +251,24 @@ def printConstraint(constraint):
 #
 
 def printDoc(doc):
-	result = '<Doc>' + doc.content.strip() + '</Doc>'
+	return '<Doc>' + doc.content.strip() + '</Doc>'
+
+
+#
+#	misc functions to help printing results
+#
+
+def _printList(lst, element, func):
+	result = ''
+	if len(lst) > 0:
+		result += '%s<%s>' % (newLine(), element)
+		incTab()
+		for l in lst:
+			result += func(l)
+		decTab()
+		result += '%s</%s>' % (newLine(), element)
 	return result
 
+
+def r(line):
+	return '%s%s' % (newLine(), line)

@@ -1,5 +1,5 @@
 # SDTTool
-Version 0.8
+Version 0.9
 
 *SDTTool* is a utility to read and convert *Smart Device Template* (*SDT*) definitions.
 
@@ -55,15 +55,18 @@ Skeletons of *definitions* and *paths* operations for a Swagger input file can b
 Running the script without with the ``-h`` option or without any argument will present a an overview about all possible command line parameters.
 
 ### Input Formats
-- ``-if {sdt2,sdt3,}`` , ``--inputformat {sdt2,sdt3,}``: The input format to read. The default is *sdt3*.
+- ``-if {sdt2,sdt3,sdt4}`` , ``--inputformat {sdt2,sdt3,sdt4}``: The input format to read. The default is *sdt4*.
 
 The following input formats are supported for the ``-if`` or ``--inputformat`` command line argument:
 
 - **sdt2**: SDT Version 2.0.1
-- **sdt3**: SDT Version 3.0, the default
+- **sdt3**: SDT Version 3.0
+- **sdt4**: SDT Version 4.0, the default
 
 ### Output Formats
-- ``-of {plain,opml,markdown,sdt3,java,vorto-dsl,onem2m-svg,onem2m-xsd,swagger}``, ``--outputformat {plain,opml,markdown,sdt3,java,vorto-dsl,onem2m-svg,onem2m-xsd,swagger}``: The output format for the result. The default is *markdown*.
+Please note that not all output formats are available for every SDT version.
+
+- ``-of {plain,opml,markdown,sdt3,sdt4,java,vorto-dsl,onem2m-svg,onem2m-xsd,swagger}``, ``--outputformat {plain,opml,markdown,sdt3,sdt4,java,vorto-dsl,onem2m-svg,onem2m-xsd,swagger}``: The output format for the result. The default is *markdown*.
 
 Output formats for documentation for the ``-of`` or ``--outputformat`` command line argument:
 
@@ -87,11 +90,15 @@ For this output format the argument ``-o`` refers to an output directory, not a 
 
 ### oneM2M specific arguments
 - ``--domain <domain name>``: Specify the domain name for XSD output.
-- ``--namespaceprefix <xsd prefix>``: Specify the XSD name space prefix for the model. This argument is mandatory when generating XSD and SVG.
+- ``-ns <xsd prefix>``, ``--namespaceprefix <xsd prefix>``: Specify the XSD name space prefix for the model. This argument is mandatory when generating XSD and SVG drawings.
 - ``--abbreviationsinfile <filename>``: Specify the file that contains a CSV table of already existing abbreviations.
 - ``--abbreviationlength <integer>``: Specify the maximum length for abbreviations. The default is *5*.
 - ``--xsdtargetnamespace <URI>`` : Specify the target namespace for the oneM2M XSD.
-- ``--modelversion <version number>`` : Specify the version of the model. This is used in the filenames of XSD and SVG files. "." characters are replaced with "_".
+- ``-mv <version number>``, ``--modelversion <version number>`` : Specify the version of the model. This is used in the filenames of XSD and SVG files. "." characters are replaced with "_".
+
+- ``--svg-with-attributes`` : Generate SVG drawings for ModuleClass attributes as well.
+
+
 
 ### Markdown Specific Arguments
 - ``--markdowntables``: Generate tables instead of the usual list output style for markdown.
@@ -100,7 +107,7 @@ For this output format the argument ``-o`` refers to an output directory, not a 
 
 ### Other Arguments
 - ``--hidedetails``: Hide the details of module classes and devices when generating the documentation.
-- ``--licensefile <filename>``: Add the text of the specified file as a license to the generated files.
+- ``-lf <filename>``, ``--licensefile <filename>``: Add the text of the specified file as a license to the generated files.
 
 
 ### Configuration Files
@@ -122,48 +129,10 @@ or to mix command line arguments and configuration files:
 
 ## Changelog
 
-## Version 0.8
-15.05.2018
-
-- Added *--modelversion** 
-- Adopted to new naming scheme for oneM2M XSD and SVG files
-- Various fixes for XSD schemas. Support oneM2M Version 2 XSD
-- Refactored script directory structure
-- Added *--markdownpagebreak* option
-- Added first support to generate Swagger files for ModuleClasses and Devices. Not complete yet. 
-- Added *-of swagger* option
-- Beautified OPML/Mindmanager output
-- First work on replacing the hand-crafted output modules by a templating engine (Jinja2, [](http://jinja.pocoo.org/)).
-- Profided first templates for markdown and oneM2M XSD.
-- Added support for oneM2M release R3
- 
-
-### Version 0.7
-09.04.2016
-
-- Export to Eclipse Vorto, first version
-- First version of export to SVG in oneM2M resource format
-- First version of export to oneM2M XSD
-- First version of abbreviation support (for oneM2M)
-- Fixed errors in Java export
-- Fixed errors in OPML export
-- Improved markdown export
-- Added optional reading of command line arguments from configuration file(s)
-- Made SDT3 the default input format
-- minor bug fixes
-
-### Version 0.6
-04.02.2016
-
-- Improved Java export: output documentation when available, generate static variables for property names, added getter for event payload data points
-- Fixed error when exporting SDT2 to markdown
-- Added option (``--markdowntables``) to present data points, actions, properties and more in table format
-
-
 See the [Changelog](CHANGELOG.md) for all changes.
 
 ## Copyright and License
-Copyright (c) 2015 Deutsche Telekom AG
+Copyright (c) 2015-2020 Deutsche Telekom AG
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

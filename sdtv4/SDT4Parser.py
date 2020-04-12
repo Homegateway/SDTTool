@@ -4,39 +4,46 @@
 
 from .SDT4Classes import *
 
+
 class SDT4Parser:
 
-	# Define the element tags of the SDT3
+	# Define the element tags of the SDT4
 
-	includeTag						= 'include'
+	actionTag 						= 'action'
+	actionsTag						= 'actions'
+	argTag							= 'arg'
+	argsTag							= 'args'
+	arrayTypeTag					= 'array'
+	constraintTag					= 'constraint'
+	constraintsTag					= 'constraints'
+	dataPointTag					= 'datapoint'
+	dataTag							= 'data'
+	dataTypeTag						= 'datatype'
+	dataTypesTag					= 'datatypes'
+	deviceClassTag					= 'deviceclass'
+	deviceClassesTag				= 'deviceclasses'
 	domainTag						= 'domain'
+	enumTypeTag 					= 'enum'
+	enumValueTag 					= 'enumvalue'
+	eventTag 						= 'event'
+	eventsTag						= 'events'
+	excludeTag						= 'exclude'
+	extendDeviceTag					= 'extenddevice'
+	extendTag						= 'extend'
 	importsTag						= 'imports'
+	includeTag						= 'include'
 	moduleClassTag					= 'moduleclass'
-	moduleTag 						= 'module'
-	extendsTag						= 'extends'
-	devicesTag						= 'devices'
-	deviceTag 						= 'device'
-	subDevicesTag 					= 'subdevices'
-	subDeviceTag 					= 'subdevice'
+	moduleClassesTag				= 'moduleclasses'
+	productClassTag 				= 'productclass'
+	productClassesTag				= 'productclasses'
 	propertiesTag					= 'properties'
 	propertyTag						= 'property'
-	actionsTag						= 'actions'
-	actionTag 						= 'action'
-	argsTag							= 'args'
-	argTag							= 'arg'
-	eventsTag						= 'events'
-	eventTag 						= 'event'
-	dataTag							= 'data'
-	dataPointTag					= 'datapoint'
-	dataTypeTag						= 'datatype'
-	simpleTypeTag					= 'simpletype'
+	simpleTypeTag					= 'simple'
 	structTypeTag					= 'struct'
-	arrayTypeTag					= 'array'
-	constraintsTag					= 'constraints'
-	constraintTag					= 'constraint'
+	subDeviceTag 					= 'subdevice'
+	subDevicesTag 					= 'subdevices'
 
-
-
+	# Document tags
 	docTag 							= 'doc'
 	ttTag							= 'tt'
 	emTag							= 'em'
@@ -44,7 +51,6 @@ class SDT4Parser:
 	pTag 							= 'p'
 	imgTag							= 'img'
 	imgCaptionTag					= 'caption'
-
 
 
 	def __init__(self):
@@ -56,16 +62,14 @@ class SDT4Parser:
 	def start(self, tag, attrib):
 
 		# First add the name space to the list of used name spaces
-
-		uri, ignore, ntag = tag[1:].partition("}")
-		if (uri not in self.nameSpaces):
+		uri, ignore, otag = tag[1:].partition("}")
+		if uri not in self.nameSpaces:
 			self.nameSpaces.append(uri)
-		ntag = ntag.lower()
+		ntag = otag.lower()
 
 		# Check non-emptyness of attributes
 		for at in attrib:
-			value = attrib[at].strip()
-			if len(value) == 0:
+			if len(attrib[at].strip()) == 0:
 				raise SyntaxError('empty attribute: ' + at + ' for element ' + tag)
 
 
@@ -73,366 +77,369 @@ class SDT4Parser:
 
 		# The lastElem always contains the last element on the stack and is
 		# used transparently in the code below.
-		if (len(self.elementStack) > 0):
-			lastElem = self.elementStack[-1]
-			#print(lastElem)
+		lastElem = self.elementStack[-1] if len(self.elementStack) > 0 else None
 
-		# Domain, includes
-
-		if (ntag == SDT4Parser.domainTag):
-			self.domain = SDT4Domain()
-			self.domain.id = _getAtribute(attrib, 'id')
-			self.domain.semanticURI = _getAtribute(attrib, 'semanticURI')
-			self.elementStack.append(self.domain)
-
-		elif (ntag == SDT3Parser.includeTag):
-			if (isinstance(lastElem, SDT3Domain)):
-				self.domain = self.elementStack[-1]
-				include = SDT3Include()
-				include.parse = attrib['parse'].strip() if 'parse' in attrib else None
-				include.href = attrib['href'].strip() if 'href' in attrib else None
-				self.domain.includes.append(include)
+		# Call the handler function for that element tag.
+		# First, chech whether this is allowed for the current parent, or raise an exception
+		if ntag in handlers:
+			(func, instances) = handlers[ntag]
+			if instances is None or isinstance(lastElem, instances):
+				func(attrib, lastElem, self.elementStack)
 			else:
-				raise SyntaxError('<include> definition is only allowed in <domain> element')
-
-
-		# ModulClass, Module, Extends
-
-		elif (ntag == SDT3Parser.moduleClassTag):
-			if (isinstance(lastElem, SDT3Domain)):
-				module = SDT3ModuleClass()
-				module.name = attrib['name'].strip() if 'name' in attrib else None
-				module.optional = attrib['optional'].strip() if 'optional' in attrib else None
-				lastElem.modules.append(module)
-				self.elementStack.append(module)
-			else:
-				raise SyntaxError('<ModuleClass> definition is only allowed in <Domain> element')
-
-		elif (ntag == SDT3Parser.moduleTag):
-			if (isinstance(lastElem, SDT3Device) or isinstance(lastElem, SDT3SubDevice)):
-				module = SDT3Module()
-				module.name = attrib['name'].strip() if 'name' in attrib else None
-				module.optional = attrib['optional'].strip() if 'optional' in attrib else None
-				lastElem.modules.append(module)
-				self.elementStack.append(module)
-			else:
-				raise SyntaxError('<Module> definition is only allowed in <RootDevice> or <Device> element')
-
-		elif (ntag == SDT3Parser.extendsTag):
-			if (isinstance(lastElem, SDT3Module) or isinstance(lastElem, SDT3ModuleClass) or isinstance(lastElem, SDT3SubDevice)):
-				extends = SDT3Extends()
-				extends.domain = attrib['domain'].strip() if 'domain' in attrib else None
-				extends.clazz = attrib['class'].strip() if 'class' in attrib else None
-				lastElem.extends = extends
-			else:
-				raise SyntaxError('<extends> definition is only allowed in <Module> or <ModuleClass> element')
-
-		# Action, Arg
-
-		elif (ntag == SDT3Parser.actionTag):
-			if (isinstance(lastElem, SDT3Module) or isinstance(lastElem, SDT3ModuleClass)):
-				action = SDT3Action()
-				action.name = attrib['name'] if 'name' in attrib else None
-				action.optional = attrib['optional'] if 'optional' in attrib else None
-				lastElem.actions.append(action)
-				self.elementStack.append(action)
-			else:
-				print(self.elementStack)
-
-				raise SyntaxError('<Action> definition is only allowed in <Module> or <ModuleClass> element')
-
-		elif (ntag == SDT3Parser.argTag):
-			if (isinstance(lastElem, SDT3Action)):
-				arg = SDT3Arg()
-				arg.name = attrib['name'].strip() if 'name' in attrib else None
-				lastElem.args.append(arg)
-				self.elementStack.append(arg)
-			else:
-				raise SyntaxError('<Arg> definition is only allowed in <Action> element')
-
-		# Event
-
-		elif (ntag == SDT3Parser.eventTag):
-			if (isinstance(lastElem, SDT3Module) or isinstance(lastElem, SDT3ModuleClass)):
-				event = SDT3Event()
-				event.name = attrib['name'].strip() if 'name' in attrib else None
-				event.optional = attrib['optional'].strip() if 'optional' in attrib else None
-				lastElem.events.append(event)
-				self.elementStack.append(event)
-			else:
-				raise SyntaxError('<Event> definition is only allowed in <Module> or <ModuleClass> element')
-
-		# DataPoint
-
-		elif (ntag == SDT3Parser.dataPointTag):
-			if (isinstance(lastElem, SDT3Event) or isinstance(lastElem, SDT3ModuleClass) or isinstance(lastElem, SDT3Module)):
-				dataPoint = SDT3DataPoint()
-				dataPoint.name = attrib['name'].strip() if 'name' in attrib else None
-				dataPoint.optional = attrib['optional'].strip() if 'optional' in attrib else dataPoint.optional
-				dataPoint.writable = attrib['writable'].strip() if 'writable' in attrib else dataPoint.writable
-				dataPoint.readable = attrib['readable'].strip() if 'readable' in attrib else dataPoint.readable
-				dataPoint.eventable = attrib['eventable'].strip() if 'eventable' in attrib else dataPoint.eventable
-				lastElem.data.append(dataPoint)
-				self.elementStack.append(dataPoint)
-			else:
-				raise SyntaxError('<DataPoint> definition is only allowed in <Event>, <Module> or <ModuleClass> element')
-	
-		# Device, SubDevice
-
-		elif (ntag == SDT3Parser.deviceTag):
-			if (isinstance(lastElem, SDT3Domain)):
-				device = SDT3Device()
-				device.id = attrib['id'].strip() if 'id' in attrib else None
-				lastElem.devices.append(device)
-				self.elementStack.append(device)
-			else:
-				raise SyntaxError('<Device> definition is only allowed in <Domain> element')
-
-		elif (ntag == SDT3Parser.subDeviceTag):
-			if (isinstance(lastElem, SDT3Device)):
-				subDevice = SDT3SubDevice()
-				subDevice.id = attrib['id'].strip() if 'id' in attrib else None
-				lastElem.subDevices.append(subDevice)
-				self.elementStack.append(subDevice)
-			else:
-				raise SyntaxError('<SubDevice> definition is only allowed in <Device> element')
-
-		# Property & elements
-
-		elif (ntag == SDT3Parser.propertyTag):
-			if (isinstance(lastElem, SDT3Device) or isinstance(lastElem, SDT3SubDevice)
-				or isinstance(lastElem, SDT3Module) or isinstance(lastElem, SDT3ModuleClass)):
-				prop = SDT3Property()
-				prop.name = attrib['name'].strip() if 'name' in attrib else None
-				prop.optional = attrib['optional'].strip() if 'optional' in attrib else None
-				prop.value = attrib['value'].strip() if 'value' in attrib else None
-				lastElem.properties.append(prop)
-				self.elementStack.append(prop)
-			else:
-				raise SyntaxError('<Property> definition is only allowed in <Device>, <SubDevice>, <Module> or <ModuleClass> element')
-
-		# DataType
-
-		elif (ntag == SDT3Parser.dataTypeTag):
-			if (isinstance(lastElem, SDT3Action)     or isinstance(lastElem, SDT3DataPoint) or
-				isinstance(lastElem, SDT3Event)      or isinstance(lastElem, SDT3Arg) or
-				isinstance(lastElem, SDT3StructType) or isinstance(lastElem, SDT3ArrayType)
-			):
-				dataType = SDT3DataType()
-				dataType.name = attrib['name'].strip() if 'name' in attrib else None
-				dataType.unitOfMeasure = attrib['unitOfMeasure'].strip() if 'unitOfMeasure' in attrib else None
-				if (isinstance(lastElem, SDT3ArrayType)):
-					lastElem.arrayType = dataType
-				elif (isinstance(lastElem, SDT3StructType)):
-					lastElem.structElements.append(dataType)
-				else:
-					lastElem.type = dataType
-				self.elementStack.append(dataType)
-			else:
-				raise SyntaxError('<DataType> definition is only allowed in <Action>, <DataPoint>, <Event>'+
-					'<Arg>, <DeviceInfo>, <Struct> or <Array> element')
-
-		# SimpleType
-
-		elif (ntag == SDT3Parser.simpleTypeTag):
-			if (isinstance(lastElem, SDT3DataType) or isinstance(lastElem, SDT3Property)):
-				typeElem = SDT3SimpleType()
-				typeElem.type = attrib['type'].strip() if 'type' in attrib else None
-				lastElem.type = typeElem
-				self.elementStack.append(typeElem)
-			else:
-				raise SyntaxError('<SimpleType> definition is only allowed in <DataType> or <Property> element')
-
-		# Array
-
-		elif (ntag == SDT3Parser.arrayTypeTag):
-			if (isinstance(lastElem, SDT3DataType)):
-				typeElem = SDT3ArrayType()
-				lastElem.type = typeElem
-				self.elementStack.append(typeElem)
-			else:
-				raise SyntaxError('<Array> definition is only allowed in <DataType> element')
-
-		# Struct
-
-		elif (ntag == SDT3Parser.structTypeTag):
-			if (isinstance(lastElem, SDT3DataType)):
-				typeElem = SDT3StructType()
-				lastElem.type = typeElem
-				self.elementStack.append(typeElem)
-			else:
-				raise SyntaxError('<Array> definition is only allowed in <DataType> element')
-
-		# Constraint
-
-		elif (ntag == SDT3Parser.constraintTag):
-			if (isinstance(lastElem, SDT3DataType)):
-				constraint = SDT3Constraint()
-				constraint.name = attrib['name'].strip() if 'name' in attrib else None
-				constraint.type = attrib['type'].strip() if 'type' in attrib else None
-				constraint.value = attrib['value'].strip() if 'value' in attrib else None
-				lastElem.constraints.append(constraint)
-				self.elementStack.append(constraint)
-			else:
-				raise SyntaxError('<Constraint> definition is only allowed in <DataType> element')
-	
-		# Doc & elements
-
-		elif (ntag == SDT3Parser.docTag):
-			if (isinstance(lastElem, SDT3Domain)     or	isinstance(lastElem, SDT3Device) or
-				isinstance(lastElem, SDT3SubDevice)  or isinstance(lastElem, SDT3DataType) or
-				isinstance(lastElem, SDT3Module)     or isinstance(lastElem, SDT3ModuleClass) or
-				isinstance(lastElem, SDT3Action)     or isinstance(lastElem, SDT3DataPoint) or
-				isinstance(lastElem, SDT3Event)      or isinstance(lastElem, SDT3Arg) or
-				isinstance(lastElem, SDT3Constraint) or isinstance(lastElem, SDT3Property)
-			):
-				doc = SDT3Doc()
-				lastElem.doc = doc
-				self.elementStack.append(doc)
-			else:
-				raise SyntaxError('<Doc> definition is only allowed in <RootDevice>, <Device>, <Property>, <Module>' +
-					'<ModuleClass>, <Action>, <DataPoint>, <Arg>, <Constraint>, <DataType> or <Event> element')
-
-		elif (ntag == SDT3Parser.ttTag):
-			if (isinstance(lastElem, SDT3Doc) or isinstance(lastElem, SDT3DocP)):
-				tt = SDT3DocTT()
-				tt.doc = lastElem.doc
-				self.elementStack.append(tt)
-			else:
-				raise SyntaxError('<tt> definition is only allowed in <Doc> or <p> element')
-
-		elif (ntag == SDT3Parser.emTag):
-			if (isinstance(lastElem, SDT3Doc) or isinstance(lastElem, SDT3DocP)):
-				em = SDT3DocEM()
-				em.doc = lastElem.doc
-				self.elementStack.append(em)
-			else:
-				raise SyntaxError('<em> definition is only allowed in <Doc> or <p> element')
-
-		elif (ntag == SDT3Parser.bTag):
-			if (isinstance(lastElem, SDT3Doc) or isinstance(lastElem, SDT3DocP)):
-				b = SDT3DocB()
-				b.doc = lastElem.doc
-				self.elementStack.append(b)
-			else:
-				raise SyntaxError('<b> definition is only allowed in <Doc> or <p> element')
-
-		elif (ntag == SDT3Parser.pTag):
-			if (isinstance(lastElem, SDT3Doc) or isinstance(lastElem, SDT3DocP)):
-				p = SDT3DocP()
-				p.doc = lastElem.doc
-				p.startParagraph()
-				self.elementStack.append(p)
-			else:
-				raise SyntaxError('<p> definition is only allowed in <Doc> or <p> element')
-
-		elif (ntag == SDT3Parser.imgTag):
-			if (isinstance(lastElem, SDT3Doc) or isinstance(lastElem, SDT3DocP)):
-				img = SDT3DocIMG()
-				img.doc = lastElem.doc
-				img.startImage(attrib['src'].strip() if 'src' in attrib else None)
-				self.elementStack.append(img)
-			else:
-				raise SyntaxError('<img> definition is only allowed in <Doc> or <p> element')
-
-		elif (ntag == SDT3Parser.imgCaptionTag):
-			if (isinstance(lastElem, SDT3DocIMG)):
-				caption = SDT3DocCaption()
-				caption.doc = lastElem.doc
-				self.elementStack.append(caption)
-			else:
-				raise SyntaxError('<caption> definition is only allowed in <img> element')
-
+				raise SyntaxError('%s definition is only allowed in %s elements' % (otag, [v._name for v in instances]))
 
 		# Other tags to ignore / just containers
-
-		elif (ntag == SDT3Parser.devicesTag or
-			  ntag == SDT3Parser.subDevicesTag or
-			  ntag == SDT3Parser.propertiesTag or
-			  ntag == SDT3Parser.modulesTag or
-			  ntag == SDT3Parser.actionsTag or
-			  ntag == SDT3Parser.eventsTag or
-			  ntag == SDT3Parser.dataTag or
-			  ntag == SDT3Parser.importsTag or
-			  ntag == SDT3Parser.argsTag or
-			  ntag == SDT3Parser.constraintsTag):
+		elif ntag in (SDT4Parser.actionsTag,
+					  SDT4Parser.argsTag,
+					  SDT4Parser.constraintsTag,
+					  SDT4Parser.dataTag,
+					  SDT4Parser.dataTypesTag,
+					  SDT4Parser.deviceClassesTag,
+					  SDT4Parser.eventsTag,
+					  SDT4Parser.extendDeviceTag,
+					  SDT4Parser.importsTag, 
+					  SDT4Parser.moduleClassesTag,
+					  SDT4Parser.productClassesTag,
+					  SDT4Parser.propertiesTag,
+					  SDT4Parser.subDevicesTag):
 			pass
 
+		# Encountered an unknwon element
 		else:
-			print('*** Unknown Element: ' + tag, attrib)
+			raise SyntaxError('Unknown Element: %s %s' % (tag, attrib))
 
 
 	def end(self, tag):
 		uri, ignore, ntag = tag[1:].partition("}")
 		ntag = ntag.lower()
+		if ntag == SDT4Parser.domainTag:
+			self.domain = self.elementStack.pop() # Assign the domain to the parser as result
 
-		if (ntag == SDT3Parser.domainTag):
-			self.domain = self.elementStack.pop()
-
-		elif (ntag == SDT3Parser.moduleClassTag or
-			  ntag == SDT3Parser.moduleTag or
-  			  ntag == SDT3Parser.deviceTag or
-			  ntag == SDT3Parser.subDeviceTag or
-			  ntag == SDT3Parser.propertyTag or
-			  ntag == SDT3Parser.actionTag or
-			  ntag == SDT3Parser.argTag or
-			  ntag == SDT3Parser.eventTag or
-			  ntag == SDT3Parser.dataPointTag or
-			  ntag == SDT3Parser.docTag or
-			  ntag == SDT3Parser.ttTag or
-			  ntag == SDT3Parser.emTag or 
-			  ntag == SDT3Parser.bTag or 
-			  ntag == SDT3Parser.imgCaptionTag or
-			  ntag == SDT3Parser.simpleTypeTag or 
-			  ntag == SDT3Parser.structTypeTag or
-			  ntag == SDT3Parser.arrayTypeTag or
-			  ntag == SDT3Parser.dataTypeTag or
-			  ntag == SDT3Parser.constraintTag
-			  ):
-			self.elementStack.pop()
-
-
-
-		elif (ntag == SDT3Parser.pTag):
+		elif ntag in (SDT4Parser.actionTag,
+					  SDT4Parser.argTag, 
+					  SDT4Parser.arrayTypeTag,
+					  SDT4Parser.bTag,
+					  SDT4Parser.constraintTag,
+					  SDT4Parser.eventTag,
+					  SDT4Parser.deviceClassTag,
+					  SDT4Parser.dataPointTag,
+					  SDT4Parser.dataTypeTag,
+					  SDT4Parser.docTag,
+					  SDT4Parser.emTag,
+					  SDT4Parser.enumTypeTag,
+					  SDT4Parser.enumValueTag,
+					  SDT4Parser.extendTag,
+					  SDT4Parser.imgTag,  
+					  SDT4Parser.imgCaptionTag,
+					  SDT4Parser.moduleClassTag, 
+					  SDT4Parser.pTag,
+					  SDT4Parser.productClassTag,
+					  SDT4Parser.propertyTag,
+					  SDT4Parser.simpleTypeTag,
+					  SDT4Parser.structTypeTag,
+					  SDT4Parser.subDeviceTag,
+					  SDT4Parser.ttTag):
 			obj = self.elementStack.pop()
-			obj.endParagraph()
-		elif (ntag == SDT3Parser.imgTag):
-			obj = self.elementStack.pop()
-			obj.endImage()
+			obj.endElement()
+		else:
+			# ignore others
+			pass
 
 
 	def data(self, data):
-		if (isinstance(self.elementStack[-1], SDT3Doc)):
+		if len(self.elementStack) < 1:
+			return
+
+
+
+
+		if isinstance(self.elementStack[-1], SDT4Doc):
 			obj = self.elementStack[-1]
 			obj.addContent(' ' + ' '.join(data.split()))
-		elif (isinstance(self.elementStack[-1], SDT3DocTT)):
-			obj = self.elementStack[-1]
-			obj.addContent(' '.join(data.split()))
-		elif (isinstance(self.elementStack[-1], SDT3DocEM)):
-			obj = self.elementStack[-1]
-			obj.addContent(' '.join(data.split()))
-		elif (isinstance(self.elementStack[-1], SDT3DocB)):
-			obj = self.elementStack[-1]
-			obj.addContent(' '.join(data.split()))
-		elif (isinstance(self.elementStack[-1], SDT3DocP)):
-			obj = self.elementStack[-1]
-			obj.addContent(' '.join(data.split()))
-		elif (isinstance(self.elementStack[-1], SDT3DocIMG)):
-			obj = self.elementStack[-1]
-			obj.addContent(' '.join(data.split()))
-		elif (isinstance(self.elementStack[-1], SDT3DocCaption)):
+		elif isinstance(self.elementStack[-1], (SDT4DocTT, SDT4DocEM, SDT4DocB, SDT4DocP, SDT4DocIMG, SDT4DocCaption)):
 			obj = self.elementStack[-1]
 			obj.addContent(' '.join(data.split()))
 
 
-	def close(self):
+	def close(self): # ignore end of file
 		pass
 
 
-	def comment(self, data):
+	def comment(self, data): # ignore comments
 		pass
 
 
-def _getAtribute(attrib, attribName):
+def getAttribute(attrib, attribName):
 	return attrib[attribName].strip() if attribName in attrib else None
 
+
+#
+#	Hanlder for each of the element types
+#
+
+def handleAction(attrib, lastElem, elementStack):
+	action = SDT4Action()
+	action.name = getAttribute(attrib, 'name')
+	action.optional = getAttribute(attrib, 'optional')
+	action.semanticURI = getAttribute(attrib, 'semanticURI')
+	lastElem.actions.append(action)
+	elementStack.append(action)
+
+
+def handleArg(attrib, lastElem, elementStack):
+	arg = SDT4Arg()
+	arg.name = getAttribute(attrib, 'name')
+	arg.optional = getAttribute(attrib, 'optional')
+	arg.default = getAttribute(attrib, 'default')
+	arg.semanticURI = getAttribute(attrib, 'semanticURI')
+	lastElem.args.append(arg)
+	elementStack.append(arg)
+
+
+def handleArrayType(attrib, lastElem, elementStack):
+	arrayType = SDT4ArrayType()
+	lastElem.type = arrayType
+	elementStack.append(arrayType)
+
+
+def handleB(attrib, lastElem, elementStack):
+	b = SDT4DocB()
+	b.doc = lastElem.doc
+	elementStack.append(b)
+
+
+def handleConstraint(attrib, lastElem, elementStack):
+	constraint = SDT4Constraint()
+	constraint.name = getAttribute(attrib, 'name')
+	constraint.type = getAttribute(attrib, 'type')
+	constraint.value = getAttribute(attrib, 'value')
+	constraint.semanticURI = getAttribute(attrib, 'semanticURI')
+	lastElem.constraints.append(constraint)
+	elementStack.append(constraint)
+
+
+def handleDataPoint(attrib, lastElem, elementStack):
+	dataPoint = SDT4DataPoint()
+	dataPoint.name = getAttribute(attrib, 'name')
+	dataPoint.optional = getAttribute(attrib, 'optional')
+	dataPoint.writable = getAttribute(attrib, 'writable')
+	dataPoint.readable = getAttribute(attrib, 'readable')
+	dataPoint.eventable = getAttribute(attrib, 'eventable')
+	dataPoint.default = getAttribute(attrib, 'default')
+	dataPoint.semanticURI = getAttribute(attrib, 'semanticURI')
+	lastElem.data.append(dataPoint)
+	elementStack.append(dataPoint)
+
+
+def handleDataType(attrib, lastElem, elementStack):
+	dataType = SDT4DataType()
+	dataType.name = getAttribute(attrib, 'name')
+	dataType.unitOfMeasure = getAttribute(attrib, 'unitOfMeasure')
+	dataType.semanticURI = getAttribute(attrib, 'semanticURI')
+	if isinstance(lastElem, SDT4ArrayType):
+		lastElem.arrayType = dataType
+	elif isinstance(lastElem, SDT4StructType):
+		lastElem.structElements.append(dataType)
+	elif isinstance(lastElem, SDT4Domain):			# DataTypes in Domain
+		lastElem.dataTypes.append(dataType)
+	else:
+		lastElem.type = dataType
+	elementStack.append(dataType)
+
+
+def handleDeviceClass(attrib, lastElem, elementStack):
+	device = SDT4DeviceClass()
+	device.id = getAttribute(attrib, 'id')
+	device.semanticURI = getAttribute(attrib, 'semanticURI')
+	lastElem.deviceClasses.append(device)
+	elementStack.append(device)
+
+
+def handleDoc(attrib, lastElem, elementStack):
+	doc = SDT4Doc()
+	lastElem.doc = doc
+	elementStack.append(doc)
+
+
+def handleDomain(attrib, lastElem, elementStack):
+	domain = SDT4Domain()
+	domain.id = getAttribute(attrib, 'id')
+	domain.semanticURI = getAttribute(attrib, 'semanticURI')
+	elementStack.append(domain)
+
+
+def handleEM(attrib, lastElem, elementStack):
+	em = SDT4DocEM()
+	em.doc = lastElem.doc
+	elementStack.append(em)
+
+
+def handleEnumType(attrib, lastElem, elementStack):
+	enumType = SDT4EnumType()
+	lastElem.type = enumType
+	elementStack.append(enumType)
+
+
+def handleEnumValue(attrib, lastElem, elementStack):
+	value = SDT4EnumValue()
+	value.name = getAttribute(attrib, 'name')
+	value.value = getAttribute(attrib, 'value')
+	value.type = getAttribute(attrib, 'type')
+	value.semanticURI = getAttribute(attrib, 'semanticURI')
+	lastElem.enumValues.append(value)
+	elementStack.append(value)
+
+
+def handleEvent(attrib, lastElem, elementStack):
+	event = SDT4Event()
+	event.name = getAttribute(attrib, 'name')
+	event.optional = getAttribute(attrib, 'optional')
+	event.semanticURI = getAttribute(attrib, 'semanticURI')
+	lastElem.events.append(event)
+	elementStack.append(event)
+
+
+def handleExtendExclude(attrib, lastElem, elementStack):
+	exclude = SDT4ExtendExclude()
+	exclude.name = getAttribute(attrib, 'name')
+	exclude.type = getAttribute(attrib, 'type')
+	lastElem.excludes.append(exclude)
+
+
+def handleExtend(attrib, lastElem, elementStack):
+	extend = SDT4Extend()
+	extend.domain = getAttribute(attrib, 'domain')
+	extend.entity = getAttribute(attrib, 'entity')
+	if isinstance(lastElem, SDT4ProductClass): # for ProductClass
+		lastElem.extendDevice = extend
+	else: # normal extend
+		lastElem.extend = extend
+	elementStack.append(extend)
+
+
+def handleImg(attrib, lastElem, elementStack):
+	img = SDT4DocIMG()
+	img.doc = lastElem.doc
+	img.startImage(getAttribute(attrib, 'src'))
+	elementStack.append(img)
+
+
+def handleImgCaption(attrib, lastElem, elementStack):
+	caption = SDT4DocCaption()
+	caption.doc = lastElem.doc
+	elementStack.append(caption)
+
+
+def handleInclude(attrib, lastElem, elementStack):
+	# Unfortunately, there are two "include" element types to handle
+	if isinstance(lastElem, SDT4Extend):
+		include = SDT4ExtendInclude()
+		include.name = getAttribute(attrib, 'name')
+		include.type = getAttribute(attrib, 'type')
+		lastElem.excludes.append(include)
+	else:
+		include = SDT4Include()
+		include.parse = getAttribute(attrib, 'parse')
+		include.href = getAttribute(attrib, 'href')
+		lastElem.includes.append(include)
+
+
+
+def handleModuleClass(attrib, lastElem, elementStack):
+	mc = SDT4ModuleClass()
+	mc.name = getAttribute(attrib, 'name')
+	mc.semanticURI = getAttribute(attrib, 'semanticURI')
+	mc.minOccurs = getAttribute(attrib, 'minOccurs')
+	mc.maxOccurs = getAttribute(attrib, 'maxOccurs')
+	lastElem.moduleClasses.append(mc)
+	elementStack.append(mc)
+
+
+def handleP(attrib, lastElem, elementStack):
+	p = SDT4DocP()
+	p.doc = lastElem.doc
+	p.startParagraph()
+	elementStack.append(p)
+
+
+def handleProductClass(attrib, lastElem, elementStack):
+	product = SDT4ProductClass()
+	product.id = getAttribute(attrib, 'name')
+	product.semanticURI = getAttribute(attrib, 'semanticURI')
+	lastElem.productClasses.append(product)
+	elementStack.append(product)
+
+
+def handleProperty(attrib, lastElem, elementStack):
+	prop = SDT4Property()
+	prop.name = getAttribute(attrib, 'name')
+	prop.optional = getAttribute(attrib, 'optional')
+	prop.value = getAttribute(attrib, 'value')
+	prop.semanticURI = getAttribute(attrib, 'semanticURI')
+	lastElem.properties.append(prop)
+	elementStack.append(prop)
+
+
+def handleSimpleType(attrib, lastElem, elementStack):
+	simpleType = SDT4SimpleType()
+	simpleType.type = getAttribute(attrib, 'type')
+	lastElem.type = simpleType
+	elementStack.append(simpleType)
+
+
+def handleStructType(attrib, lastElem, elementStack):
+	structType = SDT4StructType()
+	lastElem.type = structType
+	self.elementStack.append(structType)
+
+
+def handleSubDevice(attrib, lastElem, elementStack):
+	subDevice = SDT4SubDevice()
+	subDevice.id = getAttribute(attrib, 'id')
+	subDevice.semanticURI = getAttribute(attrib, 'semanticURI')
+	subDevice.minOccurs = getAttribute(attrib, 'minOccurs')
+	subDevice.maxOccurs = getAttribute(attrib, 'maxOccurs')
+	lastElem.subDevices.append(subDevice)
+	elementStack.append(subDevice)
+
+
+def handleTT(attrib, lastElem, elementStack):
+	tt = SDT4DocTT()
+	tt.doc = lastElem.doc
+	elementStack.append(tt)
+
+
+#
+#	Assignment of element types and (handlerFunction, (tuple of allowed parents))
+#
+
+
+handlers = {
+	SDT4Parser.actionTag 		: (handleAction, (SDT4ModuleClass,)),
+	SDT4Parser.argTag 			: (handleArg, (SDT4Action,)),
+	SDT4Parser.arrayTypeTag 	: (handleArrayType, (SDT4DataType,)),
+	SDT4Parser.bTag 			: (handleB, (SDT4Doc, SDT4DocP)),
+	SDT4Parser.constraintTag 	: (handleConstraint, (SDT4DataType,)),
+	SDT4Parser.dataPointTag		: (handleDataPoint, (SDT4Event, SDT4ModuleClass)),
+	SDT4Parser.dataTypeTag 		: (handleDataType, (SDT4Action, SDT4DataPoint, SDT4Event, SDT4Arg, SDT4StructType, SDT4ArrayType, SDT4Domain)),
+	SDT4Parser.deviceClassTag 	: (handleDeviceClass, (SDT4Domain,)),
+	SDT4Parser.docTag 			: (handleDoc, (SDT4Domain, SDT4ProductClass, SDT4DeviceClass, SDT4SubDevice, SDT4DataType, SDT4ModuleClass, SDT4Action, SDT4DataPoint, SDT4Event, SDT4EnumValue, SDT4Arg, SDT4Constraint, SDT4Property)),
+	SDT4Parser.domainTag 		: (handleDomain, None),
+	SDT4Parser.emTag 			: (handleEM, (SDT4Doc, SDT4DocP)),
+	SDT4Parser.enumTypeTag 		: (handleEnumType, (SDT4DataType,)),
+	SDT4Parser.enumValueTag 	: (handleEnumValue, (SDT4EnumType,)),
+	SDT4Parser.eventTag 		: (handleEvent, (SDT4ModuleClass,)),
+	SDT4Parser.excludeTag 		: (handleExtendExclude, (SDT4Extend,)),
+	SDT4Parser.extendTag 		: (handleExtend, (SDT4ModuleClass, SDT4DataType, SDT4ProductClass, SDT4SubDevice)),
+	SDT4Parser.imgTag 			: (handleImg, (SDT4Doc, SDT4DocP)),
+	SDT4Parser.imgCaptionTag 	: (handleImgCaption, (SDT4DocIMG,)),
+	SDT4Parser.includeTag 		: (handleInclude, (SDT4Domain, SDT4Extend)),
+	SDT4Parser.moduleClassTag 	: (handleModuleClass, (SDT4Domain, SDT4ProductClass, SDT4DeviceClass, SDT4SubDevice, SDT4ProductClass)),
+	SDT4Parser.pTag 			: (handleP, (SDT4Doc, SDT4DocP)),
+	SDT4Parser.productClassTag	: (handleProductClass, (SDT4Domain,)),
+	SDT4Parser.propertyTag		: (handleProperty, (SDT4ProductClass, SDT4DeviceClass, SDT4SubDevice, SDT4ModuleClass)),
+	SDT4Parser.simpleTypeTag 	: (handleSimpleType, (SDT4DataType, SDT4Property)),
+	SDT4Parser.structTypeTag	: (handleStructType, (SDT4DataType,)),
+	SDT4Parser.subDeviceTag 	: (handleSubDevice, (SDT4DeviceClass, SDT4ProductClass, SDT4Domain)),
+	SDT4Parser.ttTag 			: (handleTT, (SDT4Doc, SDT4DocP))
+}

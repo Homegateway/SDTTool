@@ -1,9 +1,9 @@
-#	SDT3PrintOneM2MSVG.py
+#	SDT4PrintOneM2MSVG.py
 #
 #	Generate SVG in oneM2M's Resource format 
 
 import datetime, os, pathlib, string
-from .SDT3Classes import *
+from .SDT4Classes import *
 from common.SDTSVG import *
 from common.SDTHelper import *
 
@@ -21,8 +21,11 @@ namespacePrefix = ''
 # variable that holds the version of the data model
 modelVersion = ''
 
-def print3OneM2MSVG(domain, options, directory):
-	global headerText, modelVersion, namespacePrefix
+# variable that holds whether datapoints should be exported as well
+exportDataPoints = False
+
+def print4OneM2MSVG(domain, options, directory):
+	global headerText, modelVersion, namespacePrefix, exportDataPoints
 
 	lfile = options['licensefile']
 	if lfile != None:
@@ -36,6 +39,9 @@ def print3OneM2MSVG(domain, options, directory):
 		print('Error: name space prefix not set')
 		return
 
+	# Generate SVG's for ModuleClass attributes as well?
+	exportDataPoints = options['svgwithattributes']
+
 	# Create package path and make directories
 	path = pathlib.Path(directory)
 	try:
@@ -45,14 +51,25 @@ def print3OneM2MSVG(domain, options, directory):
 	package = sanitizePackage(domain.id)
 
 	# Export ModuleClasses
-	for module in domain.modules:
-		exportModuleClass(module, package, path)
+	for moduleClass in domain.moduleClasses:
+		exportModuleClass(moduleClass, package, path)
 
 	# Export Devices
-	for device in domain.devices:
-		exportDevice(device, package, path)
-		for subDevice in device.subDevices:
-			exportDevice(subDevice, package, path, parent=device)
+	for deviceClass in domain.deviceClasses:
+		exportDevice(deviceClass, package, path)
+		for subDevice in deviceClass.subDevices:
+			exportDevice(subDevice, package, path, parent=deviceClass)
+
+	# Export possible SubDevices
+	for subDevice in domain.subDevices:
+		exportDevice(subDevice, package, path)
+
+def cardinality(obj):
+	if obj.minOccurs == '0' and obj.maxOccurs == '1':
+		return cardinality01
+	if obj.minOccurs == '0' and obj.maxOccurs == 'n':
+		return cardinality0n
+	return cardinality1
 
 
 #############################################################################
@@ -107,13 +124,15 @@ def addModuleClassFooterToResource(resource):
 def exportDevice(device, package, path, parent=None):
 	name = sanitizeName(device.id, False)
 	pth = None
-	if isinstance(device, SDT3Device):
+	if isinstance(device, SDT4DeviceClass):
 		pth = pathlib.Path(str(path) + os.sep + name)
-	elif isinstance(device, SDT3SubDevice) and parent is not None and isinstance(parent, SDT3Device):
+	elif isinstance(device, SDT4SubDevice) and parent is not None and isinstance(parent, SDT4DeviceClass):
 		pth = pathlib.Path(str(path) + os.sep + sanitizeName(parent.id, False) + os.sep + name)
+	elif isinstance(device, SDT4SubDevice) and parent is None:
+		pth = pathlib.Path(str(path) + os.sep + name)
 	else:
 		return
-
+	
 	try:
 		pth.mkdir(parents=True)
 	except FileExistsError as e:
@@ -127,8 +146,9 @@ def exportDevice(device, package, path, parent=None):
 		print(err)
 
 	# export module classes of the device
-	for module in device.modules:
-		exportModuleClass(module, package, pth, name)
+	if exportDataPoints:
+		for moduleClass in device.moduleClasses:
+			exportModuleClass(moduleClass, package, pth, name)
 
 
 # Get the Device resource
@@ -142,13 +162,13 @@ def getDeviceSVG(device, package, name):
 		res.add( Attribute(sanitizeName(prop.name, False), cardinality=cardinality01 if prop.optional == "true" else cardinality1))
 
 	# Add modules
-	for module in device.modules:
-		res.add(Resource(sanitizeName(module.name, False), cardinality=cardinality01 if module.optional == 'true' else cardinality1, specialization=True))
+	for module in device.moduleClasses:
+		res.add(Resource(sanitizeName(module.name, False), cardinality=cardinality(module), specialization=True))
 
 	# Add sub-devices
-	if isinstance(device, SDT3Device):
+	if isinstance(device, SDT4DeviceClass):
 		for subDevice in device.subDevices:
-			res.add(Resource(sanitizeName(subDevice.id, False), cardinality=cardinality1, specialization=True))
+			res.add(Resource(sanitizeName(subDevice.id, False), cardinality=cardinality(subDevice), specialization=True))
 
 	addDeviceFooterToResource(res)
 	return svgStart(res.width(), res.height(), headerText) + res.draw() + svgFinish()
@@ -193,14 +213,15 @@ def getDataPointSVG(dataPoint):
 
 # Construct data points export
 def getDataPoints(resource, dataPoints, moduleName, path):
-	if (dataPoints == None or len(dataPoints) == 0):
+	if dataPoints == None or len(dataPoints) == 0:
 		return
 	for dataPoint in dataPoints:
 		# First add it to the resource
 		resource.add(Attribute(sanitizeName(dataPoint.name, False), \
 			cardinality=cardinality01 if dataPoint.optional == 'true' else cardinality1))
 		# write out to a file
-		exportDataPoint(dataPoint, moduleName, path)
+		if exportDataPoints:
+			exportDataPoint(dataPoint, moduleName, path)
 
 
 # Add standard header attributes to a data point resource
