@@ -37,7 +37,7 @@ def printPlain(domain, options):
 	# 	return print3DomainPlain(domain, options)
 
 def printOPML(domain, options):
-	if domain == None:
+	if domain is None:
 		return
 	if domain._version == '2':
 		return print2DomainOPML(domain, options)
@@ -48,7 +48,7 @@ def printOPML(domain, options):
 		return ''
 
 def printMarkdown(domain, options):
-	if domain == None:
+	if domain is None:
 		return
 	if domain._version == '2':
 		return print2DomainMarkdown(domain, options)
@@ -58,7 +58,7 @@ def printMarkdown(domain, options):
 		return print4SDT(domain, options)
 
 def printSDT3(domain, inputFormat, options):
-	if domain == None:
+	if domain is None:
 		return
 	if domain._version == '2' and inputFormat == 'sdt2':
 		return print2DomainSDT3(domain, options)
@@ -67,7 +67,7 @@ def printSDT3(domain, inputFormat, options):
 		return ''
 
 def printSDT4(domain, inputFormat, options):
-	if domain == None:
+	if domain is None:
 		return
 	if domain._version == '3' and inputFormat == 'sdt3':
 		return print2DomainSDT4(domain, options)
@@ -80,7 +80,7 @@ def printJava(domain, inputFormat, directory, options):
 	if inputFormat != 'sdt3':
 		print('Only the input format "sdt3" is supported')
 		return
-	if directory == None:
+	if directory is None:
 		print('-o <directory> must be specified')
 		return
 
@@ -92,7 +92,7 @@ def printVortoDSL(domain, inputFormat, directory, options):
 	if inputFormat != 'sdt3':
 		print('Only the input format "sdt3" is supported')
 		return
-	if directory == None:
+	if directory is None:
 		print('-o <directory> must be specified')
 		return
 
@@ -104,7 +104,7 @@ def printOneM2MSVG(domain, inputFormat, directory, options):
 	if inputFormat not in ['sdt3', 'sdt4' ]:
 		print('Only the input formats "sdt3" or "sdt4" are supported')
 		return
-	if directory == None:
+	if directory is None:
 		print('-o <directory> must be specified')
 		return
 
@@ -117,12 +117,12 @@ def printOneM2MSVG(domain, inputFormat, directory, options):
 
 
 def printOneM2MXSD(domain, inputFormat, directory, options):
-	if domain == None:
+	if domain is None:
 		return
 	if inputFormat not in ['sdt3', 'sdt4']:
 		print('Only the input formats "sdt3" and "sdt4" are supported')
 		return
-	if directory == None:
+	if directory is None:
 		print('-o <directory> must be specified')
 		return
 	modelVersion = options['modelversion']
@@ -142,7 +142,7 @@ def printSwagger(domain, inputFormat, directory, options):
 	if inputFormat != 'sdt3':
 		print('Only the input format "sdt3" is supported')
 		return
-	if directory == None:
+	if directory is None:
 		print('-o <directory> must be specified')
 		return
 

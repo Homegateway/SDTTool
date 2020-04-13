@@ -38,7 +38,7 @@ class Resource(object):
 
 	def draw(self):
 		result = drawResource(self.x, self.y, self.name, self.specialization)
-		if self.parent != None:
+		if self.parent is not None:
 			result += drawLine(self.parent.x, self.parent.y, self.x, self.y, self.cardinality)
 		for o in self.children:
 			result += o.draw()
@@ -79,7 +79,7 @@ class Attribute(object):
 	
 	def draw(self):
 		result = drawAttribute(self.x, self.y, self.name)
-		if self.parent != None:
+		if self.parent is not None:
 			result += drawLine(self.parent.x, self.parent.y, self.x, self.y, self.cardinality)
 		return result
 
@@ -96,7 +96,7 @@ class Attribute(object):
 def svgStart(width=0, height=0, header=None):
 	result  = '<?xml version="1.0"?>\n'
 
-	if header != None:
+	if header is not None:
 		result += '\n<!--\n' + sanitizeText(header) + '\n-->\n\n'
 	if width > 0 and height > 0:
 		result += '<svg height="' + str(height) + '" width="' + str(width) + '" xmlns="http://www.w3.org/2000/svg">\n'
@@ -129,7 +129,7 @@ def svgText(x, y, text, anchor=None, fontsize=-1):
 	result += 'fill="' + stdFontColor + '" '
 	result += 'font-family="' + stdFontFamily + '" '
 	result += 'font-size="' + str(fontsize) + '" '
-	if anchor != None:
+	if anchor is not None:
 		result += 'style="text-anchor: ' + anchor + ';"'
 	result += '>' + text + '</text>\n'
 	return result
@@ -175,6 +175,6 @@ def drawLine(x1, y1, x2, y2, label):
 
 
 def sanitizeText(text):
-	if (text == None or len(text) == 0):
+	if text is None or len(text) == 0:
 		return ''
 	return text.replace('<', '&lt;').replace('>', '&gt;')
