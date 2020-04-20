@@ -182,16 +182,11 @@ void
 {##### Print ModuleClasses #####}
 {%- macro printModuleClasses(moduleClasses, withCardinality) %}
 {%- if moduleClasses | length > 0 and countUnextend(moduleClasses) > 0 %}
-{% if pageBreakBeforeMCandDevices %}
-<!--BREAK-->
+{% if markdownPageBreak %}<!--BREAK-->
 
 {% endif %}
 {{incLevel('ModuleClasses')}}
 {% for moduleClass in moduleClasses if not moduleClass.extend %}
-{% if pageBreakBeforeMCandDevices %}
-<!--BREAK-->
-
-{% endif %}
 {{incLevel(getNSName(moduleClass.name))}}
 
 {% if not hideDetails %}
@@ -243,6 +238,9 @@ void
 {##### Print SubDevices #####}
 {% macro printSubDevices(subdevices) %}
 {% if subdevices and subdevices | length > 0 and countUnextend(subdevices) > 0 %}
+{% if markdownPageBreak %}<!--BREAK-->
+
+{% endif %}
 {{ incLevel('SubDevices') }}
 {% for sd in subdevices %}
 {#{incLevel('SubDevice ' + getNSName(sd.id))} #}
@@ -276,11 +274,11 @@ void
 {##### Print Devices #####}
 {% macro printDeviceClasses(deviceClasses) %}
 {% if deviceClasses | length > 0 %}
-{% if pageBreakBeforeMCandDevices %}<!--BREAK-->{% endif %}
+{% if markdownPageBreak %}<!--BREAK-->
 
+{% endif %}
 {{incLevel('DeviceClasses')}}
 {% for device in deviceClasses %}
-{% if pageBreakBeforeMCandDevices %}<!--BREAK-->{% endif %}
 {% if not hideDetails %}
 {{incLevel(getNSName(device.id))}}
 {{ doc(device.doc) }}
@@ -315,8 +313,9 @@ void
 {##### Print DataTypes #####}
 {% macro printDataTypes(dataTypes) %}
 {% if dataTypes | length > 0 %}
-{% if pageBreakBeforeMCandDevices %}<!--BREAK-->{% endif %}
+{% if markdownPageBreak %}<!--BREAK-->
 
+{% endif %}
 {{incLevel('DataTypes')}}
 {% for dataType in dataTypes %}
 

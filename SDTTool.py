@@ -35,6 +35,7 @@ class MultilineFormatter(argparse.HelpFormatter):
 			multiline_text = multiline_text + formatted_paragraph
 		return multiline_text
 
+
 class LineNumberingParser(XMLParser):
     def _start_list(self, *args, **kwargs):
         # Here we assume the default XML parser which is expat
@@ -186,6 +187,7 @@ def main(argv):
 	moreOptions['hideDetails'] 					= args.hidedetails
 	moreOptions['markdowntables'] 				= args.markdowntables
 	moreOptions['pageBreakBeforeMCandDevices'] 	= args.markdownpagebreak
+	moreOptions['markdownPageBreak']		 	= args.markdownpagebreak # renamed, therefore twice
 	moreOptions['licensefile'] 					= args.licensefile
 	moreOptions['domain'] 						= args.domain
 	moreOptions['namespaceprefix'] 				= args.namespaceprefix
