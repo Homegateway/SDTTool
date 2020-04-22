@@ -10,5 +10,3 @@
 {{ md.printSubDevices(domain.subDevices) }}
 {{ md.printDeviceClasses(domain.deviceClasses) }}
 {{ md.printProductClasses(domain.productClasses) }}
-{{ md.printLicense(license)}}
-

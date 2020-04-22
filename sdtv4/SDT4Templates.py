@@ -144,7 +144,7 @@ def getContext(domain, options, directory=None):
 	return {
 		'domain'						: domain,
 	    'hideDetails'					: options['hideDetails'],
-    	'pageBreakBeforeMCandDevices'	: options['pageBreakBeforeMCandDevices'],
+    	'markdownPageBreak'				: options['markdownPageBreak'],
     	'licensefile'					: options['licensefile'],
     	'namespaceprefix'				: options['namespaceprefix'],
     	'xsdtargetnamespace' 			: options['xsdtargetnamespace'],

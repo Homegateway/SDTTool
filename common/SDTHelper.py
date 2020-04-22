@@ -7,10 +7,10 @@ import os, pathlib, time, datetime
 
 # Sanitize a name 
 def sanitizeName(name, isClass):
-	if (name == None or len(name) == 0):
+	if name is None or len(name) == 0:
 		return ''
 	result = name
-	if (isClass):
+	if isClass:
 		result = result[0].upper() + name[1:]
 	else:
 		result = result[0].lower() + name[1:]
@@ -37,7 +37,7 @@ def getVersionedFilename(fileName, extension, name=None, path=None, isModule=Fal
 
 	prefix  = ''
 	postfix = ''
-	if name != None:
+	if name is not None:
 		prefix += sanitizeName(name, False) + '_'
 	else:
 		if namespacePrefix:
