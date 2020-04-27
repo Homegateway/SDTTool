@@ -3,7 +3,7 @@
 ## Version 0.9
 xx.xx.2020
 
-- Added support for SDT version 4.
+- Added support for SDT version 4: Conversion from SDT3 to SDT4, markdown, and oneM2M XSD & SVG. 
 - Support for namespace prefix in markdown generation.
 - Added some short versions for command line arguments.
 

@@ -86,7 +86,6 @@
 {% else %}
 {% set it = instanceType(type) %}
  type="{{ getSimpleDataType(it) -}}" />
-{# type="{{ getSimpleDataType(type.type) -}}" /> #}
 {% endif %}
 {% endif %}
 {% endmacro %}

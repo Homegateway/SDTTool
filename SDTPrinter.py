@@ -20,6 +20,7 @@ from sdtv3.SDT3Templates import print3SDT
 from sdtv3.SDT3PrintSDT4 import print2DomainSDT4
 from sdtv4.SDT4PrintOneM2MSVG import print4OneM2MSVG
 from sdtv4.SDT4Templates import print4SDT
+from sdtv4.SDT4oneM2MHelper import prepare4OneM2M
 
 
 
@@ -47,6 +48,7 @@ def printOPML(domain, options):
 		print('Output format is not supported')
 		return ''
 
+
 def printMarkdown(domain, options):
 	if domain is None:
 		return
@@ -57,6 +59,7 @@ def printMarkdown(domain, options):
 	elif domain._version == '4':
 		return print4SDT(domain, options)
 
+
 def printSDT3(domain, inputFormat, options):
 	if domain is None:
 		return
@@ -65,6 +68,7 @@ def printSDT3(domain, inputFormat, options):
 	else:
 		print('Conversion is not supported')
 		return ''
+
 
 def printSDT4(domain, inputFormat, options):
 	if domain is None:
@@ -112,6 +116,7 @@ def printOneM2MSVG(domain, inputFormat, directory, options):
 	if inputFormat == 'sdt3':
 		print3OneM2MSVG(domain, options, directory)
 	elif inputFormat == 'sdt4':
+		prepare4OneM2M(domain)
 		print4OneM2MSVG(domain, options, directory)
 
 
@@ -134,6 +139,7 @@ def printOneM2MXSD(domain, inputFormat, directory, options):
 	if domain._version == '3':
 		return print3SDT(domain, options, directory)
 	elif domain._version == '4':
+		prepare4OneM2M(domain)
 		return print4SDT(domain, options, directory)
 	return ''
 
