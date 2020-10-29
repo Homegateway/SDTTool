@@ -2,7 +2,7 @@
 #
 #	Print an SDT in various formats
 
-import os, pathlib
+import pathlib
 
 from sdtv2.SDT2PrintMarkdown import print2DomainMarkdown
 from sdtv2.SDT2PrintOPML import print2DomainOPML
@@ -21,6 +21,7 @@ from sdtv3.SDT3PrintSDT4 import print2DomainSDT4
 from sdtv4.SDT4PrintOneM2MSVG import print4OneM2MSVG
 from sdtv4.SDT4Templates import print4SDT
 from sdtv4.SDT4oneM2MHelper import prepare4OneM2M
+import common.SDTHelper as helper
 
 
 
@@ -32,10 +33,7 @@ def printPlain(domain, options):
 	if domain == None:
 		return
 	return printers[domain._version](domain, options)
-	# if domain._version == '2':
-	# 	return print2DomainPlain(domain, options)
-	# elif domain._version == '3':
-	# 	return print3DomainPlain(domain, options)
+
 
 def printOPML(domain, options):
 	if domain is None:
@@ -81,26 +79,26 @@ def printSDT4(domain, inputFormat, options):
 
 
 def printJava(domain, inputFormat, directory, options):
-	if inputFormat != 'sdt3':
+	if inputFormat not in [ 'sdt3' ]:
 		print('Only the input format "sdt3" is supported')
 		return
 	if directory is None:
 		print('-o <directory> must be specified')
 		return
 
-	_makeDir(directory)
+	helper.makeDir(directory)
 	print3JavaClasses(domain, directory, options)
 
 
 def printVortoDSL(domain, inputFormat, directory, options):
-	if inputFormat != 'sdt3':
+	if inputFormat not in ['sdt3']:
 		print('Only the input format "sdt3" is supported')
 		return
 	if directory is None:
 		print('-o <directory> must be specified')
 		return
 
-	_makeDir(directory)
+	helper.makeDir(directory)
 	print3VortoDSL(domain, directory, options)
 
 
@@ -112,7 +110,7 @@ def printOneM2MSVG(domain, inputFormat, directory, options):
 		print('-o <directory> must be specified')
 		return
 
-	_makeDir(directory)
+	helper.makeDir(directory)
 	if inputFormat == 'sdt3':
 		print3OneM2MSVG(domain, options, directory)
 	elif inputFormat == 'sdt4':
@@ -135,7 +133,7 @@ def printOneM2MXSD(domain, inputFormat, directory, options):
 		print('--modelVersion <version> must be specified')
 		return
 
-	_makeDir(directory)
+	helper.makeDir(directory)
 	if domain._version == '3':
 		return print3SDT(domain, options, directory)
 	elif domain._version == '4':
@@ -145,24 +143,13 @@ def printOneM2MXSD(domain, inputFormat, directory, options):
 
 
 def printSwagger(domain, inputFormat, directory, options):
-	if inputFormat != 'sdt3':
+	if inputFormat not in ['sdt3']:
 		print('Only the input format "sdt3" is supported')
 		return
 	if directory is None:
 		print('-o <directory> must be specified')
 		return
 
-	_makeDir(directory)
+	helper.makeDir(directory)
 	print3Swagger(domain, directory, options)
 
-
-
-##############################################################################
-
-def _makeDir(directory):
-	try:
-		path = pathlib.Path(directory)
-		path.mkdir(parents=True)
-	except FileExistsError as e:
-		# ignore existing directory for now
-		pass

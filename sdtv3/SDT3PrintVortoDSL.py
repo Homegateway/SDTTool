@@ -14,10 +14,10 @@ vortoModelVersion = '1.0.0'
 vortoModelCategory = 'SDT3'
 
 # Dictionary to temporarly store the found structs.
-structs = {}
+structs:dict = {}
 
 # Dictionary to temporarly store necessary imports
-imports = {}
+imports:dict = {}
 
 
 def print3VortoDSL(domain, directory, options):

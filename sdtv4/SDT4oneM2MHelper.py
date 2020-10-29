@@ -37,10 +37,10 @@ def _prepareModuleClasses(moduleClasses):
 
 
 def _createDPDataGenerationTime():
-	dp = SDT4DataPoint()
-	dp.name = 'dataGenerationTime'
-	dp.optional = 'true'
-	dp.type = SDT4SimpleType()
-	dp.type.type = SDT4SimpleType()
-	dp.type.type.type = "datetime"
+	dp 					= SDT4DataPoint(None)
+	dp.name 			= 'dataGenerationTime'
+	dp.optional 		= 'true'
+	dp.type				= SDT4DataType()
+	dp.type.type	 	= SDT4SimpleType()
+	dp.type.type.type 	= "datetime"
 	return dp

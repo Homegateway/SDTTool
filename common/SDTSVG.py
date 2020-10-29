@@ -96,7 +96,7 @@ class Attribute(object):
 def svgStart(width=0, height=0, header=None):
 	result  = '<?xml version="1.0"?>\n'
 
-	if header is not None:
+	if header is not None and len(header)>0:
 		result += '\n<!--\n' + sanitizeText(header) + '\n-->\n\n'
 	if width > 0 and height > 0:
 		result += '<svg height="' + str(height) + '" width="' + str(width) + '" xmlns="http://www.w3.org/2000/svg">\n'

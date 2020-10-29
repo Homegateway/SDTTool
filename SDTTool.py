@@ -3,71 +3,43 @@
 #	Main module for the SDTTool
 
 from xml.etree.ElementTree import XMLParser, ParseError
-from sdtv2 import *
-from sdtv3 import *
-from sdtv4 import *
-from SDTPrinter import *
+from sdtv2 import SDT2Parser
+from sdtv3 import SDT3Parser
+from sdtv4 import SDT4Parser
+import common.SDTHelper as SDTHelper, SDTPrinter
 
 
-import io, sys, traceback, argparse, textwrap
+import io, sys, traceback, argparse
 
 version = '0.9'
 description = 'SDTTool ' + version + ' - A tool to read and convert Smart Device Templates.'
 epilog = 'Read arguments from one or more configuration files: @file1 @file2 ...|n |n See https://github.com/Homegateway for further information.'
 
-#
-#	Helper method for loading arguments from file
-#
 
-def convertArgLineToArgs(arg_line):
-	for arg in arg_line.split():
-		if not arg.strip():
-			continue
-		yield arg
+# class LineNumberingParser(XMLParser):
+#     def _start_list(self, *args, **kwargs):
+#         # Here we assume the default XML parser which is expat
+#         # and copy its element position attributes into output Elements
+#         element = super(self.__class__, self)._start_list(*args, **kwargs)
+#         element._start_line_number = self.parser.CurrentLineNumber
+#         element._start_column_number = self.parser.CurrentColumnNumber
+#         element._start_byte_index = self.parser.CurrentByteIndex
+#         return element
 
-class MultilineFormatter(argparse.HelpFormatter):
-	def _fill_text(self, text, width, indent):
-		text = self._whitespace_matcher.sub(' ', text).strip()
-		paragraphs = text.split('|n ')
-		multiline_text = ''
-		for paragraph in paragraphs:
-			formatted_paragraph = textwrap.fill(paragraph, width, initial_indent=indent, subsequent_indent=indent) + '\n'
-			multiline_text = multiline_text + formatted_paragraph
-		return multiline_text
-
-
-class LineNumberingParser(XMLParser):
-    def _start_list(self, *args, **kwargs):
-        # Here we assume the default XML parser which is expat
-        # and copy its element position attributes into output Elements
-        element = super(self.__class__, self)._start_list(*args, **kwargs)
-        element._start_line_number = self.parser.CurrentLineNumber
-        element._start_column_number = self.parser.CurrentColumnNumber
-        element._start_byte_index = self.parser.CurrentByteIndex
-        return element
-
-    def _end(self, *args, **kwargs):
-        element = super(self.__class__, self)._end(*args, **kwargs)
-        element._end_line_number = self.parser.CurrentLineNumber
-        element._end_column_number = self.parser.CurrentColumnNumber
-        element._end_byte_index = self.parser.CurrentByteIndex
-        return element
+#     def _end(self, *args, **kwargs):
+#         element = super(self.__class__, self)._end(*args, **kwargs)
+#         element._end_line_number = self.parser.CurrentLineNumber
+#         element._end_column_number = self.parser.CurrentColumnNumber
+#         element._end_byte_index = self.parser.CurrentByteIndex
+#         return element
 
 
 #
-# Read data from the input file
-#
-
-def readDataFromFile(inFile):
-	# Read the input file
-	with open(inFile, 'r') as inputFile:
-		data = inputFile.read()
-	return data
-
-#
-# Parse the data with the given parser and handle errors
+# Parse the data
 #
 def parseData(target, data):
+	"""	Parse the data with the given parser and handle errors.
+	"""
 	parser = XMLParser(target=target)
 	errormsg = ''
 	try:
@@ -91,39 +63,28 @@ def parseData(target, data):
 
 
 #
-# Read and parse an SDT2 XML
+#	XML Reader
 #
-def readSDT2XML(inFile):
-	# open the file
-	data = readDataFromFile(inFile)
+def readSDTXML(inFile, sdtVersion=2):
+	""" Read and parse an SDT version 2, 3 or 4 XML.
+	"""
+	# read the data from the input file
+	with open(inFile, 'r') as inputFile:
+		data = inputFile.read()
+
+	# select parser
+	parser = [ None, None, SDT2Parser, SDT3Parser, SDT4Parser ][sdtVersion]()	# no parsers for v 0 and 1
+
 	# Parse the data
-	return parseData(SDT2Parser(), data)
+	return parseData(parser, data)
 
 
 #
-# Read and parse an SDT3 XML
-#
-def readSDT3XML(inFile):
-	# open the file
-	data = readDataFromFile(inFile)
-	# Parse the data
-	return parseData(SDT3Parser(), data)
-
-
-#
-# Read and parse an SDT4 XML
-#
-def readSDT4XML(inFile):
-	# open the file
-	data = readDataFromFile(inFile)
-	# Parse the data
-	return parseData(SDT4Parser(), data)
-
-
-#
-#	Print the output to stdout or to a file
+#	Output
 #
 def outputResult(outFile, result):
+	"""	Print the output to stdout or to a file.
+	"""
 	if result == None:
 		return
 	if outFile == None:
@@ -136,10 +97,9 @@ def outputResult(outFile, result):
 			print(err)
 
 
-#
-#	Check the available name spaces
-#
 def checkForNamespace(nameSpaces, checkNameSpace):
+	"""	Check whether a name space can be found in a list of nameSpaces.
+	"""
 	for ns in nameSpaces:
 		if (ns.find(checkNameSpace) > -1):
 			return True
@@ -151,8 +111,8 @@ def main(argv):
 
 	# Read command line arguments
 	
-	parser = argparse.ArgumentParser(description=description, epilog=epilog, fromfile_prefix_chars='@', formatter_class=MultilineFormatter)
-	parser.convert_arg_line_to_args = convertArgLineToArgs
+	parser = argparse.ArgumentParser(description=description, epilog=epilog, fromfile_prefix_chars='@', formatter_class=SDTHelper.MultilineFormatter)
+	parser.convert_arg_line_to_args = SDTHelper.convertArgLineToArgs
 
 	parser.add_argument('-o', '--outfile', action='store', dest='outFile', help='The output file or directory for the result. The default is stdout')
 	parser.add_argument('-if', '--inputformat', choices=('sdt2', 'sdt3', 'sdt4'), action='store', dest='inputFormat', default='sdt4', help='The input format to read. The default is sdt4')
@@ -178,10 +138,10 @@ def main(argv):
 		parser.print_help()
 		sys.exit(1)
 
-	args = parser.parse_args()
-	inFile = args.inFile
-	outFile = args.outFile
-	inputFormat = args.inputFormat
+	args 		= parser.parse_args()
+	inFile 		= args.inFile
+	outFile 	= args.outFile
+	inputFormat	= args.inputFormat
 	
 	moreOptions = {}
 	moreOptions['hideDetails'] 					= args.hidedetails
@@ -202,45 +162,34 @@ def main(argv):
 	# Read input file. Check for correct format
 
 	if inputFormat == 'sdt2':
-		domain, nameSpaces = readSDT2XML(inFile)
+		domain, nameSpaces = readSDTXML(inFile, 2)
 		if not checkForNamespace(nameSpaces, 'http://homegatewayinitiative.org/xml/dal/2.0'):
 			print('ERROR: Namespace "http://homegatewayinitiative.org/xml/dal/2.0" not found in input file.')
 			return
 
 	elif inputFormat == 'sdt3':
-		domain, nameSpaces = readSDT3XML(inFile)
+		domain, nameSpaces = readSDTXML(inFile, 3)
 		if not checkForNamespace(nameSpaces, 'http://homegatewayinitiative.org/xml/dal/3.0'):
 			print('ERROR: Namespace "http://homegatewayinitiative.org/xml/dal/3.0" not found in input file.')
 			return
 
 	elif inputFormat == 'sdt4':
-		domain, nameSpaces = readSDT4XML(inFile)
+		domain, nameSpaces = readSDTXML(inFile, 4)
 		if not checkForNamespace(nameSpaces, 'http://www.onem2m.org/xml/sdt/4.0'):
 			print('ERROR: Namespace "http://www.onem2m.org/xml/sdt/4.0" not found in input file.')
 			return
 
 	# Output to destination format
-	if args.outputFormat == 'plain':
-		outputResult(outFile, printPlain(domain, moreOptions))
-	elif args.outputFormat == 'opml':
-		outputResult(outFile, printOPML(domain, moreOptions))
-	elif args.outputFormat == 'markdown':
-		outputResult(outFile, printMarkdown(domain, moreOptions))
-	elif args.outputFormat == 'sdt3':
-		outputResult(outFile, printSDT3(domain, inputFormat, moreOptions))
-	elif args.outputFormat == 'sdt4':
-		outputResult(outFile, printSDT4(domain, inputFormat, moreOptions))
-	elif args.outputFormat == 'java':
-		printJava(domain, inputFormat, outFile, moreOptions)
-	elif args.outputFormat == 'vorto-dsl':
-		printVortoDSL(domain, inputFormat, outFile, moreOptions)
-	elif args.outputFormat == 'onem2m-svg':
-		printOneM2MSVG(domain, inputFormat, outFile, moreOptions)
-	elif args.outputFormat == 'onem2m-xsd':
-		printOneM2MXSD(domain, inputFormat, outFile, moreOptions)
-	elif args.outputFormat == 'swagger':
-		printSwagger(domain, inputFormat, outFile, moreOptions)
-
+	if   args.outputFormat == 'plain':		outputResult(outFile, SDTPrinter.printPlain(domain, moreOptions))
+	elif args.outputFormat == 'opml':		outputResult(outFile, SDTPrinter.printOPML(domain, moreOptions))
+	elif args.outputFormat == 'markdown':	outputResult(outFile, SDTPrinter.printMarkdown(domain, moreOptions))
+	elif args.outputFormat == 'sdt3':		outputResult(outFile, SDTPrinter.printSDT3(domain, inputFormat, moreOptions))
+	elif args.outputFormat == 'sdt4':		outputResult(outFile, SDTPrinter.printSDT4(domain, inputFormat, moreOptions))
+	elif args.outputFormat == 'java':		SDTPrinter.printJava(domain, inputFormat, outFile, moreOptions)
+	elif args.outputFormat == 'vorto-dsl':	SDTPrinter.printVortoDSL(domain, inputFormat, outFile, moreOptions)
+	elif args.outputFormat == 'onem2m-svg':	SDTPrinter.printOneM2MSVG(domain, inputFormat, outFile, moreOptions)
+	elif args.outputFormat == 'onem2m-xsd':	SDTPrinter.printOneM2MXSD(domain, inputFormat, outFile, moreOptions)
+	elif args.outputFormat == 'swagger':	SDTPrinter.printSwagger(domain, inputFormat, outFile, moreOptions)
 
 
 if __name__ == "__main__":

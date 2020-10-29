@@ -8,6 +8,11 @@ class SDT4Element:
 	def endElement(self):
 		pass
 
+	def getAttribute(self, attrib, attribName:str, default=None):
+		if attrib is None:
+			return default
+		return attrib[attribName].strip() if attribName in attrib else default
+
 
 #
 #	Domain, Includes
@@ -15,92 +20,92 @@ class SDT4Element:
 class SDT4Domain(SDT4Element):
 	_name = 'Domain'
 
-	def __init__(self):
-		self._version = '4'
-		self.id = None
-		self.semanticURI = None
-		self.doc = None
-		self.includes = []			# imports
-		self.dataTypes = []
-		self.moduleClasses = []
-		self.subDevices = []
-		self.deviceClasses = []
+	def __init__(self, attrib=None):
+		self._version 		= '4'
+		self.id 			= self.getAttribute(attrib, 'id')
+		self.semanticURI 	= self.getAttribute(attrib, 'semanticURI')
+		self.doc 			= None
+		self.includes 		= []			# imports
+		self.dataTypes 		= []
+		self.moduleClasses 	= []
+		self.subDevices 	= []
+		self.deviceClasses 	= []
 		self.productClasses = []
 
 
 class SDT4Include(SDT4Element):
 	_name = 'Include'
 
-	def __init__(self):
-		self.parse = None
-		self.href = None
+	def __init__(self, attrib=None):
+		self.parse 		= self.getAttribute(attrib, 'parse')
+		self.href 		= self.getAttribute(attrib, 'href')
 
 
 #	Product
 class SDT4ProductClass(SDT4Element):
 	_name = 'ProductClass'
 
-	def __init__(self):
-		self.id = None
-		self.semanticURI = None
-		self.doc = None
-		self.extend = None
-		self.properties = []
-		self.moduleClasses = []
-		self.subDevices = []
-		self.extendDevice = None # actually an extend
+	def __init__(self, attrib=None):
+		self.id 			= self.getAttribute(attrib, 'name')
+		self.semanticURI 	= self.getAttribute(attrib, 'semanticURI')
+		self.doc 			= None
+		self.extend 		= None
+		self.properties 	= []
+		self.moduleClasses 	= []
+		self.subDevices 	= []
+		self.extendDevice 	= None # actually an extend
 
 
 #	DeviceClass
 class SDT4DeviceClass(SDT4Element):
 	_name = 'DeviceClass'
 
-	def __init__(self):
-		self.id = None
-		self.semanticURI = None
-		self.doc = None
-		self.properties = []
-		self.moduleClasses = []
-		self.subDevices = []
+	def __init__(self, attrib):
+		self.id 			= self.getAttribute(attrib, 'id')
+		self.semanticURI 	= self.getAttribute(attrib, 'semanticURI')
+		self.doc 			= None
+		self.properties 	= []
+		self.moduleClasses 	= []
+		self.subDevices 	= []
 
 
 #	SubDevice
 class SDT4SubDevice(SDT4Element):
 	_name = 'SubDevice'
 
-	def __init__(self):
-		self.id = None
-		self.semanticURI = None
-		self.minOccurs = None
-		self.maxOccurs = None
-		self.doc = None
-		self.extend = None
-		self.properties = []
-		self.moduleClasses = []
+	def __init__(self, attrib=None):
+		self.id 			= self.getAttribute(attrib, 'id')
+		self.semanticURI 	= self.getAttribute(attrib, 'semanticURI')
+		self.minOccurs 		= self.getAttribute(attrib, 'minOccurs')
+		self.maxOccurs 		= self.getAttribute(attrib, 'maxOccurs')
+		self.doc 			= None
+		self.extend 		= None
+		self.properties 	= []
+		self.moduleClasses 	= []
 
 
 #	Properties
 class SDT4Property(SDT4Element):
 	_name = 'Property'
 
-	def __init__(self):
-		self.name = None
-		self.optional = 'false'
-		self.semanticURI = None
-		self.doc = None
-		self.type = None	# This is always a simpleType
-		self.value = None
+	def __init__(self, attrib=None):
+		self.name 			= getAttribute(attrib, 'name')
+		self.optional 		= self.getAttribute(attrib, 'optional', 'false')
+		self.semanticURI 	= self.getAttribute(attrib, 'semanticURI')
+		self.doc 			= None
+		self.type 			= None	# This is always a simpleType
+		self.value 			= self.getAttribute(attrib, 'value')
 
 
 #	ModuleClass
 class SDT4ModuleClass(SDT4Element):
 	_name = 'ModuleClass'
 
-	def __init__(self):
-		self.name = None
-		self.semanticURI = None
-		self.minOccurs = None
-		self.maxOccurs = None
+	def __init__(self, attrib=None):
+		self.name = self.getAttribute(attrib, 'name')
+		self.semanticURI = self.getAttribute(attrib, 'semanticURI')
+		self.minOccurs = self.getAttribute(attrib, 'minOccurs')
+		self.maxOccurs = self.getAttribute(attrib, 'maxOccurs')
 		self.extend = None
 		self.doc = None
 		self.actions = []
@@ -113,153 +118,152 @@ class SDT4ModuleClass(SDT4Element):
 class SDT4Extend(SDT4Element):
 	_name = 'Extend'
 
-	def __init__(self):
-		self.domain = None
-		self.entity = None
-		self.excludes = []
-		self.includes = []
+	def __init__(self, attrib=None):
+		self.domain 	= self.getAttribute(attrib, 'domain')
+		self.entity 	= self.getAttribute(attrib, 'entity')
+		self.excludes 	= []
+		self.includes 	= []
 
 
 class SDT4ExtendExclude(SDT4Element):
 	_name = 'Exclude'
 
-	def __init__(self):
-		self.name = None
-		self.type = 'datapoint'
+	def __init__(self, attrib=None):
+		self.name = self.getAttribute(attrib, 'name')
+		self.type = self.getAttribute(attrib, 'type', 'datapoint')
 
 
 class SDT4ExtendInclude(SDT4Element):
 	_name = 'Include'
 
-	def __init__(self):
-		self.name = None
-		self.type = 'datapoint'
+	def __init__(self, attrib=None):
+		self.name 			= self.getAttribute(attrib, 'name')
+		self.type 			= self.getAttribute(attrib, 'type', 'datapoint')
 
 
 #	Action & Arg
 class SDT4Action(SDT4Element):
 	_name = 'Action'
 
-	def __init__(self):
-		self.name = None
-		self.optional = None
-		self.semanticURI = None
-		self.type = None
-		self.doc = None
-		self.args = []
+	def __init__(self, attrib=None):
+		self.name 			= self.getAttribute(attrib, 'name')
+		self.optional 		= self.getAttribute(attrib, 'optional')
+		self.semanticURI	= self.getAttribute(attrib, 'semanticURI')
+		self.type 			= None
+		self.doc 			= None
+		self.args 			= []
 
 
 class SDT4Arg(SDT4Element):
 	_name = 'Arg'
 
-	def __init__(self):
-		self.name = None
-		self.optional = None
-		self.default = None
-		self.type = None
-		self.semanticURI = None
-		self.doc = None
+	def __init__(self, attrib=None):
+		self.name 			= self.getAttribute(attrib, 'name')
+		self.optional 		= self.getAttribute(attrib, 'optional')
+		self.default 		= self.getAttribute(attrib, 'default')
+		self.semanticURI 	= self.getAttribute(attrib, 'semanticURI')
+		self.type 			= None
+		self.doc 			= None
 
 
 #	Event
 class SDT4Event(SDT4Element):
 	_name = 'Event'
 
-	def __init__(self):
-		self.name = None
-		self.optional = 'false'
-		self.semanticURI = None
-		self.data = []
-		self.doc = None
+	def __init__(self, attrib=None):
+		self.name 			= self.getAttribute(attrib, 'name')
+		self.optional 		= self.getAttribute(attrib, 'optional', 'false')
+		self.semanticURI	= self.getAttribute(attrib, 'semanticURI')
+		self.data 			= []
+		self.doc 			= None
 
 #	DataPoint
 class SDT4DataPoint(SDT4Element):
 	_name = 'DataPoint'
 
-	def __init__(self):
-		self.name = None
-		self.optional = 'false'
-		self.type = None
-		self.writable = 'true'
-		self.readable = 'true'
-		self.eventable = 'false'
-		self.default = None
-		self.semanticURI = None
-		self.doc = None
+	def __init__(self, attrib=None):
+		self.name 			= self.getAttribute(attrib, 'name')
+		self.optional 		= self.getAttribute(attrib, 'optional', 'false')
+		self.writable 		= self.getAttribute(attrib, 'writable', 'true')
+		self.readable 		= self.getAttribute(attrib, 'readable', 'true')
+		self.eventable 		= self.getAttribute(attrib, 'eventable', 'false')
+		self.default 		= self.getAttribute(attrib, 'default')
+		self.semanticURI 	= self.getAttribute(attrib, 'semanticURI')
+		self.type 			= None
+		self.doc 			= None
 
 
 #	DataTypes
 class SDT4DataType(SDT4Element):
 	_name = 'DataType'
 
-	def __init__(self):
-		self.name = None
-		self.unitOfMeasure = None
-		self.semanticURI = None
-		self.constraints = []
-		self.extend = None
-		self.type = None
-		self.doc = None
+	def __init__(self, attrib=None):
+		self.name 			= self.getAttribute(attrib, 'name')
+		self.unitOfMeasure 	= self.getAttribute(attrib, 'unitOfMeasure')
+		self.semanticURI 	= self.getAttribute(attrib, 'semanticURI')
+		self.constraints 	= []
+		self.extend 		= None
+		self.type 			= None
+		self.doc 			= None
 
 
 class SDT4SimpleType(SDT4DataType):
 	_name = 'SimpleType'
 
-	def __init__(self):
-		self.type = None
+	def __init__(self, attrib=None):
+		self.type = self.getAttribute(attrib, 'type')
 
 
 class SDT4StructType(SDT4DataType):
 	_name = 'Struct'
 
-	def __init__(self):
-		super().__init__()
+	def __init__(self, attrib=None):
+		super().__init__(attrib)
 		self.structElements = []
 
 
 class SDT4ArrayType(SDT4DataType):
 	_name = 'Array'
 
-	def __init__(self):
-		super().__init__()
+	def __init__(self, attrib=None):
+		super().__init__(attrib)
 		self.arrayType = None
 
 
 class SDT4EnumType(SDT4DataType):
 	_name = 'Enum'
 
-	def __init__(self):
-		super().__init__()
+	def __init__(self, attrib=None):
+		super().__init__(attrib)
 		self.enumValues = []
 
 
 class SDT4EnumValue(SDT4Element):
 	_name = 'EnumValue'
 
-	def __init__(self):
-		self.name = None
-		self.value = None
-		self.type = 'integer'
-		self.semanticURI = None
-		self.doc = None
+	def __init__(self, attrib=None):
+		self.name 			= self.getAttribute(attrib, 'name')
+		self.value 			= self.getAttribute(attrib, 'value')
+		self.type 			= self.getAttribute(attrib, 'type', 'integer')
+		self.semanticURI 	= self.getAttribute(attrib, 'semanticURI')
+		self.doc 			= None
 
 
 class SDT4Constraint(SDT4Element):
 	_name = 'Constraint'
 
-	def __init__(self):
-		SDT3DataType.__init__(self)
-		self.name = None
-		self.type = None
-		self.value = None
-		self.semanticURI = None
-		self.doc = None
+	def __init__(self, attrib=None):
+		self.name 			= self.getAttribute(attrib, 'name')
+		self.type 			= self.getAttribute(attrib, 'type')
+		self.value 			= self.getAttribute(attrib, 'value')
+		self.semanticURI 	= self.getAttribute(attrib, 'semanticURI')
+		self.doc 			= None
 
 #
 #	Doc & elements
 #
 class SDT4DocBase(SDT4Element):
-	def __init__(self):
+	def __init__(self, attrib=None):
 		self.doc = None
 	
 	def addContent(self, content):
@@ -269,7 +273,7 @@ class SDT4DocBase(SDT4Element):
 class SDT4Doc(SDT4DocBase):
 	_name = 'Doc'
 
-	def __init__(self):
+	def __init__(self, attrib=None):
 		self.doc = self
 		self.content = ''
 
@@ -280,7 +284,7 @@ class SDT4Doc(SDT4DocBase):
 class SDT4DocTT(SDT4DocBase):
 	_name = 'tt'
 
-	def __init__(self):
+	def __init__(self, attrib=None):
 		SDT4DocBase.__init__(self)
 
 	def addContent(self, content):
@@ -290,7 +294,7 @@ class SDT4DocTT(SDT4DocBase):
 class SDT4DocEM(SDT4DocBase):
 	_name = 'em'
 
-	def __init__(self):
+	def __init__(self, attrib=None):
 		SDT4DocBase.__init__(self)
 
 	def addContent(self, content):
@@ -300,7 +304,7 @@ class SDT4DocEM(SDT4DocBase):
 class SDT4DocB(SDT4DocBase):
 	_name = 'b'
 
-	def __init__(self):
+	def __init__(self, attrib=None):
 		SDT4DocBase.__init__(self)
 	
 	def addContent(self, content):
@@ -310,7 +314,7 @@ class SDT4DocB(SDT4DocBase):
 class SDT4DocP(SDT4DocBase):
 	_name = 'p'
 
-	def __init__(self):
+	def __init__(self, attrib=None):
 		SDT4DocBase.__init__(self)
 
 	def startParagraph(self):
@@ -326,7 +330,7 @@ class SDT4DocP(SDT4DocBase):
 class SDT4DocIMG(SDT4DocBase):
 	_name = 'img'
 
-	def __init__(self):
+	def __init__(self, attrib=None):
 		SDT4DocBase.__init__(self)
 
 	def startImage(self, src):
@@ -345,7 +349,7 @@ class SDT4DocIMG(SDT4DocBase):
 class SDT4DocCaption(SDT4DocBase):
 	_name = 'caption'
 
-	def __init__(self):
+	def __init__(self, attrib=None):
 		SDT4DocBase.__init__(self)
 	
 	def addContent(self, content):

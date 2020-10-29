@@ -27,12 +27,12 @@ templates = {
 	'markdown'		: ('markdown.tpl', True, None),
 	'onem2m-xsd'	: ('onem2m-xsd.tpl', False, 'xsd')
 }
-actions = set()
-enumTypes = set()
-extendedModules = dict()
-extendedModulesExtends = dict()
-extendedSubDevices = dict()
-extendedSubDevicesExtends = dict()
+actions:set = set()
+enumTypes:set = set()
+extendedModules:dict = dict()
+extendedModulesExtends:dict = dict()
+extendedSubDevices:dict = dict()
+extendedSubDevicesExtends:dict = dict()
 
 # constants for abbreviation file
 constAbbreviationCSVFile = '_Abbreviations.csv'
@@ -161,7 +161,7 @@ def getContext(domain, options, directory=None):
     	'addToActions'					: addToActions,
     	'addToEnums'					: addToEnums,
     	'getVersionedFilename'			: getVersionedFilename,
-    	'sanitizeName'					: sanitizeName,
+    	'sanitizeName'					: templateSanitizeName,
     	'renderObject'					: renderObject
 	}
 
@@ -182,7 +182,7 @@ def printShortNames(context):
 	#	combined files?
 
 	# devices
-	fileName = sanitizeName('devices-' + getTimeStamp(), False)
+	fileName = templateSanitizeName('devices-' + getTimeStamp(), False)
 	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for device in domain.devices:
@@ -190,7 +190,7 @@ def printShortNames(context):
 	deleteEmptyFile(fullFilename)
 
 	# sub.devices - Instances
-	fileName = sanitizeName('subDevicesInstances-' + getTimeStamp(), False)
+	fileName = templateSanitizeName('subDevicesInstances-' + getTimeStamp(), False)
 	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for device in domain.devices:
@@ -199,7 +199,7 @@ def printShortNames(context):
 	deleteEmptyFile(fullFilename)
 
 	# sub.devices
-	fileName = sanitizeName('subDevice-' + getTimeStamp(), False)
+	fileName = templateSanitizeName('subDevice-' + getTimeStamp(), False)
 	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for name in extendedSubDevicesExtends:
@@ -207,7 +207,7 @@ def printShortNames(context):
 	deleteEmptyFile(fullFilename)
 
 	# ModuleClasses
-	fileName = sanitizeName('moduleClasses-' + getTimeStamp(), False)
+	fileName = templateSanitizeName('moduleClasses-' + getTimeStamp(), False)
 	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for mc in domain.modules:
@@ -221,7 +221,7 @@ def printShortNames(context):
 	deleteEmptyFile(fullFilename)
 
 	# DataPoints
-	fileName = sanitizeName('dataPoints-' + getTimeStamp(), False)
+	fileName = templateSanitizeName('dataPoints-' + getTimeStamp(), False)
 	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for mc in domain.modules:
@@ -238,7 +238,7 @@ def printShortNames(context):
 	deleteEmptyFile(fullFilename)
 
 	# Actions
-	fileName = sanitizeName('actions-' + getTimeStamp(), False)
+	fileName = templateSanitizeName('actions-' + getTimeStamp(), False)
 	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for mc in domain.modules:
@@ -266,9 +266,9 @@ def renderComponentToFile(context, name=None, isModule=False, isEnum=False, isAc
 	namespaceprefix = context['namespaceprefix'] if 'namespaceprefix' in context else None
 
 	if isSubDevice and context['object'].extends:
-		fileName = sanitizeName(context['object'].extends.clazz, False)
+		fileName = templateSanitizeName(context['object'].extends.clazz, False)
 	else:
-		fileName = sanitizeName(context['object'].name if isModule or isEnum or isAction or isExtras else context['object'].id, False)
+		fileName = templateSanitizeName(context['object'].name if isModule or isEnum or isAction or isExtras else context['object'].id, False)
 	#print('---' + fileName)
 	fullFilename 	= getVersionedFilename(fileName, context['extension'], name=name, path=str(context['path']), isModule=isModule, isEnum=isEnum, isAction=isAction, isSubDevice=isSubDevice, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	outputFile   	= None
@@ -283,25 +283,10 @@ def renderComponentToFile(context, name=None, isModule=False, isEnum=False, isAc
 			outputFile.close()
 
 
-def sanitizeName(name, isClass, annc=False):
+def templateSanitizeName(name, isClass, annc=False):
 	""" Sanitize a (file)name. Also add it to the list of abbreviations. """
-	if (name == None or len(name) == 0):
-		return ''
-	result = name
-	if (isClass):
-		result = result[0].upper() + name[1:]
-	else:
-		result = result[0].lower() + name[1:]
-	result =  result.replace(' ', '')\
-					.replace('/', '')\
-					.replace('.', '')\
-					.replace(' ', '')\
-					.replace("'", '')\
-					.replace('´', '')\
-					.replace('`', '')\
-					.replace('(', '_')\
-					.replace(')', '_')\
-					.replace('-', '_')
+	result = sanitizeName(name, isClass)
+
 	# If this name is an announced resource, add "Annc" Postfix to both the
 	# name as well as the abbreviation.
 	if ':' not in name:	# ignore, for example, type/enum definitions

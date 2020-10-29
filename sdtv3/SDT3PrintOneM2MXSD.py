@@ -5,7 +5,6 @@
 import csv, datetime, os, pathlib, re, string
 from .SDT3Classes import *
 from common.SDTAbbreviate import *
-from common import SDTAbbreviate
 
 
 # variable that holds an optional header text
@@ -104,8 +103,9 @@ def print3OneM2MXSD(domain, directory, options):
 
 
 	# Export abbreviations
-	exportAbbreviations(path, SDTAbbreviate.getAbbreviations())
-
+	exportAbbreviations(str(context['path']) + os.sep + constAbbreviationCSVFile, 
+	 					str(context['path']) + os.sep + constAbbreviationMAPFile,
+						getAbbreviations())
 
 #############################################################################
 
@@ -764,51 +764,51 @@ def getDeviceProperties(device, annc=False):
 
 # Export abbreviations
 
-def exportAbbreviations(path, abbreviations):
-	global constAbbreviationCSVFile, constAbbreviationMAPFile
+# def exportAbbreviations(path, abbreviations):
+# 	global constAbbreviationCSVFile, constAbbreviationMAPFile
 
-	# Export as python map
-	fullFilename = str(path) + os.sep + constAbbreviationMAPFile
-	outputFile = None
-	try:
-		outputFile = open(fullFilename, 'w')
-		outputFile.write(abbreviations)
-	except IOError as err:
-		print(err)
-	finally:
-		if outputFile != None:
-			outputFile.close()
+# 	# Export as python map
+# 	fullFilename = str(path) + os.sep + constAbbreviationMAPFile
+# 	outputFile = None
+# 	try:
+# 		outputFile = open(fullFilename, 'w')
+# 		outputFile.write(abbreviations)
+# 	except IOError as err:
+# 		print(err)
+# 	finally:
+# 		if outputFile != None:
+# 			outputFile.close()
 
-	# Export as CSV
-	fullFilename = str(path) + os.sep + constAbbreviationCSVFile
-	outputFile = None
-	try:
-		outputFile = open(fullFilename, 'w', newline='')
-		writer = csv.writer(outputFile)
-		for key, value in abbreviations.items():
-			writer.writerow([key, value])
-	except IOError as err:
-		print(err)
-	finally:
-		if outputFile != None:
-			outputFile.close()
+# 	# Export as CSV
+# 	fullFilename = str(path) + os.sep + constAbbreviationCSVFile
+# 	outputFile = None
+# 	try:
+# 		outputFile = open(fullFilename, 'w', newline='')
+# 		writer = csv.writer(outputFile)
+# 		for key, value in abbreviations.items():
+# 			writer.writerow([key, value])
+# 	except IOError as err:
+# 		print(err)
+# 	finally:
+# 		if outputFile != None:
+# 			outputFile.close()
 
 
 # create a python map
-def getAbbreviations(abbreviations):
-	result  = '#!/usr/bin/python'
-	result += newLine(2)
-	result += newLine() + 'map = {'
-	incTab()
-	vals = ''
-	for key in abbreviations:
-		if len(vals) > 0:
-			vals += ','
-		vals += newLine() + '\'' + key + '\':\'' + abbreviations[key] + '\''
-	result += vals
-	decTab()
-	result += newLine() + '}'
-	return result
+# def getAbbreviations(abbreviations):
+# 	result  = '#!/usr/bin/python'
+# 	result += newLine(2)
+# 	result += newLine() + 'map = {'
+# 	incTab()
+# 	vals = ''
+# 	for key in abbreviations:
+# 		if len(vals) > 0:
+# 			vals += ','
+# 		vals += newLine() + '\'' + key + '\':\'' + abbreviations[key] + '\''
+# 	result += vals
+# 	decTab()
+# 	result += newLine() + '}'
+# 	return result
 
 
 #############################################################################

@@ -4,17 +4,17 @@
 # 
 
 import csv
+from typing import Dict
 
 # Dictionary for abbreviations (name, abbr)
-abbreviations = {}
+abbreviations:Dict[str, str] = {}
 
 # Dicionary for existing abbreviations
-preDefinedAbbreviations = {}
+preDefinedAbbreviations:Dict[str, str] = {}
 
 
 # experimental abreviation function. Move later
-
-def abbreviate(name, length=5):
+def abbreviate(name:str, length:int=5) -> str:
 	global abbreviations
 	result = ''
 

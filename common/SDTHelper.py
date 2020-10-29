@@ -2,29 +2,28 @@
 #
 #	Helpers
 #
-import os, pathlib, time, datetime
+import os, pathlib, time, datetime, argparse, textwrap
 
 
 # Sanitize a name 
 def sanitizeName(name, isClass):
-	if name is None or len(name) == 0:
+	if (name == None or len(name) == 0):
 		return ''
 	result = name
-	if isClass:
+	if (isClass):
 		result = result[0].upper() + name[1:]
 	else:
 		result = result[0].lower() + name[1:]
-	result = result.replace(' ', '')
-	result = result.replace('/', '')
-	result = result.replace('.', '')
-	result = result.replace(' ', '')
-	result = result.replace("'", '')
-	result = result.replace('´', '')
-	result = result.replace('`', '')
-	result = result.replace('(', '_')
-	result = result.replace(')', '_')
-	result = result.replace('-', '_')
-
+	result =  result.replace(' ', '')\
+					.replace('/', '')\
+					.replace('.', '')\
+					.replace(' ', '')\
+					.replace("'", '')\
+					.replace('´', '')\
+					.replace('`', '')\
+					.replace('(', '_')\
+					.replace(')', '_')\
+					.replace('-', '_')
 	return result
 
 # Sanitize the package name
@@ -64,13 +63,23 @@ def getVersionedFilename(fileName, extension, name=None, path=None, isModule=Fal
 	return fullFilename
 
 
+def makeDir(directory, parents=True):
+	"""	Create a directory including missing parents.
+		If the directory exists then this is ignored.
+		Return: the path object of the new directory
+	"""
+	try:
+		path = pathlib.Path(directory)
+		path.mkdir(parents=parents)
+	except FileExistsError:
+		# ignore existing directory for now
+		pass
+	return path
+
+
 # Create package path and make directories
 def getPackage(directory, domain):
-	path = pathlib.Path(directory)
-	try:
-		path.mkdir(parents=True)
-	except FileExistsError as e:
-		pass # on purpose. We override files for now
+	path = makeDir(directory)
 	return sanitizePackage(domain.id), path
 
 
@@ -120,7 +129,7 @@ def setTabChar(val):
 def getTabIndent():
 	global tabChar
 	result = ''
-	for i in range(tab):
+	for _ in range(tab):
 		result += tabChar
 	return result
 
@@ -129,3 +138,29 @@ def newLine():
 	result = '\n'
 	result += getTabIndent()
 	return result
+
+
+#
+#	Helper methods for argument parsing
+#
+
+def convertArgLineToArgs(arg_line):
+	"""	Convert single lines to arguments. Deliver one at a time.
+		Skip empty lines.
+	"""
+	for arg in arg_line.split():
+		if not arg.strip():
+			continue
+		yield arg
+
+class MultilineFormatter(argparse.HelpFormatter):
+	"""	Formatter for argparse.
+	"""
+	def _fill_text(self, text, width, indent):
+		text = self._whitespace_matcher.sub(' ', text).strip()
+		paragraphs = text.split('|n ')
+		multiline_text = ''
+		for paragraph in paragraphs:
+			formatted_paragraph = textwrap.fill(paragraph, width, initial_indent=indent, subsequent_indent=indent) + '\n'
+			multiline_text = multiline_text + formatted_paragraph
+		return multiline_text

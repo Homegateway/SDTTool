@@ -9,7 +9,7 @@ from .SDT3Classes import *
 
 # Dictionary to temporarly store the found structs.
 # TODO: export for each ModuleClass (as done yet) or only once? Check for duplicates?
-structs = {}
+structs:dict = {}
 
 # Dictionary to temporarly store necessary imports
 imports = {}

@@ -28,12 +28,12 @@ def print4OneM2MSVG(domain, options, directory):
 	global headerText, modelVersion, namespacePrefix, exportDataPoints
 
 	lfile = options['licensefile']
-	if lfile != None:
+	if lfile is not None:
 		with open(lfile, 'rt') as f:
 			headerText = f.read()
 
 	# get the version of the data model
-	modelVersion = options['modelversion']
+	modelVersion 	= options['modelversion']
 	namespacePrefix = options['namespaceprefix']
 	if namespacePrefix == None:			# ERROR
 		print('Error: name space prefix not set')
@@ -79,7 +79,12 @@ def exportModuleClass(module, package, path, name=None):
 	# export the module class itself
 
 	name = sanitizeName(module.name, False)
-	fileName = getVersionedFilename(name, 'svg', path=str(path), isModule=True, modelVersion=modelVersion, namespacePrefix=namespacePrefix)
+	fileName = getVersionedFilename(name,
+									'svg', 
+									path=str(path), 
+									isModule=True, 
+									modelVersion=modelVersion,
+									namespacePrefix=namespacePrefix)
 	try:
 		with open(fileName, 'w') as outputFile:
 			outputFile.write(getModuleClassSVG(module, package, name, path))		
@@ -213,7 +218,7 @@ def getDataPointSVG(dataPoint):
 
 # Construct data points export
 def getDataPoints(resource, dataPoints, moduleName, path):
-	if dataPoints == None or len(dataPoints) == 0:
+	if dataPoints is None or len(dataPoints) == 0:
 		return
 	for dataPoint in dataPoints:
 		# First add it to the resource
@@ -240,9 +245,12 @@ def addDataPointFooterToResource(resource):
 
 # Export an action definiton to a file
 def exportAction(action, moduleName, path):
-	fileName = getVersionedFilename(sanitizeName(action.name, False), \
-		'svg', path=str(path), isAction=True, modelVersion=modelVersion, \
-		namespacePrefix=namespacePrefix)
+	fileName = getVersionedFilename(sanitizeName(action.name, False),
+									'svg', 
+									path=str(path), 
+									isAction=True,
+									modelVersion=modelVersion,
+									namespacePrefix=namespacePrefix)
 	try:
 		with open(fileName, 'w') as outputFile:
 			outputFile.write(getActionSVG(action))
@@ -261,12 +269,12 @@ def getActionSVG(action):
 
 # Construct actions export
 def getActions(resource, actions, moduleName, path):
-	if actions == None or len(actions) == 0:
+	if actions is None or len(actions) == 0:
 		return
 	for action in actions:
 		# First add it to the resource
-		resource.add(Attribute(sanitizeName(action.name, False), \
-				cardinality=cardinality01 if action.optional == 'true' else cardinality1))
+		resource.add(Attribute(sanitizeName(action.name, False),
+					 cardinality=cardinality01 if action.optional == 'true' else cardinality1))
 		# write out to a file
 		exportAction(action, moduleName, path)
 
