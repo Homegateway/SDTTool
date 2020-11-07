@@ -96,12 +96,12 @@ class SDT4Parser:
 		try:
 			ntag = SDT4Tag(otag.lower())
 		except Exception:
-			raise SyntaxError('unknown tag: %s' % otag)
+			raise SyntaxError(f'unknown tag: {otag}')
 
 		# Check non-emptyness of attributes
 		for at in attrib:
 			if len(attrib[at].strip()) == 0:
-				raise SyntaxError('empty attribute: %s for element: %s' % (at, tag))
+				raise SyntaxError(f'empty attribute: {at} for element: {tag}')
 
 		# Handle all elements 
 
@@ -111,12 +111,13 @@ class SDT4Parser:
 
 		# Call the handler function for that element tag.
 		# First, chech whether this is allowed for the current parent, or raise an exception
+
 		if ntag.isProcessable():
 			(func, instances) = ntag.handler()
 			if instances is None or isinstance(lastElem, instances):
 				func(attrib, lastElem, self.elementStack)
 			else:
-				raise SyntaxError('%s definition is only allowed in %s elements' % (otag, [v._name for v in instances]))
+				raise SyntaxError(f'{otag} definition is only allowed in {[v._name for v in instances]} elements')
 
 		# Other tags to ignore / just containers
 		elif ntag.isIgnored():
@@ -124,7 +125,7 @@ class SDT4Parser:
 
 		# Encountered an unknown element
 		else:
-			raise SyntaxError('Unknown Element: %s %s' % (tag, attrib))
+			raise SyntaxError(f'Unknown Element: {tag} {attrib}')
 
 
 	def end(self, tag):
@@ -132,7 +133,7 @@ class SDT4Parser:
 		try:
 			ntag = SDT4Tag(otag.lower())
 		except Exception:
-			raise SyntaxError('unknown tag: %s' % otag)
+			raise SyntaxError(f'unknown tag: {otag}')
 		if ntag == SDT4Tag.domainTag:
 			self.domain = self.elementStack.pop() # Assign the domain to the parser as result
 		elif ntag.isProcessable():
@@ -330,10 +331,12 @@ def handleInclude(attrib, lastElem, elementStack):
 	"""
 	if isinstance(lastElem, SDT4Extend):
 		include = SDT4ExtendInclude(attrib)
-		lastElem.excludes.append(include)
+		lastElem.includes.append(include)
+		elementStack.append(include)
 	else:
 		include = SDT4Include(attrib)
 		lastElem.includes.append(include)
+		elementStack.append(include)
 
 
 def handleModuleClass(attrib, lastElem, elementStack):
@@ -412,7 +415,7 @@ SDT4Tag._handlers = {	#  type: ignore
 	SDT4Tag.constraintTag 	: (handleConstraint, (SDT4DataType,)),
 	SDT4Tag.dataPointTag	: (handleDataPoint, (SDT4Event, SDT4ModuleClass)),
 	SDT4Tag.dataTypeTag 	: (handleDataType, (SDT4Action, SDT4DataPoint, SDT4Event, SDT4Arg, SDT4StructType, SDT4ArrayType, SDT4Domain)),
-	SDT4Tag.deviceClassTag 	: (handleDeviceClass, (SDT4Domain,)),
+	SDT4Tag.deviceClassTag 	: (handleDeviceClass, (SDT4Domain)),
 	SDT4Tag.docTag 			: (handleDoc, (SDT4Domain, SDT4ProductClass, SDT4DeviceClass, SDT4SubDevice, SDT4DataType, SDT4ModuleClass, SDT4Action, SDT4DataPoint, SDT4Event, SDT4EnumValue, SDT4Arg, SDT4Constraint, SDT4Property)),
 	SDT4Tag.domainTag 		: (handleDomain, None),
 	SDT4Tag.emTag 			: (handleEM, (SDT4Doc, SDT4DocP)),
@@ -424,12 +427,12 @@ SDT4Tag._handlers = {	#  type: ignore
 	SDT4Tag.imgTag 			: (handleImg, (SDT4Doc, SDT4DocP)),
 	SDT4Tag.imgCaptionTag 	: (handleImgCaption, (SDT4DocIMG,)),
 	SDT4Tag.includeTag 		: (handleInclude, (SDT4Domain, SDT4Extend)),
-	SDT4Tag.moduleClassTag 	: (handleModuleClass, (SDT4Domain, SDT4ProductClass, SDT4DeviceClass, SDT4SubDevice, SDT4ProductClass)),
+	SDT4Tag.moduleClassTag 	: (handleModuleClass, (SDT4Domain, SDT4ProductClass, SDT4DeviceClass, SDT4SubDevice)),
 	SDT4Tag.pTag 			: (handleP, (SDT4Doc, SDT4DocP)),
 	SDT4Tag.productClassTag	: (handleProductClass, (SDT4Domain,)),
 	SDT4Tag.propertyTag		: (handleProperty, (SDT4ProductClass, SDT4DeviceClass, SDT4SubDevice, SDT4ModuleClass)),
 	SDT4Tag.simpleTypeTag 	: (handleSimpleType, (SDT4DataType, SDT4Property)),
 	SDT4Tag.structTypeTag	: (handleStructType, (SDT4DataType,)),
-	SDT4Tag.subDeviceTag 	: (handleSubDevice, (SDT4DeviceClass, SDT4ProductClass, SDT4Domain)),
+	SDT4Tag.subDeviceTag 	: (handleSubDevice, (SDT4Domain, SDT4DeviceClass, SDT4ProductClass)),
 	SDT4Tag.ttTag 			: (handleTT, (SDT4Doc, SDT4DocP))
 }

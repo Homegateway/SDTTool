@@ -26,7 +26,8 @@ class SDT4Commons(object):
 
 templates = {
 	'markdown'		: ('markdown.tpl', None, True, None),
-	'onem2m-xsd'	: ('onem2m-xsd.tpl', 'enumerationTypes', False, 'xsd')
+	'onem2m-xsd'	: ('onem2m-xsd.tpl', 'enumerationTypes', False, 'xsd'),
+	'acme-ap'		: ('acme-ap.tpl', None, True, None),
 }
 actions:set = set()
 enumTypes:set = set()
@@ -35,6 +36,7 @@ extendedModuleClassesExtend:dict = dict()
 extendedSubDevices:dict = dict()
 extendedSubDevicesExtend:dict = dict()
 context = None
+optionArgs = None
 
 # constants for abbreviation file
 constAbbreviationCSVFile = '_Abbreviations.csv'
@@ -42,19 +44,24 @@ constAbbreviationMAPFile = '_Abbreviations.py'
 
 def print4SDT(domain, options, directory=None):
 	global context
+	global optionArgs
 	context = getContext(domain, options, directory)
+	optionArgs = options
 	if context['isSingleFile']:
-		return render(context['templateFile'], context)
+		render(context['templateFile'], context)
+		# Export NEW abbreviations
+		exportAbbreviations(constAbbreviationCSVFile, constAbbreviationMAPFile, getAbbreviations())
+		return
 	else:
 		renderMultiple(context['templateFile'], context, domain, directory, context['extension'])
 	printShortNames(context) # TODO better
-	return None
 
 
 
 def render(templateFile, context):
 	_, filename = os.path.split(templateFile)
 	(path, _) = os.path.split(os.path.realpath(__file__))
+	# print(context)
 	return jinja2.Environment(
         loader=jinja2.FileSystemLoader(path + '/templates'),
         trim_blocks=True,
@@ -120,9 +127,12 @@ def renderMultiple(templateFile, context, domain, directory, extension):
 	renderComponentToFile(context, isExtras=True)
 
 	# Export abbreviations
-	exportAbbreviations(str(context['path']) + os.sep + constAbbreviationCSVFile, \
-		str(context['path']) + os.sep + constAbbreviationMAPFile,\
-		getAbbreviations())
+	exportAbbreviations(f'{context["path"]}{os.sep}{constAbbreviationCSVFile}',
+						f'{context["path"]}{os.sep}{constAbbreviationMAPFile}',
+						getAbbreviations())
+	# exportAbbreviations(str(context['path']) + os.sep + constAbbreviationCSVFile, \
+	# 	str(context['path']) + os.sep + constAbbreviationMAPFile,\
+	# 	getAbbreviations())
 
 
 
@@ -179,6 +189,7 @@ def getContext(domain, options, directory=None):
     	'debug'							: debug,
     	'countExtend'					: countExtend,
     	'countUnextend'					: countUnextend,
+		'shortname'						: shortname,
 	}
 
 
@@ -197,6 +208,7 @@ def printShortNames(context):
 	#	Uniqe
 	#	combined files?
 
+	print("hu")
 	# devices
 	fileName = templateSanitizeName('devices-' + getTimeStamp(), False)
 	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
@@ -307,7 +319,7 @@ def templateSanitizeName(name, isClass, annc=False):
 	# If this name is an announced resource, add "Annc" Postfix to both the
 	# name as well as the abbreviation.
 	if ':' not in name:	# ignore, for example, type/enum definitions
-		abbr = abbreviate(result)
+		abbr = abbreviate(result, optionArgs['abbreviationlength'])
 		if annc:
 			addAbbreviation(result + 'Annc', abbr + 'Annc')
 		else:
@@ -324,17 +336,17 @@ def templateSanitizeName(name, isClass, annc=False):
 def instanceType(ty):
 	""" Return the type of an object as a string. Replace domain with namespace, if set.
 	"""
-	#print(type(ty).__name__)
+	# print(type(ty).__name__)
 
 	# Handle normal classes
 	tyn = type(ty).__name__
-	if tyn in ['SDT4ModuleClass', 'SDT4ArrayType', 'SDT4SimpleType', 'SDT4Action', 'SDT4DeviceClass', 'SDT4SubDevice', 'SDT4Commons', 'SDT4DataTypes', 'NoneType']:
+	if tyn in ['SDT4ModuleClass', 'SDT4ArrayType', 'SDT4SimpleType', 'SDT4EnumType', 'SDT4Action', 'SDT4DeviceClass', 'SDT4SubDevice', 'SDT4Commons', 'SDT4DataTypes', 'NoneType']:
 		return tyn
 
 	# Handle data types
 	ns = context['namespaceprefix']
 	if ty.type is None and ty.extend is not None:
-		#print(ty.extend.entity)
+		# print(ty.extend.entity)
 		if ty.extend.domain == context['domain'].id and ns is not None:
 			return '%s:%s' % (ns, ty.extend.entity)
 		return '%s : %s' % (ty.extend.domain, ty.extend.entity)
@@ -355,6 +367,10 @@ def countExtend(lst):
 
 def countUnextend(lst):
 	return len(lst) - countExtend(lst)
+
+
+def shortname(name):
+	return abbreviate(name, optionArgs['abbreviationlength'])
 
 
 #

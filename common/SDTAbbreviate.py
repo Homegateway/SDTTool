@@ -92,7 +92,7 @@ def getAbbreviation(name):
 	return None
 
 
-# Read existing abbreviations
+# Read already existing abbreviations
 def readAbbreviations(infile, predefined=True):
 	global preDefinedAbbreviations, abbreviations
 	if infile == None:

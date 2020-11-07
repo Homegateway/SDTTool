@@ -153,3 +153,14 @@ def printSwagger(domain, inputFormat, directory, options):
 	helper.makeDir(directory)
 	print3Swagger(domain, directory, options)
 
+
+def printACMEAp(domain, inputFormat, directory, options):
+	if domain is None:
+		return
+	if inputFormat not in ['sdt4']:
+		print('Only the input format "sdt4" is supported')
+		return
+	elif domain._version == '4':
+		prepare4OneM2M(domain)
+		return print4SDT(domain, options, directory)
+	return ''
