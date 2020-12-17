@@ -27,8 +27,26 @@ class SDT4Commons(object):
 templates = {
 	'markdown'		: ('markdown.tpl', None, True, None),
 	'onem2m-xsd'	: ('onem2m-xsd.tpl', 'enumerationTypes', False, 'xsd'),
-	'acme-ap'		: ('acme-ap.tpl', None, True, None),
+	'apjson'		: ('apjson.tpl', None, True, None),
 }
+
+
+# Mapping between domain and namespace prefix
+# TODO make this mapping more configurable, maybe on the command line?
+
+namespacePrefixMappings = {
+	('agd', 'org.onem2m.agriculture',	'http://www.onem2m.org/xml/protocols/agriculturedomain'),
+	('cid', 'org.onem2m.city',			'http://www.onem2m.org/xml/protocols/citydomain'),
+	('cod', 'org.onem2m.common',		'http://www.onem2m.org/xml/protocols/commondomain'),
+	('hed', 'org.onem2m.health',		'http://www.onem2m.org/xml/protocols/healthdomain'),
+	('hod', 'org.onem2m.home',			'http://www.onem2m.org/xml/protocols/homedomain'),
+	('ind', 'org.onem2m.industry',		'http://www.onem2m.org/xml/protocols/industrydomain'),
+	('mad', 'org.onem2m.management',	'http://www.onem2m.org/xml/protocols/managementdomain'),
+	('rad', 'org.onem2m.railway',		'http://www.onem2m.org/xml/protocols/railwaydomain'),
+	('ved', 'org.onem2m.vehicular',		'http://www.onem2m.org/xml/protocols/vehiculardomain'),
+}
+
+
 actions:set = set()
 enumTypes:set = set()
 extendedModuleClasses:dict = dict()
@@ -48,20 +66,22 @@ def print4SDT(domain, options, directory=None):
 	context = getContext(domain, options, directory)
 	optionArgs = options
 	if context['isSingleFile']:
-		render(context['templateFile'], context)
+	# Read abbreviations
+		readAbbreviations(context['abbreviationsinfile'])
+		result = render(context['templateFile'], context)
 		# Export NEW abbreviations
 		exportAbbreviations(constAbbreviationCSVFile, constAbbreviationMAPFile, getAbbreviations())
-		return
+		return result
 	else:
 		renderMultiple(context['templateFile'], context, domain, directory, context['extension'])
-	printShortNames(context) # TODO better
+	printShortNames(context) # TODO improve printShortnames
 
 
 
 def render(templateFile, context):
 	_, filename = os.path.split(templateFile)
 	(path, _) = os.path.split(os.path.realpath(__file__))
-	# print(context)
+	#print(context)
 	return jinja2.Environment(
         loader=jinja2.FileSystemLoader(path + '/templates'),
         trim_blocks=True,
@@ -190,6 +210,10 @@ def getContext(domain, options, directory=None):
     	'countExtend'					: countExtend,
     	'countUnextend'					: countUnextend,
 		'shortname'						: shortname,
+		'getNamespacePrefix'			: getNamespacePrefix,
+		'componentName'					: componentName,
+		'getNamespaceFromPrefix'		: getNamespaceFromPrefix,
+		'getXMLNameSpaces'				: getXMLNameSpaces,
 	}
 
 
@@ -208,7 +232,6 @@ def printShortNames(context):
 	#	Uniqe
 	#	combined files?
 
-	print("hu")
 	# devices
 	fileName = templateSanitizeName('devices-' + getTimeStamp(), False)
 	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
@@ -231,7 +254,9 @@ def printShortNames(context):
 	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for name in extendedSubDevicesExtend:
-			outputFile.write(name + ',' + getAbbreviation(name) + '\n')
+			if (abbr := getAbbreviation(name)) is None:
+				continue
+			outputFile.write(name + ',' + abbr + '\n')
 	deleteEmptyFile(fullFilename)
 
 	# ModuleClasses
@@ -333,11 +358,14 @@ def templateSanitizeName(name, isClass, annc=False):
 	return result
 
 
-def instanceType(ty):
+def instanceType(ty, withNameSpace=True):
 	""" Return the type of an object as a string. Replace domain with namespace, if set.
 	"""
 	# print(type(ty).__name__)
 
+	# Handle just strings
+	if isinstance(ty, str):
+		return str
 	# Handle normal classes
 	tyn = type(ty).__name__
 	if tyn in ['SDT4ModuleClass', 'SDT4ArrayType', 'SDT4SimpleType', 'SDT4EnumType', 'SDT4Action', 'SDT4DeviceClass', 'SDT4SubDevice', 'SDT4Commons', 'SDT4DataTypes', 'NoneType']:
@@ -348,14 +376,15 @@ def instanceType(ty):
 	if ty.type is None and ty.extend is not None:
 		# print(ty.extend.entity)
 		if ty.extend.domain == context['domain'].id and ns is not None:
-			return '%s:%s' % (ns, ty.extend.entity)
-		return '%s : %s' % (ty.extend.domain, ty.extend.entity)
+			return f'{ns}:{ty.extend.entity}' if withNameSpace else ty.extend.entity
+		return f'{ty.extend.domain}:{ty.extend.entity}' if withNameSpace else ty.extend.entity
 	return type(ty.type).__name__
 
 
 def getNSName(name):
 	""" Return the correct name, including namespace prefix, if set. """
 	return '%s:%s' % (context['namespaceprefix'], name) if context['namespaceprefix'] is not None else name
+
 
 def countExtend(lst):
 	cnt = 0
@@ -371,6 +400,44 @@ def countUnextend(lst):
 
 def shortname(name):
 	return abbreviate(name, optionArgs['abbreviationlength'])
+
+
+def getNamespacePrefix(obj):
+	"""	Try to map the extended domain to a short name prefix.
+		Otherwise return the defined namespace prefix for this object.
+	"""
+	if obj.extend is not None:
+		domain = obj.extend.domain
+		for (k,v,d) in namespacePrefixMappings:
+			if domain.startswith(v):
+				return k
+		return context['namespaceprefix']
+	return context['namespaceprefix']
+
+def getNamespaceFromPrefix(prfx):
+	"""	Try to find the full prefix from the short prefix.
+	"""
+	for (k,v,d) in namespacePrefixMappings:
+		if k == prfx:
+			return v
+	return None
+
+
+def getXMLNameSpaces():
+	result = ''
+	for (k,v,d) in namespacePrefixMappings:
+		result += f'xmlns:{k}="{d}" '
+	return result
+# xmlns:agd="http://www.onem2m.org/xml/protocols/agriculturedomain"
+
+
+def componentName(obj):
+	"""	Return the name or id of an SDT object as a string.
+		If the object extends another object then that name is returned.
+	"""
+	if obj.extend is not None:
+		return obj.extend.entity
+	return obj.id if isinstance(obj, (SDT4DeviceClass, SDT4SubDevice)) else obj.name
 
 
 #

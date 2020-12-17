@@ -152,6 +152,8 @@ class SDT4Action(SDT4Element):
 		self.type 			= None
 		self.doc 			= None
 		self.args 			= []
+		self.extend 		= None		# Action does not have 'extend' but it is added here to simplify handling in templates
+
 
 
 class SDT4Arg(SDT4Element):

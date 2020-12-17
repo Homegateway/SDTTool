@@ -32,15 +32,24 @@ def _prepareSubDevices(subDevices):
 
 def _prepareModuleClasses(moduleClasses):
 	for mc in moduleClasses:
-		mc.data.insert(0, _createDPDataGenerationTime())
+		mc.data.insert(0, _createDataPoint('dataGenerationTime', 'datetime', True))
+		_prepareActions(mc.actions
+		
+		)
+
+def _prepareActions(actions):
+	for action in actions:	# Add dataGenerationTime to Actions as well
+		action.args.insert(0, _createDataPoint('dataGenerationTime', 'datetime', True))
+		# Add result if the action has a data type
+		if action.type is not None:
+			action.args.append(_createDataPoint('result', action.type.type.type, False))
 
 
-
-def _createDPDataGenerationTime():
+def _createDataPoint(name:str, tpe:str, optional:bool):
 	dp 					= SDT4DataPoint(None)
-	dp.name 			= 'dataGenerationTime'
-	dp.optional 		= 'true'
+	dp.name 			= name
+	dp.optional 		= 'true' if optional else 'false'
 	dp.type				= SDT4DataType()
 	dp.type.type	 	= SDT4SimpleType()
-	dp.type.type.type 	= "datetime"
+	dp.type.type.type 	= tpe
 	return dp

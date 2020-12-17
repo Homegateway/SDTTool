@@ -9,7 +9,7 @@ from sdtv4 import SDT4Parser
 import common.SDTHelper as SDTHelper, SDTPrinter
 
 
-import io, sys, traceback, argparse
+import io, sys, traceback, argparse, pathlib, os
 
 version = '0.9'
 description = 'SDTTool ' + version + ' - A tool to read and convert Smart Device Templates.'
@@ -90,6 +90,9 @@ def outputResult(outFile, result):
 	if outFile == None:
 		print(result)
 	else:
+		path = os.path.dirname(outFile)
+		if len(path) > 0:
+			os.makedirs(path, exist_ok=True)
 		try:
 			with open(outFile, 'w') as outputFile:
 				outputFile.write(result)
@@ -114,9 +117,9 @@ def main(argv):
 	parser = argparse.ArgumentParser(description=description, epilog=epilog, fromfile_prefix_chars='@', formatter_class=SDTHelper.MultilineFormatter)
 	parser.convert_arg_line_to_args = SDTHelper.convertArgLineToArgs
 
-	parser.add_argument('-o', '--outfile', action='store', dest='outFile', help='The output file or directory for the result. The default is stdout')
+	parser.add_argument('-o', '--outfile', action='store', dest='outFile', default=None, help='The output file or directory for the result. The default is stdout')
 	parser.add_argument('-if', '--inputformat', choices=('sdt2', 'sdt3', 'sdt4'), action='store', dest='inputFormat', default='sdt4', help='The input format to read. The default is sdt4')
-	parser.add_argument('-of', '--outputformat', choices=('plain', 'opml', 'markdown', 'sdt3', 'sdt4', 'java', 'vorto-dsl', 'onem2m-svg', 'onem2m-xsd', 'swagger', 'acme-ap'), action='store', dest='outputFormat', default='markdown', help='The output format for the result. The default is markdown')
+	parser.add_argument('-of', '--outputformat', choices=('plain', 'opml', 'markdown', 'sdt3', 'sdt4', 'java', 'vorto-dsl', 'onem2m-svg', 'onem2m-xsd', 'swagger', 'apjson'), action='store', dest='outputFormat', default='markdown', help='The output format for the result. The default is markdown')
 	parser.add_argument('--hidedetails',  action='store_true', help='Hide the details of module classes and devices when printing documentation')
 	parser.add_argument('--markdowntables',  action='store_true', help='Format markdown output as tables for markdown')
 	parser.add_argument('--markdownpagebreak',  action='store_true', help='Insert page breaks before ModuleClasse and Device definitions.')
@@ -124,12 +127,13 @@ def main(argv):
 
 	oneM2MArgs = parser.add_argument_group('oneM2M sepcific')
 	oneM2MArgs.add_argument('--domain',  action='store', dest='domain', help='Set the domain for the model')
-	oneM2MArgs.add_argument('-ns', '--namespaceprefix',  action='store', dest='namespaceprefix', help='Specify the name space prefix for the model')
+	oneM2MArgs.add_argument('-ns', '--namespaceprefix',  action='store', dest='namespaceprefix', default='m2m', help='Specify the name space prefix for the model')
 	oneM2MArgs.add_argument('--abbreviationsinfile', '-abif',  action='store', dest='abbreviationsinfile', help='Specify the file that contains a CSV table of alreadys existing abbreviations.')
 	oneM2MArgs.add_argument('--abbreviationlength',  action='store', dest='abbreviationlength', type=int, default=5, help='Specify the maximum length for abbreviations. The default is 5.')
 	oneM2MArgs.add_argument('--xsdtargetnamespace',  action='store', dest='xsdtargetnamespace', help='Specify the target namespace for the oneM2M XSD (a URI).')
 	oneM2MArgs.add_argument('--modelversion', '-mv', action='store', dest='modelversion', help='Specify the version of the model.')
 	oneM2MArgs.add_argument('--svg-with-attributes',  action='store_true', dest='svgwithattributes', help='Generate SVG for ModuleClass attributes as well.')
+	oneM2MArgs.add_argument('--xsdnamespacemapping', '-xsdnsmap',  action='store', dest='xsdnamespacemapping', nargs='*', help='Specify the target namespace for the oneM2M XSD (a URI).')
 
 	requiredNamed = parser.add_argument_group('required arguments')
 	requiredNamed.add_argument('-i', '--infile', action='store', dest='inFile', required=True, help='The SDT input file to parse')
@@ -154,6 +158,7 @@ def main(argv):
 	moreOptions['abbreviationsinfile'] 			= args.abbreviationsinfile
 	moreOptions['abbreviationlength'] 			= args.abbreviationlength
 	moreOptions['xsdtargetnamespace'] 			= args.xsdtargetnamespace
+	moreOptions['xsdnamespacemapping']			= args.xsdnamespacemapping
 	moreOptions['modelversion'] 				= args.modelversion
 	moreOptions['outputFormat']					= args.outputFormat
 	moreOptions['svgwithattributes']			= args.svgwithattributes
@@ -189,7 +194,7 @@ def main(argv):
 	elif args.outputFormat == 'vorto-dsl':	SDTPrinter.printVortoDSL(domain, inputFormat, outFile, moreOptions)
 	elif args.outputFormat == 'onem2m-svg':	SDTPrinter.printOneM2MSVG(domain, inputFormat, outFile, moreOptions)
 	elif args.outputFormat == 'onem2m-xsd':	SDTPrinter.printOneM2MXSD(domain, inputFormat, outFile, moreOptions)
-	elif args.outputFormat == 'acme-ap':	outputResult(outFile, SDTPrinter.printACMEAp(domain, inputFormat, outFile, moreOptions))
+	elif args.outputFormat == 'apjson':		outputResult(outFile, SDTPrinter.printApJSON(domain, inputFormat, outFile, moreOptions))
 	elif args.outputFormat == 'swagger':	SDTPrinter.printSwagger(domain, inputFormat, outFile, moreOptions)
 
 

@@ -154,7 +154,7 @@ def printSwagger(domain, inputFormat, directory, options):
 	print3Swagger(domain, directory, options)
 
 
-def printACMEAp(domain, inputFormat, directory, options):
+def printApJSON(domain, inputFormat, directory, options):
 	if domain is None:
 		return
 	if inputFormat not in ['sdt4']:

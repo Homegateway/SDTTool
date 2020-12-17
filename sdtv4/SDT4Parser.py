@@ -96,7 +96,7 @@ class SDT4Parser:
 		try:
 			ntag = SDT4Tag(otag.lower())
 		except Exception:
-			raise SyntaxError(f'unknown tag: {otag}')
+			raise SyntaxError(self._unknownTag(otag))
 
 		# Check non-emptyness of attributes
 		for at in attrib:
@@ -133,7 +133,7 @@ class SDT4Parser:
 		try:
 			ntag = SDT4Tag(otag.lower())
 		except Exception:
-			raise SyntaxError(f'unknown tag: {otag}')
+			raise SyntaxError(self._unknownTag(otag))
 		if ntag == SDT4Tag.domainTag:
 			self.domain = self.elementStack.pop() # Assign the domain to the parser as result
 		elif ntag.isProcessable():
@@ -162,6 +162,13 @@ class SDT4Parser:
 
 	def comment(self, data): # ignore comments
 		pass
+
+	
+	def _unknownTag(self, tag):
+		help = ''
+		if tag.lower() == 'simpletype':	help = 'Do you mean "Simple"?'
+		return f'unknown tag: {tag}. {help}'
+
 
 
 def getAttribute(attrib, attribName):

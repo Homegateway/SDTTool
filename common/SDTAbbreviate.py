@@ -109,7 +109,7 @@ def readAbbreviations(infile, predefined=True):
 				else:
 					print('Unknwon row found (ignored): ' + ', '.join(row))
 	except FileNotFoundError as e:
-		print(str(e) + ' (abbreviation input file ignored)')
+		print(f'WARNING: No such file or directory: "{infile}": abbreviation input file ignored')
 	except Exception as e:
 		raise
 
