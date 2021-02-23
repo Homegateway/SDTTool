@@ -1,3 +1,5 @@
+
+{##### TODO Where to put this? #####}
 {##### Define CDT version to use #####}
 {% set CDTVersion = '3_7_0' %}
 
@@ -87,14 +89,15 @@
 
 {##### Print General DataType #####}
 {% macro getDataType(name, type, level) %}
+{% if isString(type) %}
+ type="{{ getSimpleDataType(type) -}}" />
+{% else %}
 {% if instanceType(type.type) == 'SDT4ArrayType' %}
 {{ _arrayType(type.type.arrayType) | indent(5*level, indentfirst=False) -}}
 {% else %}
 {% if instanceType(type.type) == 'SDT4SimpleType' %}
  type="{{ getSimpleDataType(type.type.type) -}}" />
-{% else %}
-{% set it = instanceType(type) %}
- type="{{ getSimpleDataType(it) -}}" />
+{% endif %}
 {% endif %}
 {% endif %}
 {% endmacro %}
@@ -287,7 +290,7 @@ unknown
     </xs:complexType>
 
 
-<!-- EXPERIMENTAL FCI -->
+<!-- TODO FCI -->
 
     <xs:element name="{{ object.name }}Inst" type="{{ namespaceprefix }}:{{ object.name }}Inst" substitutionGroup="m2m:sg_flexContainerInstanceResource" />
     <xs:complexType name="{{ object.name }}Inst" >
@@ -349,6 +352,7 @@ unknown
                 <xs:sequence>
                 
                     <!-- Resource Specific Attributes -->
+{{ renderSpecificAttributes(object.properties, False, 6) }}
 
                     <!-- Child Resources -->
                     
@@ -374,6 +378,7 @@ unknown
                 <xs:sequence>
 
                     <!-- Resource Specific Attributes -->
+{{ renderSpecificAttributes(object.properties, False, 6) }}
 
                     <!-- Child Resources -->
 
@@ -391,7 +396,7 @@ unknown
         </xs:complexContent>
     </xs:complexType>
 
-<!-- EXPERIMENTAL FCI -->
+<!-- TODO FCI -->
 
     <xs:element name="{{ name }}Inst" type="{{ namespaceprefix }}:{{ name }}Inst" substitutionGroup="m2m:sg_flexContainerInstanceResource" />
     <xs:complexType name="{{ name }}Inst" >
@@ -401,6 +406,7 @@ unknown
                 <xs:sequence>
 
                     <!-- Resource Specific Attributes -->
+{{ renderSpecificAttributes(object.properties, False, 6) }}
 
                     <!-- No Child Resources -->
 
@@ -480,7 +486,7 @@ unknown
         </xs:complexContent>
     </xs:complexType>
 
-<!-- EXPERIMENTAL FCI -->
+<!-- TODO FCI -->
 
     <xs:element name="{{ object.name }}Inst" type="{{ namespaceprefix }}:{{ object.name }}Inst" substitutionGroup="m2m:sg_flexContainerInstanceResource" />
     <xs:complexType name="{{ object.name }}Inst" >

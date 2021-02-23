@@ -89,11 +89,11 @@ class SDT4Property(SDT4Element):
 	_name = 'Property'
 
 	def __init__(self, attrib=None):
-		self.name 			= getAttribute(attrib, 'name')
+		self.name 			= self.getAttribute(attrib, 'name')
 		self.optional 		= self.getAttribute(attrib, 'optional', 'false')
 		self.semanticURI 	= self.getAttribute(attrib, 'semanticURI')
 		self.doc 			= None
-		self.type 			= None	# This is always a simpleType
+		self.type 			= self.getAttribute(attrib, 'type')	
 		self.value 			= self.getAttribute(attrib, 'value')
 
 
@@ -123,6 +123,10 @@ class SDT4Extend(SDT4Element):
 		self.entity 	= self.getAttribute(attrib, 'entity')
 		self.excludes 	= []
 		self.includes 	= []
+		if self.domain is None or len(self.domain) == 0:
+			raise SyntaxError('Extend: "domain" attribute is missing')
+		if self.entity is None or len(self.entity) == 0:
+			raise SyntaxError('Extend: "entity" attribute is missing')
 
 
 class SDT4ExtendExclude(SDT4Element):

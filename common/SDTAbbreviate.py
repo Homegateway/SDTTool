@@ -63,13 +63,13 @@ def abbreviate(name:str, length:int=5) -> str:
 	abbr = result[:length]
 	clashVal = -1
 	while abbr in list(abbreviations.values()) or abbr in list(preDefinedAbbreviations.values()	):
-		#print('clash: ' + abbr)
+		# print(f'clash: {abbr}')
 		clashVal += 1
 		prf = result[:length]
 		pof = str(clashVal)
 		abbr = prf[:len(prf)-len(pof)] + pof
-		#print('resolution: ' + abbr)
-
+		# print(f'resolution: {abbr}')
+	# print(f'{name} - {abbr}')
 	return abbr
 
 

@@ -197,6 +197,7 @@ def getContext(domain, options, directory=None):
     	# pointer to functions
     	'renderComponentToFile'			: renderComponentToFile,
     	'instanceType'					: instanceType,
+    	'isString'						: isString,
     	'getNSName'						: getNSName,
     	'incLevel'						: incLevel,
     	'decLevel'						: decLevel,
@@ -364,7 +365,7 @@ def instanceType(ty, withNameSpace=True):
 	# print(type(ty).__name__)
 
 	# Handle just strings
-	if isinstance(ty, str):
+	if isinstance(ty, str): # ty is just a string and contains the type already
 		return str
 	# Handle normal classes
 	tyn = type(ty).__name__
@@ -380,6 +381,9 @@ def instanceType(ty, withNameSpace=True):
 		return f'{ty.extend.domain}:{ty.extend.entity}' if withNameSpace else ty.extend.entity
 	return type(ty.type).__name__
 
+
+def isString(v) -> bool:
+	return isinstance(v, str)
 
 def getNSName(name):
 	""" Return the correct name, including namespace prefix, if set. """
@@ -399,7 +403,9 @@ def countUnextend(lst):
 
 
 def shortname(name):
-	return abbreviate(name, optionArgs['abbreviationlength'])
+	abbr = abbreviate(name, optionArgs['abbreviationlength'])
+	addAbbreviation(name, abbr)
+	return abbr
 
 
 def getNamespacePrefix(obj):

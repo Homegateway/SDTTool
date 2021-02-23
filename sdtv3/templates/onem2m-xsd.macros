@@ -1,4 +1,6 @@
 {##### Define CDT version to use #####}
+{##### TODO Where to put this? #####}
+
 {% set CDTVersion = '3_7_0' %}
 
 

@@ -21,6 +21,8 @@ def _prepareProductClasses(productClasses):
 
 def _prepareDeviceClasses(deviceClasses):
 	for dc in deviceClasses:
+		dc.properties.insert(0, _createProperty('flexNodeLink', 'string', True))
+		dc.properties.insert(0, _createProperty('nodeLink', 'string', True))
 		_prepareModuleClasses(dc.moduleClasses)
 		_prepareSubDevices(dc.subDevices)
 
@@ -33,9 +35,7 @@ def _prepareSubDevices(subDevices):
 def _prepareModuleClasses(moduleClasses):
 	for mc in moduleClasses:
 		mc.data.insert(0, _createDataPoint('dataGenerationTime', 'datetime', True))
-		_prepareActions(mc.actions
-		
-		)
+		_prepareActions(mc.actions)
 
 def _prepareActions(actions):
 	for action in actions:	# Add dataGenerationTime to Actions as well
@@ -53,3 +53,10 @@ def _createDataPoint(name:str, tpe:str, optional:bool):
 	dp.type.type	 	= SDT4SimpleType()
 	dp.type.type.type 	= tpe
 	return dp
+
+def _createProperty(name:str, tpe:str, optional:bool):
+	p 			= SDT4Property(None)
+	p.name 		= name
+	p.optional 	= 'true' if optional else 'false'
+	p.type		= tpe
+	return p

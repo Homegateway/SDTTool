@@ -23,11 +23,18 @@
 {%endmacro %}
 
 
-{% macro printEmptyEntry(name, type, cnd, children, annc) -%}
+{% macro printEmptyEntry(name, type, cnd, children, annc, properties) -%}
 {
-        "type"      : "{{ getNSName(shortname(name)) }}{{ annc }}",
-        "lname"     : "{{ name }}{{ annc }}",
-        "cnd"       : "{{ cnd }}{{ annc }}"{{"," if children | length > 0 }}
+        "type"      : "{{ getNSName(shortname(name)) }}{{ annc if annc}}",
+        "lname"     : "{{ name }}{{ annc if annc }}",
+        "cnd"       : "{{ cnd }}{{ annc if annc }}"{{"," if properties or children| length > 0 }}
+{% if properties | length > 0 %}
+        "attributes": [
+{% for pr in properties %}
+{{ printAsProperty(pr, loop.last) }}
+{% endfor %}
+        ]{{"," if children | length > 0 }}
+{% endif %}
 {% if children | length > 0 %}
         "children"  : [
 {% for child in children %}
@@ -46,7 +53,10 @@
             { "sname" : "{{shortname(dp.name)}}", "lname" : "{{ dp.name }}", "type" : "{{printDataType(dp.type)}}", "car" : "{{printOptional(dp.optional)}}" }{{ ", " if not last }}
 {%- endmacro %}
 
-
+{% macro printAsProperty(pr, last) %}
+            // Property: {{ pr.name }}
+            { "sname" : "{{shortname(pr.name)}}", "lname" : "{{ pr.name }}", "type" : "{{pr.type}}", "car" : "{{printOptional(pr.optional)}}" }{{ ", " if not last }}
+{%- endmacro %}
 
 {##### Generate ModuleClasses (normal and announced version) #####}
 {%- macro printModuleClasses(moduleClasses) %}
@@ -60,6 +70,9 @@
         {% set cnd = getNamespaceFromPrefix(namespaceprefix) ~ ".moduleclass." ~ moduleClass.name %}
         "cnd"       : "{{ cnd }}",
         "attributes": [
+{% for pr in moduleClass.properties %}
+{{ printAsProperty(pr, loop.last) }}
+{% endfor %}
 {% for dp in moduleClass.data %}
 {{ printAsAttribute(dp, loop.last) }}
 {% endfor %}
@@ -96,6 +109,9 @@
         {% set cnd = getNamespaceFromPrefix(namespaceprefix) ~ ".moduleclass." ~ moduleClass.name %}
         "cnd"       : "{{ cnd }}Annc",
         "attributes": [
+{% for pr in properties %}
+{{ printAsProperty(pr, loop.last) }}
+{% endfor %}
 {% for dp in moduleClass.data %}
 {{ printAsAttribute(dp, loop.last) }}
 {% endfor %}
@@ -118,6 +134,9 @@
         "cnd"       : "{{ cnd }}"{{"," if action.args | length > 0 }}
 {% if action.args | length > 0 %}
         "attributes": [
+{% for pr in moduleClass.properties %}
+{{ printAsProperty(pr, loop.last) }}
+{% endfor %}
 {% for arg in action.args %}
 {{ printAsAttribute(arg, loop.last) }}
 {% endfor %}
@@ -138,12 +157,13 @@
 {% for device in deviceClasses %}
     // DeviceClass: {{device.id}}
     {% set cnd = getNamespaceFromPrefix(namespaceprefix) ~ ".device." ~ device.id %}
-    {{ printEmptyEntry(device.id, None, cnd, device.moduleClasses+device.subDevices) }},
-{%- if device.moduleClasses | length > 0 %}{{ printModuleClasses(device.moduleClasses) }}{% endif %}
+    {{ printEmptyEntry(device.id, None, cnd, device.moduleClasses+device.subDevices, None, device.properties) }},
+{%- if device.moduleClasses | length > 0 %}{{ printModuleClasses(device.moduleClasses) }}{% endif %}        
+
 
 
     // DeviceClass Announced: {{device.id}}Annc
-    {{ printEmptyEntry(device.id, None, cnd, device.moduleClasses+device.subDevices, "Annc") }}
+    {{ printEmptyEntry(device.id, None, cnd, device.moduleClasses+device.subDevices, "Annc", device.properties) }}
 {%- if device.moduleClasses | length > 0 %}{{ printModuleClasses(device.moduleClasses) }}{% endif %}{{ ", " if not loop.last }}
 
 {% endfor %}
