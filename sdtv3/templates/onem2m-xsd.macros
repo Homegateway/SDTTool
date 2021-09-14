@@ -10,7 +10,7 @@
 
 {##### Print Indention #####}
 {% macro _indent(level) %}
-{{''|indent(level*4, indentfirst=True)-}}
+{{''|indent(level*4, first=True)-}}
 {% endmacro %}
 
 
@@ -73,7 +73,7 @@
 {##### Print General DataType #####}
 {% macro getDataType(name, type, level) %}
 {% if instanceType(type.type) == 'SDT3ArrayType' %}
-{{ _arrayType(type) | indent(4*level, indentfirst=False) }}
+{{ _arrayType(type) | indent(4*level, first=False) }}
 {% else %}
 {% if instanceType(type.type) == 'SDT3SimpleType' %}
  type="{{ getSimpleDataType(type.type.type) -}}" />
