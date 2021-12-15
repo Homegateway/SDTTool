@@ -60,7 +60,7 @@ optionArgs = None
 constAbbreviationCSVFile = '_Abbreviations.csv'
 constAbbreviationMAPFile = '_Abbreviations.py'
 
-def print4SDT(domain, options, directory=None):
+def  print4SDT(domain, options, directory=None):
 	global context
 	global optionArgs
 	context = getContext(domain, options, directory)
@@ -102,8 +102,7 @@ def renderMultiple(templateFile, context, domain, directory, extension):
 	# Read abbreviations
 	readAbbreviations(context['abbreviationsinfile'])
 	# Add already existing abbreviations
-	localAbbreviationsfile = str(context['path']) + os.sep + constAbbreviationCSVFile
-	readAbbreviations(localAbbreviationsfile, predefined=False)
+	readAbbreviations(f'{str(context["path"])}{os.sep}{constAbbreviationCSVFile}', predefined=False)
 
 
 	# Export ModuleClasses
@@ -150,9 +149,6 @@ def renderMultiple(templateFile, context, domain, directory, extension):
 	exportAbbreviations(f'{context["path"]}{os.sep}{constAbbreviationCSVFile}',
 						f'{context["path"]}{os.sep}{constAbbreviationMAPFile}',
 						getAbbreviations())
-	# exportAbbreviations(str(context['path']) + os.sep + constAbbreviationCSVFile, \
-	# 	str(context['path']) + os.sep + constAbbreviationMAPFile,\
-	# 	getAbbreviations())
 
 
 
@@ -234,79 +230,83 @@ def printShortNames(context):
 	#	combined files?
 
 	# devices
-	fileName = templateSanitizeName('devices-' + getTimeStamp(), False)
-	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
+	fileName = templateSanitizeName(f'devices-{getTimeStamp()}', False)
+	fullFilename = getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for deviceClass in domain.deviceClasses:
-			outputFile.write(deviceClass.id + ',' + getAbbreviation(deviceClass.id) + '\n')
+			outputFile.write(f'{deviceClass.id},{getAbbreviation(deviceClass.id)}\n')
 	deleteEmptyFile(fullFilename)
 
 	# sub.devices - Instances
-	fileName = templateSanitizeName('subDevicesInstances-' + getTimeStamp(), False)
+	fileName = templateSanitizeName(f'subDevicesInstances-{getTimeStamp()}', False)
 	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for deviceClass in domain.deviceClasses:
 			for subDevice in deviceClass.subDevices:
-				outputFile.write(subDevice.id + ',' + getAbbreviation(subDevice.id) + '\n')
+				outputFile.write(f'{subDevice.id},{getAbbreviation(subDevice.id)}\n')
 	deleteEmptyFile(fullFilename)
 
 	# sub.devices
-	fileName = templateSanitizeName('subDevice-' + getTimeStamp(), False)
+	fileName = templateSanitizeName(f'subDevice-{getTimeStamp()}', False)
 	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for name in extendedSubDevicesExtend:
 			if (abbr := getAbbreviation(name)) is None:
 				continue
-			outputFile.write(name + ',' + abbr + '\n')
+			outputFile.write(f'{name},{abbr}\n')
 	deleteEmptyFile(fullFilename)
 
+
 	# ModuleClasses
-	fileName = templateSanitizeName('moduleClasses-' + getTimeStamp(), False)
+	fileName = templateSanitizeName(f'moduleClasses-{getTimeStamp()}', False)
 	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for moduleClass in domain.moduleClasses:
-			outputFile.write(moduleClass.name + ',' + getAbbreviation(moduleClass.name) + '\n')
+			outputFile.write(f'{moduleClass.name}{getAbbreviation(moduleClass.name)}\n')
 		for deviceClass in domain.deviceClasses:
 			for moduleClass in deviceClass.moduleClasses:
-				outputFile.write(moduleClass.name + ',' + getAbbreviation(moduleClass.name) + '\n')
+				outputFile.write(f'{moduleClass.name},{getAbbreviation(moduleClass.name)}\n')
 			for subDevice in deviceClass.subDevices:
 				for moduleClass in subDevice.moduleClasses:
-					outputFile.write(moduleClass.name + ',' + getAbbreviation(moduleClass.name) + '\n')
+					outputFile.write(f'{moduleClass.name},{getAbbreviation(moduleClass.name)}\n')
 	deleteEmptyFile(fullFilename)
 
+
 	# DataPoints
-	fileName = templateSanitizeName('dataPoints-' + getTimeStamp(), False)
+	fileName = templateSanitizeName(f'dataPoints-{getTimeStamp()}', False)
 	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for moduleClass in domain.moduleClasses:
 			for dp in moduleClass.data:
-				outputFile.write(dp.name +',' + moduleClass.name + ',' + getAbbreviation(dp.name) + '\n')
+				outputFile.write(f'{dp.name},{moduleClass.name},{getAbbreviation(dp.name)}\n')
 		for deviceClass in domain.deviceClasses:
 			for moduleClass in deviceClass.moduleClasses:
 				for dp in moduleClass.data:
-					outputFile.write(dp.name +',' + moduleClass.name + ',' + getAbbreviation(dp.name) + '\n')
+					outputFile.write(f'{dp.name},{moduleClass.name},{getAbbreviation(dp.name)}\n')
 			for subDevice in deviceClass.subDevices:
 				for moduleClass in deviceClass.moduleClasses:
 					for dp in moduleClass.data:
-						outputFile.write(dp.name +',' + moduleClass.name + ',' + getAbbreviation(dp.name) + '\n')
+						outputFile.write(f'{dp.name},{moduleClass.name},{getAbbreviation(dp.name)}\n')
 	deleteEmptyFile(fullFilename)
 
+
 	# Actions
-	fileName = templateSanitizeName('actions-' + getTimeStamp(), False)
+	fileName = templateSanitizeName(f'actions-{getTimeStamp()}', False)
 	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for moduleClass in domain.moduleClasses:
 			for ac in moduleClass.actions:
-				outputFile.write(ac.name + ',' + getAbbreviation(ac.name) + '\n')
+				outputFile.write(f'{ac.name},{getAbbreviation(ac.name)}\n')
 		for deviceClass in domain.deviceClasses:
 			for moduleClass in deviceClass.moduleClasses:
 				for ac in moduleClass.actions:
-					outputFile.write(ac.name + ',' + getAbbreviation(ac.name) + '\n')
+					outputFile.write(f'{ac.name},{getAbbreviation(ac.name)}\n')
 			for subDevice in deviceClass.subDevices:
 				for moduleClass in deviceClass.moduleClasses:
 					for ac in moduleClass.actions:
-						outputFile.write(ac.name + ',' + getAbbreviation(ac.name) + '\n')
+						outputFile.write(f'{ac.name},{getAbbreviation(ac.name)}\n')
 	deleteEmptyFile(fullFilename)
+
 
 
 #############################################################################
@@ -333,7 +333,7 @@ def renderComponentToFile(context, name=None, isModule=False, isEnum=False, isAc
 		#print(fullFilename)
 		outputFile.write(render(context['templateFile'], context))
 	except IOError as err:
-		print('File not found: ' + str(err))
+		print(f'File not found: {str(err)}')
 	finally:
 		if outputFile != None:
 			outputFile.close()

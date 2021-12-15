@@ -232,7 +232,7 @@ unknown
     <xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-subscription-v{{ CDTVersion }}.xsd" />
     <xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v{{ CDTVersion }}.xsd" />
 
-    <xs:include schemaLocation="COD-enumerationTypes-v{{ modelversion.replace('.', '_')}}.xsd" />
+    <xs:include schemaLocation="HD-enumerationTypes-v{{ modelversion.replace('.', '_')}}.xsd" />
     <xs:include schemaLocation="{{ namespaceprefix | upper }}-commonTypes-v{{ modelversion.replace('.', '_')}}.xsd" />
 
 {{ renderActionSchemaLocations(object)}}
