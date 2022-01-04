@@ -3,33 +3,33 @@
 #	Helpers
 #
 import os, pathlib, time, datetime, argparse, textwrap
+from pathlib import Path
 
 
 # Sanitize a name 
-def sanitizeName(name, isClass):
-	if (name == None or len(name) == 0):
+def sanitizeName(name:str, isClass:bool) -> str:
+	if not name:
 		return ''
 	result = name
-	if (isClass):
-		result = result[0].upper() + name[1:]
-	else:
-		result = result[0].lower() + name[1:]
-	result =  result.replace(' ', '')\
-					.replace('/', '')\
-					.replace('.', '')\
-					.replace(' ', '')\
-					.replace("'", '')\
-					.replace('´', '')\
-					.replace('`', '')\
-					.replace('(', '_')\
-					.replace(')', '_')\
-					.replace('-', '_')
-	return result
+	result = f'{result[0].upper() if isClass else result[0].lower()}{name[1:]}'
+	# if isClass:
+	# 	result = result[0].upper() + name[1:]
+	# else:
+	# 	result = result[0].lower() + name[1:]
+	return result.replace(' ', '')\
+				 .replace('/', '')\
+				 .replace('.', '')\
+				 .replace(' ', '')\
+				 .replace("'", '')\
+				 .replace('´', '')\
+				 .replace('`', '')\
+				 .replace('(', '_')\
+				 .replace(')', '_')\
+				 .replace('-', '_')
 
 # Sanitize the package name
-def sanitizePackage(package):
-	result = package.replace('/', '.')
-	return result
+def sanitizePackage(package:str) -> str:
+	return  package.replace('/', '.')
 
 # get a versioned filename
 def getVersionedFilename(fileName, extension, name=None, path=None, isModule=False, isAction=False, isSubDevice=False, isEnum=False, isShortName=False, modelVersion=None, namespacePrefix=None):
@@ -63,14 +63,14 @@ def getVersionedFilename(fileName, extension, name=None, path=None, isModule=Fal
 	return fullFilename
 
 
-def makeDir(directory, parents=True):
+def makeDir(directory:str, parents:bool = True) -> Path:
 	"""	Create a directory including missing parents.
 		If the directory exists then this is ignored.
 		Return: the path object of the new directory
 	"""
 	try:
 		path = pathlib.Path(directory)
-		path.mkdir(parents=parents)
+		path.mkdir(parents = parents)
 	except FileExistsError:
 		# ignore existing directory for now
 		pass
@@ -84,25 +84,22 @@ def getPackage(directory, domain):
 
 
 # Export the content for a ModuleClass or Device
-def exportArtifactToFile(name, path, extension, content, isModule=True):
+def exportArtifactToFile(name:str, path:str, extension:str, content, isModule:bool = True) -> None:
 	fileName = getVersionedFilename(name, extension, path=str(path), isModule=isModule)
 	outputFile = None
 	try:
-		outputFile = open(fileName, 'w')
-		outputFile.write(content)		
+		with open(fileName, 'w') as outputFile:
+			outputFile.write(content)		
 	except IOError as err:
 		print(err)
-	finally:
-		if (outputFile != None):
-			outputFile.close()
 
 
 # Get a timestamp
-def getTimeStamp():
+def getTimeStamp() -> str:
 	return datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d-%H-%M-%S')
 
 
-def deleteEmptyFile(filename):
+def deleteEmptyFile(filename:str) -> None:
 	if os.stat(filename).st_size == 0:
 		os.remove(filename)  
 
@@ -113,31 +110,28 @@ def deleteEmptyFile(filename):
 tab = 0
 tabChar = '\t'
 
-def incTab():
+def incTab() -> None:
 	global tab
 	tab += 1
 
-def decTab():
+def decTab() -> None:
 	global tab
-	if (tab > 0):
+	if tab > 0:
 		tab -= 1
 
-def setTabChar(val):
+def setTabChar(val:str) -> None:
 	global tabChar
 	tabChar = val
 
-def getTabIndent():
-	global tabChar
-	result = ''
-	for _ in range(tab):
-		result += tabChar
-	return result
+def getTabIndent() -> str:
+	return ''.join(tabChar for _ in range(tab))
 
-def newLine():
-	global tab
-	result = '\n'
-	result += getTabIndent()
-	return result
+def newLine() -> str:
+	return f'\n{getTabIndent()}'
+
+	# result = '\n'
+	# result += getTabIndent()
+	# return result
 
 
 #

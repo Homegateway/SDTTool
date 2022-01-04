@@ -193,7 +193,7 @@ def getContext(domain, options, directory=None):
     	# pointer to functions
     	'renderComponentToFile'			: renderComponentToFile,
     	'instanceType'					: instanceType,
-    	'isString'						: isString,
+    	'isString'						: lambda s : isinstance(s, str),
     	'getNSName'						: getNSName,
     	'incLevel'						: incLevel,
     	'decLevel'						: decLevel,
@@ -239,7 +239,7 @@ def printShortNames(context):
 
 	# sub.devices - Instances
 	fileName = templateSanitizeName(f'subDevicesInstances-{getTimeStamp()}', False)
-	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
+	fullFilename = getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for deviceClass in domain.deviceClasses:
 			for subDevice in deviceClass.subDevices:
@@ -248,7 +248,7 @@ def printShortNames(context):
 
 	# sub.devices
 	fileName = templateSanitizeName(f'subDevice-{getTimeStamp()}', False)
-	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
+	fullFilename = getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for name in extendedSubDevicesExtend:
 			if (abbr := getAbbreviation(name)) is None:
@@ -259,7 +259,7 @@ def printShortNames(context):
 
 	# ModuleClasses
 	fileName = templateSanitizeName(f'moduleClasses-{getTimeStamp()}', False)
-	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
+	fullFilename = getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for moduleClass in domain.moduleClasses:
 			outputFile.write(f'{moduleClass.name}{getAbbreviation(moduleClass.name)}\n')
@@ -274,7 +274,7 @@ def printShortNames(context):
 
 	# DataPoints
 	fileName = templateSanitizeName(f'dataPoints-{getTimeStamp()}', False)
-	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
+	fullFilename = getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for moduleClass in domain.moduleClasses:
 			for dp in moduleClass.data:
@@ -325,18 +325,16 @@ def renderComponentToFile(context, name=None, isModule=False, isEnum=False, isAc
 		fileName = templateSanitizeName(context['enumerationsFile'], False)
 	else:
 		fileName = templateSanitizeName(context['object'].name if isModule or isEnum or isAction or isExtras else context['object'].id, False)
-	fullFilename 	= getVersionedFilename(fileName, context['extension'], name=name, path=str(context['path']), isModule=isModule, isEnum=isEnum, isAction=isAction, isSubDevice=isSubDevice, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
+	fullFilename = getVersionedFilename(fileName, context['extension'], name=name, path=str(context['path']), isModule=isModule, isEnum=isEnum, isAction=isAction, isSubDevice=isSubDevice, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	#print('---' + fullFilename)
-	outputFile   	= None
+	outputFile   = None
 	try:
-		outputFile = open(fullFilename, 'w')
-		#print(fullFilename)
-		outputFile.write(render(context['templateFile'], context))
+		with open(fullFilename, 'w') as outputFile:
+			# print(fullFilename)
+			outputFile.write(render(context['templateFile'], context))
 	except IOError as err:
 		print(f'File not found: {str(err)}')
-	finally:
-		if outputFile != None:
-			outputFile.close()
+
 
 
 def templateSanitizeName(name, isClass, annc=False):
@@ -346,10 +344,11 @@ def templateSanitizeName(name, isClass, annc=False):
 	# name as well as the abbreviation.
 	if ':' not in name:	# ignore, for example, type/enum definitions
 		abbr = abbreviate(result, optionArgs['abbreviationlength'])
-		if annc:
-			addAbbreviation(result + 'Annc', abbr + 'Annc')
-		else:
-			addAbbreviation(result, abbr)
+		addAbbreviation(f'{result}{"Annc" if annc else ""}', f'{abbr}{"Annc" if annc else ""}')
+		# if annc:
+		# 	addAbbreviation(f'{result}Annc', f'{abbr}')
+		# else:
+		# 	addAbbreviation(result, abbr)
 		# if annc:
 		# 	abbr = abbreviate(result)
 		# 	addAbbreviation(result + 'Annc', abbr + 'Annc')
@@ -382,23 +381,21 @@ def instanceType(ty, withNameSpace=True):
 	return type(ty.type).__name__
 
 
-def isString(v) -> bool:
-	return isinstance(v, str)
-
-def getNSName(name):
+def getNSName(name) -> str:
 	""" Return the correct name, including namespace prefix, if set. """
 	return '%s:%s' % (context['namespaceprefix'], name) if context['namespaceprefix'] is not None else name
 
 
-def countExtend(lst):
-	cnt = 0
-	for obj in lst:
-		if obj.extend is not None:
-			cnt += 1
-	return cnt
+def countExtend(lst) -> int:
+	return sum(map(lambda o : o.extend is not None, lst))
+	# cnt = 0
+	# for obj in lst:
+	# 	if obj.extend is not None:
+	# 		cnt += 1
+	# return cnt
 
 
-def countUnextend(lst):
+def countUnextend(lst) -> int:
 	return len(lst) - countExtend(lst)
 
 
@@ -452,29 +449,28 @@ def componentName(obj):
 
 level = 1
 
-def incLevel(name=None):
-	""" Decrement the current indention level. """
+def incLevel(name=None) -> str:
+	""" Increment the current indention level. """
 	global level
-	level = level + 1
+	level += 1
 	return ''.rjust(level, '#') + ' ' + name if name else ''
 
 
-def decLevel():
-	""" Increment the current indention level. """
+def decLevel() -> str:
+	""" Decrement the current indention level. """
 	global level
-	level = level - 1
+	level -= 1
 	if level == 0:
 		level = 1
 	return ''
 
 
-def getLevel():
+def getLevel() -> str:
 	""" Return the current indention level. """
 	return level
 
 
-
-def debug(txt):
+def debug(txt) -> str:
 	""" Print text to console."""
 	print(txt)
 	return ''
