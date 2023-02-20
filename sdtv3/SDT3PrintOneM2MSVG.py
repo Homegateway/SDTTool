@@ -58,11 +58,11 @@ def print3OneM2MSVG(domain, options, directory):
 #############################################################################
 
 # Export a ModuleClass definition to a file
-def exportModuleClass(module, package, path, name=None):
+def exportModuleClass(module, package, path, name = None):
 	# export the module class itself
 
 	name = sanitizeName(module.name, False)
-	fileName = getVersionedFilename(name, 'svg', path=str(path), isModule=True, modelVersion=modelVersion, namespacePrefix=namespacePrefix)
+	fileName = getVersionedFilename(name, 'svg', path = str(path), outType = OutType.moduleClass, modelVersion = modelVersion, namespacePrefix = namespacePrefix)
 	try:
 		with open(fileName, 'w') as outputFile:
 			outputFile.write(getModuleClassSVG(module, package, name, path))		
@@ -119,7 +119,7 @@ def exportDevice(device, package, path, parent=None):
 	except FileExistsError as e:
 		pass # on purpose. We override files for now
 
-	fileName = getVersionedFilename(name, 'svg', path=str(pth), modelVersion=modelVersion, namespacePrefix=namespacePrefix)
+	fileName = getVersionedFilename(name, 'svg', path = str(pth), modelVersion = modelVersion, namespacePrefix = namespacePrefix)
 	try:
 		with open(fileName, 'w') as outputFile:
 			outputFile.write(getDeviceSVG(device, package, name))
@@ -174,7 +174,7 @@ def addDeviceFooterToResource(resource):
 def exportDataPoint(dataPoint, moduleName, path):
 	name = sanitizeName(dataPoint.name, False)
 	mName = sanitizeName(moduleName, False)
-	fileName = getVersionedFilename(mName + '_' + name, 'svg', path=str(path), modelVersion=modelVersion, namespacePrefix=namespacePrefix)
+	fileName = getVersionedFilename(mName + '_' + name, 'svg', path = str(path), modelVersion = modelVersion, namespacePrefix = namespacePrefix)
 	try:
 		with open(fileName, 'w') as outputFile:
 			outputFile.write(getDataPointSVG(dataPoint))		
@@ -219,9 +219,7 @@ def addDataPointFooterToResource(resource):
 
 # Export an action definiton to a file
 def exportAction(action, moduleName, path):
-	fileName = getVersionedFilename(sanitizeName(action.name, False), \
-		'svg', path=str(path), isAction=True, modelVersion=modelVersion, \
-		namespacePrefix=namespacePrefix)
+	fileName = getVersionedFilename(sanitizeName(action.name, False), 'svg', path = str(path), outType = OutType.action, modelVersion = modelVersion, namespacePrefix = namespacePrefix)
 	try:
 		with open(fileName, 'w') as outputFile:
 			outputFile.write(getActionSVG(action))

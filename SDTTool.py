@@ -9,7 +9,8 @@ from sdtv4 import SDT4Parser
 import common.SDTHelper as SDTHelper, SDTPrinter
 
 
-import io, sys, traceback, argparse, pathlib, os
+import io, sys, traceback, argparse, os
+from rich import print
 
 version = '0.9'
 description = 'SDTTool ' + version + ' - A tool to read and convert Smart Device Templates.'
@@ -57,7 +58,7 @@ def parseData(target, data):
 		line = int(formatted_e[formatted_e.find("line ") + 5: formatted_e.find(",")])
 		column = int(formatted_e[formatted_e.find("column ") + 7:])
 		split_str = data.split("\n")
-		print("{}\n{}^".format(split_str[line - 1], len(split_str[line - 1][0:column])*"-"))
+		print(f'{split_str[line - 1]}\n{len(split_str[line - 1][0:column])*"-"}')
 
 	return target.domain, target.nameSpaces
 
@@ -134,6 +135,7 @@ def main(argv):
 	oneM2MArgs.add_argument('--modelversion', '-mv', action='store', dest='modelversion', help='Specify the version of the model.')
 	oneM2MArgs.add_argument('--svg-with-attributes',  action='store_true', dest='svgwithattributes', help='Generate SVG for ModuleClass attributes as well.')
 	oneM2MArgs.add_argument('--xsdnamespacemapping', '-xsdnsmap',  action='store', dest='xsdnamespacemapping', nargs='*', help='Specify the target namespace for the oneM2M XSD (a URI).')
+	oneM2MArgs.add_argument('--cdtversion',  action='store', dest='cdtversion', help='Specify the version number of the oneM2M XSD.')
 
 	requiredNamed = parser.add_argument_group('required arguments')
 	requiredNamed.add_argument('-i', '--infile', action='store', dest='inFile', required=True, help='The SDT input file to parse')
@@ -162,6 +164,7 @@ def main(argv):
 	moreOptions['modelversion'] 				= args.modelversion
 	moreOptions['outputFormat']					= args.outputFormat
 	moreOptions['svgwithattributes']			= args.svgwithattributes
+	moreOptions['cdtversion']					= args.cdtversion
 
 
 	# Read input file. Check for correct format
@@ -169,19 +172,19 @@ def main(argv):
 	if inputFormat == 'sdt2':
 		domain, nameSpaces = readSDTXML(inFile, 2)
 		if not checkForNamespace(nameSpaces, 'http://homegatewayinitiative.org/xml/dal/2.0'):
-			print('ERROR: Namespace "http://homegatewayinitiative.org/xml/dal/2.0" not found in input file.')
+			print('[red]ERROR: Namespace "http://homegatewayinitiative.org/xml/dal/2.0" not found in input file.')
 			return
 
 	elif inputFormat == 'sdt3':
 		domain, nameSpaces = readSDTXML(inFile, 3)
 		if not checkForNamespace(nameSpaces, 'http://homegatewayinitiative.org/xml/dal/3.0'):
-			print('ERROR: Namespace "http://homegatewayinitiative.org/xml/dal/3.0" not found in input file.')
+			print('[red]ERROR: Namespace "http://homegatewayinitiative.org/xml/dal/3.0" not found in input file.')
 			return
 
 	elif inputFormat == 'sdt4':
 		domain, nameSpaces = readSDTXML(inFile, 4)
 		if not checkForNamespace(nameSpaces, 'http://www.onem2m.org/xml/sdt/4.0'):
-			print('ERROR: Namespace "http://www.onem2m.org/xml/sdt/4.0" not found in input file.')
+			print('[red]ERROR: Namespace "http://www.onem2m.org/xml/sdt/4.0" not found in input file.')
 			return
 
 	# Output to destination format

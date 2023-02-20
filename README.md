@@ -13,12 +13,16 @@ The [Smart Device Template](https://github.com/Homegateway/SmartDeviceTemplate) 
 ### Prerequisites
 
 #### Python 3.x
-An installation of [Python 3](https://www.python.org/downloads/) (version 3.5 or higher) is required. For an earlier version of Python (3.2 or higher) ``pathlib`` must be installed separately (see also [PathLib](https://pypi.python.org/pypi/pathlib/)).
+An installation of [Python 3](https://www.python.org/downloads/) (version 3.8 or higher) is required. 
 
-#### Jinja2
-SDTTool uses the template engine [Jinja2](http://jinja.pocoo.org). You need to install it, e.g. via pip:
+#### Additional Packages
+- SDTTool uses the template engine [Jinja2](http://jinja.pocoo.org) in version 3.0.3. You need to install it, e.g. via pip:
 
-	pip install Jinja2
+	pip install jinja2==3.0.3
+
+- The *rich* package is used for nicer terminal output:
+
+	pip install rich
 
 
 ### Copying

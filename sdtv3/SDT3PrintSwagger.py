@@ -50,7 +50,7 @@ def print3Swagger(domain, directory, options):
 
 	# TODO DEVICES. 
 	for device in domain.devices:
-		exportArtifactToFile(device.id, path, fileExtension, getDeviceSwagger(device), isModule=False)
+		exportArtifactToFile(device.id, path, fileExtension, getDeviceSwagger(device), outType = OutType.device)
 
 #############################################################################
 

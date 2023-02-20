@@ -1,7 +1,7 @@
 
 {##### TODO Where to put this? #####}
 {##### Define CDT version to use #####}
-{% set CDTVersion = '3_7_0' %}
+{# {% set CDTVersion = '4_9_0' %} #}
 
 
 {##### Set some global variables to hold extended module classes #####}
@@ -17,7 +17,7 @@
 {##### Print schema locations for actions #####}
 {% macro renderActionSchemaLocations(moduleClass) %}
 {% for action in moduleClass.actions %}
-    <xs:include schemaLocation="{{getVersionedFilename(action.name, 'xsd', isAction=True, modelVersion=modelversion, namespacePrefix=namespaceprefix)}}" />
+    <xs:include schemaLocation="{{getVersionedFilename(action.name, 'xsd', outType=OutType.action, namespacePrefix=namespaceprefix)}}" />
 {% endfor %}
 {% endmacro %}
 
@@ -28,11 +28,11 @@
 {% for moduleClass in device.moduleClasses %}
 {% set name = componentName(moduleClass) %}
 {% if name not in schemas %}
-    <xs:include schemaLocation="{{getVersionedFilename(name, 'xsd', isModule=True, modelVersion=modelversion, namespacePrefix=getNamespacePrefix(moduleClass))}}" />
+    <xs:include schemaLocation="{{getVersionedFilename(name, 'xsd', outType=OutType.moduleClass, namespacePrefix=getNamespacePrefix(moduleClass))}}" />
 {{- schemas.append(name) or '' }}
 {% endif %}
 {#% if moduleClass.name not in extendedModuleClasses %#}
-{#    <xs:include schemaLocation="{{getVersionedFilename(componentName(moduleClass), 'xsd', isModule=True, modelVersion=modelversion, namespacePrefix=getNamespacePrefix(moduleClass))}}" /> #}
+{#    <xs:include schemaLocation="{{getVersionedFilename(componentName(moduleClass), 'xsd', outType=OutType.moduleClass, namespacePrefix=getNamespacePrefix(moduleClass))}}" /> #}
 {#% endif %#}
 {% endfor %}
 {% endmacro %}
@@ -47,11 +47,11 @@
 {% set name = subDevice.id %}
 {% endif %}
 {% if name not in handledSubDevices %}
-    <xs:include schemaLocation="{{getVersionedFilename(name, 'xsd', isSubDevice=True, modelVersion=modelversion, namespacePrefix=getNamespacePrefix(subDevice))}}" />
+    <xs:include schemaLocation="{{getVersionedFilename(name, 'xsd', outType=OutType.subDevice, namespacePrefix=getNamespacePrefix(subDevice))}}" />
 {% endif %}
 {% endfor %}
 {% for name in handledSubDevices %}
-    <xs:include schemaLocation="{{getVersionedFilename(name, 'xsd', isSubDevice=True, modelVersion=modelversion, namespacePrefix=namespaceprefix)}}" />
+    <xs:include schemaLocation="{{getVersionedFilename(name, 'xsd', outType=OutType.subDevice, namespacePrefix=namespaceprefix)}}" />
 {% endfor %}
 {% endmacro %}
 
@@ -97,6 +97,10 @@
 {% else %}
 {% if instanceType(type.type) == 'SDT4SimpleType' %}
  type="{{ getSimpleDataType(type.type.type) -}}" />
+{% else %}
+{% if type.extend %}
+ type="{{ getNamespacePrefix(type) }}:{{ type.extend.entity }}" />
+{% endif %}
 {% endif %}
 {% endif %}
 {% endif %}
@@ -132,9 +136,9 @@ unknown
 
 
 {##### Print Properties and DataPoints #####}
-{% macro renderSpecificAttributes(objs, annc, level) %}
+{% macro renderSpecificAttributes(objs, annc, level, parentType, occursIn) %}
 {% for o in objs %}
-{{_indent(level)}}<xs:element name="{{ sanitizeName(o.name, False) }}"
+{{_indent(level)}}<xs:element name="{{ sanitizeName(o.name, False, annc, parentType, occursIn = occursIn) }}"
 {%- if annc %} minOccurs="0"
 {%- else %}
 {%- if o.optional == 'true' %} minOccurs="0"
@@ -164,9 +168,9 @@ unknown
 {% for moduleClass in moduleClasses %}
 {% set name = componentName(moduleClass) %}
 {% if name not in names %}
-{{_indent(8)}}<xs:element ref="{{ getNamespacePrefix(moduleClass) }}:{{ sanitizeName(name, False, annc=withAnnc) }}" />
+{{_indent(8)}}<xs:element ref="{{ getNamespacePrefix(moduleClass) }}:{{ sanitizeName(name, False, annc=withAnnc, elementType = 1, occursIn = moduleClass.name) }}" />
 {% if withAnnc %}
-{{_indent(8)}}<xs:element ref="{{ getNamespacePrefix(moduleClass) }}:{{ sanitizeName(name, False, annc=withAnnc) }}Annc" />
+{{_indent(8)}}<xs:element ref="{{ getNamespacePrefix(moduleClass) }}:{{ sanitizeName(name, False, annc=withAnnc, elementType = 1, occursIn = moduleClass.name) }}Annc" />
 {% endif %}
 {{- names.append(name) or '' -}}
 {% endif %}
@@ -180,9 +184,9 @@ unknown
 {% for subDevice in subDevices %}
 {% set name = componentName(subDevice) %}
 {% if name not in names %}
-{{_indent(8)}}<xs:element ref="{{ getNamespacePrefix(subDevice) }}:{{ sanitizeName(name, False, annc=withAnnc) }}" />
+{{_indent(8)}}<xs:element ref="{{ getNamespacePrefix(subDevice) }}:{{ sanitizeName(name, False, annc=withAnnc, elementType = 3, occursIn = name) }}" />
 {% if withAnnc %}
-{{_indent(8)}}<xs:element ref="{{ getNamespacePrefix(subDevice) }}:{{ sanitizeName(name, False, annc=withAnnc) }}Annc" />
+{{_indent(8)}}<xs:element ref="{{ getNamespacePrefix(subDevice) }}:{{ sanitizeName(name, False, annc=withAnnc, elementType = 3, occursIn = name) }}Annc" />
 {% endif %}
 {{- names.append(name) or '' -}}
 {% endif %}
@@ -216,26 +220,51 @@ unknown
 
 {#############################################################################}
 
-{##### Print the ModuleClasses. This complexType needs to be named directly, because it may be referenced when inherited #####}
-{% macro renderModuleClass(object) %}
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 {{ license }}
 -->
 
-<xs:schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="{{ xsdtargetnamespace }}"
-    xmlns:m2m="http://www.onem2m.org/xml/protocols" xmlns:xs="http://www.w3.org/2001/XMLSchema"
-    elementFormDefault="unqualified" attributeFormDefault="unqualified" 
-    {{ getXMLNameSpaces() }} 
+{% macro renderXSDHeader(object) %}
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+{{ license }}
+-->
+
+<xs:schema targetNamespace="{{ xsdtargetnamespace }}/{{ getDomainFromPrefix(namespaceprefix) }}"
+    xmlns="http://www.w3.org/2001/XMLSchema" 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:m2m="https://git.onem2m.org/XMLSchemas/ts-0004/tree/{{ CDTVersion }}" 
+    xmlns:agd="https://git.onem2m.org/XMLSchemas/ts-0023/tree/{{ modelversion }}/agriculturedomain" 
+    xmlns:cid="https://git.onem2m.org/XMLSchemas/ts-0023/tree/{{ modelversion }}/citydomain" 
+    xmlns:cod="https://git.onem2m.org/XMLSchemas/ts-0023/tree/{{ modelversion }}/commondomain" 
+    xmlns:hed="https://git.onem2m.org/XMLSchemas/ts-0023/tree/{{ modelversion }}/healthdomain" 
+    xmlns:hod="https://git.onem2m.org/XMLSchemas/ts-0023/tree/{{ modelversion }}/homedomain" 
+    xmlns:ind="https://git.onem2m.org/XMLSchemas/ts-0023/tree/{{ modelversion }}/industrydomain"  
+    xmlns:mad="https://git.onem2m.org/XMLSchemas/ts-0023/tree/{{ modelversion }}/managementdomain" 
+    xmlns:mdd="https://git.onem2m.org/XMLSchemas/ts-0023/tree/{{ modelversion }}/metadatadomain" 
+    xmlns:psd="https://git.onem2m.org/XMLSchemas/ts-0023/tree/{{ modelversion }}/publicsafetydomain" 
+    xmlns:rad="https://git.onem2m.org/XMLSchemas/ts-0023/tree/{{ modelversion }}/railwaydomain" 
+    xmlns:ved="https://git.onem2m.org/XMLSchemas/ts-0023/tree/{{ modelversion }}/vehiculardomain" 
+    xmlns:hd="https://git.onem2m.org/XMLSchemas/ts-0023/tree/{{ modelversion }}/horizontaldomain" 
+    elementFormDefault="unqualified" 
+    attributeFormDefault="unqualified"
     >
 
-    <xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-subscription-v{{ CDTVersion }}.xsd" />
-    <xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v{{ CDTVersion }}.xsd" />
+    <xs:import namespace="https://git.onem2m.org/XMLSchemas/ts-0004/tree/{{ CDTVersion }}" schemaLocation="CDT-subscription.xsd" />
+    <xs:import namespace="https://git.onem2m.org/XMLSchemas/ts-0004/tree/{{ CDTVersion }}" schemaLocation="CDT-commonTypes.xsd" />
 
-    <xs:include schemaLocation="HD-enumerationTypes-v{{ modelversion.replace('.', '_')}}.xsd" />
-    <xs:include schemaLocation="{{ namespaceprefix | upper }}-commonTypes-v{{ modelversion.replace('.', '_')}}.xsd" />
+    <xs:include schemaLocation="HD-enumerationTypes.xsd" />
+    <xs:include schemaLocation="{{ namespaceprefix | upper }}-commonTypes.xsd" />
+{% endmacro %}
 
-{{ renderActionSchemaLocations(object)}}
+
+
+{##### Print the ModuleClasses. This complexType needs to be named directly, because it may be referenced when inherited #####}
+{% macro renderModuleClass(object) %}
+{{renderXSDHeader(object)}}
+
+{{ renderActionSchemaLocations(object) -}}
 
     <xs:element name="{{ object.name }}" type="{{ namespaceprefix }}:{{ object.name }}" substitutionGroup="m2m:sg_flexContainerResource" />
     <xs:complexType name="{{ object.name }}" >
@@ -245,8 +274,8 @@ unknown
                 <xs:sequence>
 
                     <!-- Resource Specific Attributes -->
-{{ renderSpecificAttributes(object.properties, False, 6) }}
-{{ renderSpecificAttributes(object.data, False, 6) }}
+{{ renderSpecificAttributes(object.properties, False, 6, 5, object.name) }}
+{{ renderSpecificAttributes(object.data, False, 6, 5, object.name) }}
 
                     <!-- Child Resources -->
 
@@ -255,6 +284,7 @@ unknown
                         <xs:choice minOccurs="1" maxOccurs="unbounded">
 {{ renderSpecificActions(object.actions) }}
                             <xs:element ref="m2m:subscription" />
+                            <xs:element ref="{{ namespaceprefix }}:{{ object.name }}Inst" />
                         </xs:choice>
                     </xs:choice>
 
@@ -271,8 +301,8 @@ unknown
                 <xs:sequence>
 
                     <!-- Resource Specific Attributes -->
-{{ renderSpecificAttributes(object.properties, True, 6) }}
-{{ renderSpecificAttributes(object.data, True, 6) }}
+{{ renderSpecificAttributes(object.properties, True, 6, 5, object.name+"Annc") }}
+{{ renderSpecificAttributes(object.data, True, 6, 5, object.name+"Annc") }}
 
                     <!-- Child Resources -->
 
@@ -290,7 +320,7 @@ unknown
     </xs:complexType>
 
 
-<!-- TODO FCI -->
+    <!-- FlexContainerInstance specialization -->
 
     <xs:element name="{{ object.name }}Inst" type="{{ namespaceprefix }}:{{ object.name }}Inst" substitutionGroup="m2m:sg_flexContainerInstanceResource" />
     <xs:complexType name="{{ object.name }}Inst" >
@@ -300,8 +330,8 @@ unknown
                 <xs:sequence>
 
                     <!-- Resource Specific Attributes -->
-{{ renderSpecificAttributes(object.properties, False, 6) }}
-{{ renderSpecificAttributes(object.data, False, 6) }}
+{{ renderSpecificAttributes(object.properties, False, 6, 5, object.name+"Inst") }}
+{{ renderSpecificAttributes(object.data, False, 6, 5, object.name+"Inst") }}
 
                     <!-- No Child Resources -->
 
@@ -322,22 +352,12 @@ unknown
 {% else %}
 {% set name = object.id %}
 {% endif %}
-<?xml version="1.0" encoding="UTF-8"?>
-<!--
-{{ license }}
--->
-
-<xs:schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="{{ xsdtargetnamespace }}"
-    xmlns:m2m="http://www.onem2m.org/xml/protocols" xmlns:xs="http://www.w3.org/2001/XMLSchema"
-    elementFormDefault="unqualified" attributeFormDefault="unqualified"
-    {{ getXMLNameSpaces() }}
-    >
-
-    <xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-subscription-v{{CDTVersion}}.xsd" />
-    <xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v{{CDTVersion}}.xsd" />
-
-    <xs:include schemaLocation="HD-enumerationTypes-v{{modelversion.replace('.', '_')}}.xsd" />
-    <xs:include schemaLocation="{{ namespaceprefix | upper }}-commonTypes-v{{ modelversion.replace('.', '_')}}.xsd" />
+{% if instanceType(object) == 'SDT4SubDevice' %}
+{% set elementType = 6 %}
+{% else %}
+{% set elementType = 7 %}
+{% endif %}
+{{renderXSDHeader(object)}}
 
 {{ checkInheritedModuleClasses(object.moduleClasses) -}}
 {{ checkInheritedSubDevices(object.subDevices) -}}
@@ -352,7 +372,7 @@ unknown
                 <xs:sequence>
                 
                     <!-- Resource Specific Attributes -->
-{{ renderSpecificAttributes(object.properties, False, 6) }}
+{{ renderSpecificAttributes(object.properties, False, 6, elementType, name) }}
 
                     <!-- Child Resources -->
                     
@@ -362,6 +382,7 @@ unknown
 {{ renderDeviceModuleClasses(object.moduleClasses, False)}}
 {{ renderDeviceSubDevices(object.subDevices, False)}}
                             <xs:element ref="m2m:subscription"  />
+                            <xs:element ref="{{ namespaceprefix }}:{{ name }}Inst" />
                         </xs:choice>
                     </xs:choice>
 
@@ -378,7 +399,7 @@ unknown
                 <xs:sequence>
 
                     <!-- Resource Specific Attributes -->
-{{ renderSpecificAttributes(object.properties, False, 6) }}
+{{ renderSpecificAttributes(object.properties, False, 6, elementType, name+"Annc") }}
 
                     <!-- Child Resources -->
 
@@ -396,8 +417,6 @@ unknown
         </xs:complexContent>
     </xs:complexType>
 
-<!-- TODO FCI -->
-
     <xs:element name="{{ name }}Inst" type="{{ namespaceprefix }}:{{ name }}Inst" substitutionGroup="m2m:sg_flexContainerInstanceResource" />
     <xs:complexType name="{{ name }}Inst" >
         <xs:complexContent>
@@ -406,7 +425,7 @@ unknown
                 <xs:sequence>
 
                     <!-- Resource Specific Attributes -->
-{{ renderSpecificAttributes(object.properties, False, 6) }}
+{{ renderSpecificAttributes(object.properties, False, 6, elementType, name+"Inst") }}
 
                     <!-- No Child Resources -->
 
@@ -421,22 +440,7 @@ unknown
 {#############################################################################}
 
 {% macro renderAction(object) %}
-<?xml version="1.0" encoding="UTF-8"?>
-<!--
-{{ license }}
--->
-
-<xs:schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="{{ xsdtargetnamespace }}"
-    xmlns:m2m="http://www.onem2m.org/xml/protocols" xmlns:xs="http://www.w3.org/2001/XMLSchema"
-    elementFormDefault="unqualified" attributeFormDefault="unqualified"
-    {{ getXMLNameSpaces() }}
-    >
-
-    <xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-subscription-v{{CDTVersion}}.xsd" />
-    <xs:import namespace="http://www.onem2m.org/xml/protocols" schemaLocation="CDT-commonTypes-v{{CDTVersion}}.xsd" />
-
-    <xs:include schemaLocation="HD-enumerationTypes-v{{modelversion.replace('.', '_')}}.xsd" />
-    <xs:include schemaLocation="{{ namespaceprefix | upper }}-commonTypes-v{{ modelversion.replace('.', '_')}}.xsd" />
+{{renderXSDHeader(object)}}
 
 {{ renderModuleClassesSchemaLocations(object)}}
 
@@ -448,7 +452,7 @@ unknown
                 <xs:sequence>
 
                     <!-- Resource Specific Attributes -->
-{{ renderSpecificAttributes(object.args, False, 6) }}
+{{ renderSpecificAttributes(object.args, False, 6, 8, object.name) }}
 
                     <!-- Child Resources -->
 
@@ -456,6 +460,7 @@ unknown
                         <xs:element name="childResource" type="m2m:childResourceRef" maxOccurs="unbounded" />
                         <xs:choice minOccurs="1" maxOccurs="unbounded">
                             <xs:element ref="m2m:subscription" />
+                            <xs:element ref="{{ namespaceprefix }}:{{ object.name }}Inst" />
                         </xs:choice>
                     </xs:choice>
                 </xs:sequence>
@@ -471,7 +476,7 @@ unknown
                 <xs:sequence>
 
                     <!-- Resource Specific Attributes -->
-{{ renderSpecificAttributes(object.args, False, 6) }}
+{{ renderSpecificAttributes(object.args, False, 6, 8, object.name+"Annc") }}
 
                     <!-- Child Resources -->
 
@@ -486,8 +491,6 @@ unknown
         </xs:complexContent>
     </xs:complexType>
 
-<!-- TODO FCI -->
-
     <xs:element name="{{ object.name }}Inst" type="{{ namespaceprefix }}:{{ object.name }}Inst" substitutionGroup="m2m:sg_flexContainerInstanceResource" />
     <xs:complexType name="{{ object.name }}Inst" >
         <xs:complexContent>
@@ -496,7 +499,7 @@ unknown
                 <xs:sequence>
 
                     <!-- Resource Specific Attributes -->
-{{ renderSpecificAttributes(object.args, False, 6) }}
+{{ renderSpecificAttributes(object.args, False, 6, 8, object.name+"Inst") }}
 
                     <!-- No Child Resources -->
 
@@ -557,11 +560,11 @@ unknown
     >
 
 {% for name in object.extendedSubDevicesExtend %}
-    <xs:include schemaLocation="{{ getVersionedFilename(name, 'xsd', modelVersion=modelversion, namespacePrefix=namespaceprefix) }}" />
+    <xs:include schemaLocation="{{ getVersionedFilename(name, 'xsd', outType=OutType.subDevice, namespacePrefix=namespaceprefix) }}" />
 {% endfor %}
 
 {% for name in object.extendedModuleClassesExtend %}
-    <xs:include schemaLocation="{{ getVersionedFilename(name, 'xsd', isModule=True, modelVersion=modelversion, namespacePrefix=namespaceprefix) }}" />
+    <xs:include schemaLocation="{{ getVersionedFilename(name, 'xsd', outType=OutType.moduleClass, namespacePrefix=namespaceprefix) }}" />
 {% endfor %}
 
 {% for name in object.extendedSubDevices %}

@@ -2,7 +2,8 @@
 #
 #	Print an SDT in various formats
 
-import pathlib
+
+from rich import print
 
 from sdtv2.SDT2PrintMarkdown import print2DomainMarkdown
 from sdtv2.SDT2PrintOPML import print2DomainOPML
@@ -43,7 +44,7 @@ def printOPML(domain, options):
 	elif domain._version == '3':
 		return print3DomainOPML(domain, options)
 	else:
-		print('Output format is not supported')
+		print('[red]Output format is not supported')
 		return ''
 
 
@@ -64,7 +65,7 @@ def printSDT3(domain, inputFormat, options):
 	if domain._version == '2' and inputFormat == 'sdt2':
 		return print2DomainSDT3(domain, options)
 	else:
-		print('Conversion is not supported')
+		print('[red]Conversion is not supported')
 		return ''
 
 
@@ -74,16 +75,16 @@ def printSDT4(domain, inputFormat, options):
 	if domain._version == '3' and inputFormat == 'sdt3':
 		return print2DomainSDT4(domain, options)
 	else:
-		print('Conversion is not supported')
+		print('[red]Conversion is not supported')
 		return ''
 
 
 def printJava(domain, inputFormat, directory, options):
 	if inputFormat not in [ 'sdt3' ]:
-		print('Only the input format "sdt3" is supported')
+		print('[red]Only the input format "sdt3" is supported')
 		return
 	if directory is None:
-		print('-o <directory> must be specified')
+		print('[red]-o <directory> must be specified')
 		return
 
 	helper.makeDir(directory)
@@ -92,10 +93,10 @@ def printJava(domain, inputFormat, directory, options):
 
 def printVortoDSL(domain, inputFormat, directory, options):
 	if inputFormat not in ['sdt3']:
-		print('Only the input format "sdt3" is supported')
+		print('[red]Only the input format "sdt3" is supported')
 		return
 	if directory is None:
-		print('-o <directory> must be specified')
+		print('[red]-o <directory> must be specified')
 		return
 
 	helper.makeDir(directory)
@@ -104,10 +105,10 @@ def printVortoDSL(domain, inputFormat, directory, options):
 
 def printOneM2MSVG(domain, inputFormat, directory, options):
 	if inputFormat not in ['sdt3', 'sdt4' ]:
-		print('Only the input formats "sdt3" or "sdt4" are supported')
+		print('[red]Only the input formats "sdt3" or "sdt4" are supported')
 		return
 	if directory is None:
-		print('-o <directory> must be specified')
+		print('[red]-o <directory> must be specified')
 		return
 
 	helper.makeDir(directory)
@@ -123,14 +124,14 @@ def printOneM2MXSD(domain, inputFormat, directory, options):
 	if domain is None:
 		return
 	if inputFormat not in ['sdt3', 'sdt4']:
-		print('Only the input formats "sdt3" and "sdt4" are supported')
+		print('[red]Only the input formats "sdt3" and "sdt4" are supported')
 		return
 	if directory is None:
-		print('-o <directory> must be specified')
+		print('[red]-o <directory> must be specified')
 		return
 	modelVersion = options['modelversion']
 	if modelVersion is None:
-		print('--modelVersion <version> must be specified')
+		print('[red]--modelVersion <version> must be specified')
 		return
 
 	helper.makeDir(directory)
@@ -144,10 +145,10 @@ def printOneM2MXSD(domain, inputFormat, directory, options):
 
 def printSwagger(domain, inputFormat, directory, options):
 	if inputFormat not in ['sdt3']:
-		print('Only the input format "sdt3" is supported')
+		print('[red]Only the input format "sdt3" is supported')
 		return
 	if directory is None:
-		print('-o <directory> must be specified')
+		print('[red]-o <directory> must be specified')
 		return
 
 	helper.makeDir(directory)
@@ -158,7 +159,7 @@ def printApJSON(domain, inputFormat, directory, options):
 	if domain is None:
 		return
 	if inputFormat not in ['sdt4']:
-		print('Only the input format "sdt4" is supported')
+		print('[red]Only the input format "sdt4" is supported')
 		return
 	elif domain._version == '4':
 		prepare4OneM2M(domain)

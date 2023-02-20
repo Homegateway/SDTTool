@@ -21,16 +21,16 @@ class SDT4Domain(SDT4Element):
 	_name = 'Domain'
 
 	def __init__(self, attrib=None):
-		self._version 		= '4'
-		self.id 			= self.getAttribute(attrib, 'id')
-		self.semanticURI 	= self.getAttribute(attrib, 'semanticURI')
-		self.doc 			= None
-		self.includes 		= []			# imports
-		self.dataTypes 		= []
-		self.moduleClasses 	= []
-		self.subDevices 	= []
-		self.deviceClasses 	= []
-		self.productClasses = []
+		self._version 								= '4'
+		self.id 									= self.getAttribute(attrib, 'id')
+		self.semanticURI 							= self.getAttribute(attrib, 'semanticURI')
+		self.doc 									= None
+		self.includes 								= []			# imports
+		self.dataTypes:list[SDT4DataType] 			= []
+		self.moduleClasses:list[SDT4ModuleClass] 	= []
+		self.subDevices:list[SDT4SubDevice] 		= []
+		self.deviceClasses:list[SDT4DeviceClass]	= []
+		self.productClasses:list[SDT4ProductClass]	= []
 
 
 class SDT4Include(SDT4Element):
@@ -50,10 +50,10 @@ class SDT4ProductClass(SDT4Element):
 		self.semanticURI 	= self.getAttribute(attrib, 'semanticURI')
 		self.doc 			= None
 		self.extend 		= None
-		self.properties 	= []
-		self.moduleClasses 	= []
-		self.subDevices 	= []
-		self.extendDevice 	= None # actually an extend
+		self.properties:list[SDT4Property]		 	= []
+		self.moduleClasses:list[SDT4ModuleClass] 	= []
+		self.subDevices:list[SDT4SubDevice] 		= []
+		self.extendDevice:list[SDT4DeviceClass] 	= None # actually an extend
 
 
 #	DeviceClass
@@ -64,9 +64,9 @@ class SDT4DeviceClass(SDT4Element):
 		self.id 			= self.getAttribute(attrib, 'id')
 		self.semanticURI 	= self.getAttribute(attrib, 'semanticURI')
 		self.doc 			= None
-		self.properties 	= []
-		self.moduleClasses 	= []
-		self.subDevices 	= []
+		self.properties:list[SDT4Property] 			= []
+		self.moduleClasses:list[SDT4ModuleClass] 	= []
+		self.subDevices:list[SDT4SubDevice]			= []
 
 
 #	SubDevice
@@ -80,8 +80,8 @@ class SDT4SubDevice(SDT4Element):
 		self.maxOccurs 		= self.getAttribute(attrib, 'maxOccurs')
 		self.doc 			= None
 		self.extend 		= None
-		self.properties 	= []
-		self.moduleClasses 	= []
+		self.properties:list[SDT4Property] 			= []
+		self.moduleClasses:list[SDT4ModuleClass] 	= []
 
 
 #	Properties
@@ -108,10 +108,10 @@ class SDT4ModuleClass(SDT4Element):
 		self.maxOccurs = self.getAttribute(attrib, 'maxOccurs')
 		self.extend = None
 		self.doc = None
-		self.actions = []
-		self.data = []
-		self.events = []
-		self.properties = []
+		self.actions:list[SDT4Action]		= []
+		self.data:list[SDT4DataPoint]		= []
+		self.events:list[SDT4Event] 		= []
+		self.properties:list[SDT4Property]	= []
 
 
 #	Extend

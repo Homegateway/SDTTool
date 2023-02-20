@@ -2,10 +2,14 @@
 #
 #	Print SDT4 with templates
 
+from __future__ import annotations
 import re
+from typing import Any
 from .SDT4Classes import *
 from common.SDTHelper import *
 from common.SDTAbbreviate import *
+from rich import print
+
 
 import jinja2
 from jinja2 import contextfunction
@@ -35,19 +39,22 @@ templates = {
 # TODO make this mapping more configurable, maybe on the command line?
 
 namespacePrefixMappings = {
-	('agd', 'org.onem2m.agriculture',	'http://www.onem2m.org/xml/protocols/agriculturedomain'),
-	('cid', 'org.onem2m.city',			'http://www.onem2m.org/xml/protocols/citydomain'),
-	('cod', 'org.onem2m.common',		'http://www.onem2m.org/xml/protocols/commondomain'),
-	('hed', 'org.onem2m.health',		'http://www.onem2m.org/xml/protocols/healthdomain'),
-	('hod', 'org.onem2m.home',			'http://www.onem2m.org/xml/protocols/homedomain'),
-	('ind', 'org.onem2m.industry',		'http://www.onem2m.org/xml/protocols/industrydomain'),
-	('mad', 'org.onem2m.management',	'http://www.onem2m.org/xml/protocols/managementdomain'),
-	('rad', 'org.onem2m.railway',		'http://www.onem2m.org/xml/protocols/railwaydomain'),
-	('ved', 'org.onem2m.vehicular',		'http://www.onem2m.org/xml/protocols/vehiculardomain'),
+	('agd', 'org.onem2m.agriculture',	'http://www.onem2m.org/xml/protocols/agriculturedomain', 'agriculturedomain'),
+	('cid', 'org.onem2m.city',			'http://www.onem2m.org/xml/protocols/citydomain', 'citydomain'),
+	('cod', 'org.onem2m.common',		'http://www.onem2m.org/xml/protocols/commondomain', 'commondomain'),
+	('hd',  'org.onem2m.horizontal',	'http://www.onem2m.org/xml/protocols/horizontal', 'horizontaldomain'),
+	('hed', 'org.onem2m.health',		'http://www.onem2m.org/xml/protocols/healthdomain', 'healthdomain'),
+	('hod', 'org.onem2m.home',			'http://www.onem2m.org/xml/protocols/homedomain', 'homedomain'),
+	('ind', 'org.onem2m.industry',		'http://www.onem2m.org/xml/protocols/industrydomain', 'industrydomain'),
+	('mad', 'org.onem2m.management',	'http://www.onem2m.org/xml/protocols/managementdomain', 'managementdomain'),
+	('mdd', 'org.onem2m.metadata',		'http://www.onem2m.org/xml/protocols/metadata', 'metadatadomain'),
+	('psd', 'org.onem2m.publicsafety',	'http://www.onem2m.org/xml/protocols/publicsafetydomain', 'publicsafetydomain'),
+	('rad', 'org.onem2m.railway',		'http://www.onem2m.org/xml/protocols/railwaydomain', 'railwaydomain'),
+	('ved', 'org.onem2m.vehicular',		'http://www.onem2m.org/xml/protocols/vehiculardomain', 'vehiculardomain'),
 }
 
 
-actions:set = set()
+actions:set[SDT4Action] = set()
 enumTypes:set = set()
 extendedModuleClasses:dict = dict()
 extendedModuleClassesExtend:dict = dict()
@@ -57,12 +64,14 @@ context = None
 optionArgs = None
 
 # constants for abbreviation file
-constAbbreviationCSVFile = '_Abbreviations.csv'
-constAbbreviationMAPFile = '_Abbreviations.py'
+_abbreviationCSVFile = 'Abbreviations.csv'
+_undefinedAbbreviationCSVFile = 'UndefinedAbbreviations.csv'
+_abbreviationMAPFile = 'Abbreviations.py'
 
-def  print4SDT(domain, options, directory=None):
+def print4SDT(domain:SDT4Domain, options, directory = None):
 	global context
 	global optionArgs
+	importOccursIn()
 	context = getContext(domain, options, directory)
 	optionArgs = options
 	if context['isSingleFile']:
@@ -70,11 +79,13 @@ def  print4SDT(domain, options, directory=None):
 		readAbbreviations(context['abbreviationsinfile'])
 		result = render(context['templateFile'], context)
 		# Export NEW abbreviations
-		exportAbbreviations(constAbbreviationCSVFile, constAbbreviationMAPFile, getAbbreviations())
+		exportAbbreviations(_abbreviationCSVFile, _abbreviationMAPFile, getAbbreviations())
+		exportAbbreviations(_undefinedAbbreviationCSVFile, None, getNewAbbreviations())
 		return result
 	else:
 		renderMultiple(context['templateFile'], context, domain, directory, context['extension'])
 	printShortNames(context) # TODO improve printShortnames
+	exportOccursIn()
 
 
 
@@ -90,7 +101,7 @@ def render(templateFile, context):
 
 
 
-def renderMultiple(templateFile, context, domain, directory, extension):
+def renderMultiple(templateFile:str, context:dict, domain:SDT4Domain, directory:str, extension:str):
 	try:
 		path = context['path']
 		if path:
@@ -98,32 +109,40 @@ def renderMultiple(templateFile, context, domain, directory, extension):
 	except FileExistsError as e:
 		pass # on purpose. We override files for now
 	
+	# Prefix for abbreviation files
+	prefix = f'{context["namespaceprefix"]}-{"dev-" if domain.id.endswith("device") else "mod-"}'
+	
+
 
 	# Read abbreviations
 	readAbbreviations(context['abbreviationsinfile'])
 	# Add already existing abbreviations
-	readAbbreviations(f'{str(context["path"])}{os.sep}{constAbbreviationCSVFile}', predefined=False)
+	readAbbreviations(f'{str(context["path"])}{os.sep}{prefix}{_abbreviationCSVFile}', predefined=False)
 
 
 	# Export ModuleClasses
 	for moduleClass in domain.moduleClasses:
 		context['object'] = moduleClass
-		renderComponentToFile(context, isModule=True)
+		# Do an abbreviation first
+		abbreviate(moduleClass.name)
+		renderComponentToFile(context, outType = OutType.moduleClass)
 
 	# Export Devices
 	for subDevice in domain.subDevices:
 		context['object'] = subDevice
-		renderComponentToFile(context)
+		abbreviate(subDevice.id)
+		renderComponentToFile(context, outType = OutType.subDevice)
 
 	# Export Devices
 	for deviceClass in domain.deviceClasses:
 		context['object'] = deviceClass
-		renderComponentToFile(context)
+		abbreviate(deviceClass.id)
+		renderComponentToFile(context, outType = OutType.device)
 
 	# Export enum types
 
 	context['object'] = SDT4DataTypes(domain.dataTypes)
-	renderComponentToFile(context, isEnum=True)
+	renderComponentToFile(context, outType = OutType.enumeration)
 	# for dataType in domain.dataTypes:
 	# 	if isinstance(dataType.type, SDT4EnumType):
 	# 		print(dataType)
@@ -134,7 +153,8 @@ def renderMultiple(templateFile, context, domain, directory, extension):
 	# Export found Actions
 	for action in actions:
 		context['object'] = action
-		renderComponentToFile(context, isAction=True)
+		abbreviate(action.name)
+		renderComponentToFile(context, outType = OutType.action)
 
 	# Export extras
 	commons = SDT4Commons('commonTypes')
@@ -143,16 +163,18 @@ def renderMultiple(templateFile, context, domain, directory, extension):
 	commons.extendedSubDevices = extendedSubDevices
 	commons.extendedSubDevicesExtend = extendedSubDevicesExtend
 	context['object'] = commons
-	renderComponentToFile(context, isExtras=True)
+	renderComponentToFile(context, outType = OutType.unknown)
 
 	# Export abbreviations
-	exportAbbreviations(f'{context["path"]}{os.sep}{constAbbreviationCSVFile}',
-						f'{context["path"]}{os.sep}{constAbbreviationMAPFile}',
+	exportAbbreviations(f'{context["path"]}{os.sep}{prefix}{_abbreviationCSVFile}',
+						f'{context["path"]}{os.sep}{prefix}{_abbreviationMAPFile}',
 						getAbbreviations())
+	exportAbbreviations(f'{context["path"]}{os.sep}{prefix}{_undefinedAbbreviationCSVFile}', None, getNewAbbreviations())
+	#exportAbbreviations(f'{context["path"]}{os.sep}{domain.id}-{_undefinedAbbreviationCSVFile}', None, getNewAbbreviations())
+		
 
 
-
-def getContext(domain, options, directory=None):
+def getContext(domain:SDT4Domain, options:dict, directory:str = None) -> dict[str, Any]:
 
 	path = None
 	if directory:
@@ -166,7 +188,7 @@ def getContext(domain, options, directory=None):
 			licenseText = f.read()
 
 	templateFile, enumerationsFile, isSingleFile, extension = templates[options['outputFormat']]
-
+	print(options['xsdtargetnamespace'])
 	return {
 		'domain'						: domain,
 	    'hideDetails'					: options['hideDetails'],
@@ -177,6 +199,7 @@ def getContext(domain, options, directory=None):
     	'abbreviationsinfile'			: options['abbreviationsinfile'],
     	'modelversion'					: options['modelversion'],
     	'domaindefinition'				: options['domain'],
+    	'CDTVersion'					: options['cdtversion'],
     	'license'						: licenseText,
     	'path'							: path,
 		'package'						: sanitizePackage(domain.id),
@@ -206,11 +229,14 @@ def getContext(domain, options, directory=None):
     	'debug'							: debug,
     	'countExtend'					: countExtend,
     	'countUnextend'					: countUnextend,
-		'shortname'						: shortname,
 		'getNamespacePrefix'			: getNamespacePrefix,
 		'componentName'					: componentName,
 		'getNamespaceFromPrefix'		: getNamespaceFromPrefix,
+		'getDomainFromPrefix'			: getDomainFromPrefix,
 		'getXMLNameSpaces'				: getXMLNameSpaces,
+
+		# Add types
+		'OutType'						: OutType,
 	}
 
 
@@ -230,16 +256,16 @@ def printShortNames(context):
 	#	combined files?
 
 	# devices
-	fileName = templateSanitizeName(f'devices-{getTimeStamp()}', False)
-	fullFilename = getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
+	fileName = sanitizeName(f'devices-{getTimeStamp()}', False)
+	fullFilename = getVersionedFilename(fileName, 'csv', path = str(context['path']), outType = OutType.shortName, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for deviceClass in domain.deviceClasses:
 			outputFile.write(f'{deviceClass.id},{getAbbreviation(deviceClass.id)}\n')
 	deleteEmptyFile(fullFilename)
 
 	# sub.devices - Instances
-	fileName = templateSanitizeName(f'subDevicesInstances-{getTimeStamp()}', False)
-	fullFilename = getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
+	fileName = sanitizeName(f'subDevicesInstances-{getTimeStamp()}', False)
+	fullFilename = getVersionedFilename(fileName, 'csv', path=str(context['path']), outType = OutType.shortName, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for deviceClass in domain.deviceClasses:
 			for subDevice in deviceClass.subDevices:
@@ -247,8 +273,8 @@ def printShortNames(context):
 	deleteEmptyFile(fullFilename)
 
 	# sub.devices
-	fileName = templateSanitizeName(f'subDevice-{getTimeStamp()}', False)
-	fullFilename = getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
+	fileName = sanitizeName(f'subDevice-{getTimeStamp()}', False)
+	fullFilename = getVersionedFilename(fileName, 'csv', path=str(context['path']), outType = OutType.shortName, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for name in extendedSubDevicesExtend:
 			if (abbr := getAbbreviation(name)) is None:
@@ -258,8 +284,8 @@ def printShortNames(context):
 
 
 	# ModuleClasses
-	fileName = templateSanitizeName(f'moduleClasses-{getTimeStamp()}', False)
-	fullFilename = getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
+	fileName = sanitizeName(f'moduleClasses-{getTimeStamp()}', False)
+	fullFilename = getVersionedFilename(fileName, 'csv', path=str(context['path']), outType = OutType.shortName, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for moduleClass in domain.moduleClasses:
 			outputFile.write(f'{moduleClass.name}{getAbbreviation(moduleClass.name)}\n')
@@ -273,8 +299,8 @@ def printShortNames(context):
 
 
 	# DataPoints
-	fileName = templateSanitizeName(f'dataPoints-{getTimeStamp()}', False)
-	fullFilename = getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
+	fileName = sanitizeName(f'dataPoints-{getTimeStamp()}', False)
+	fullFilename = getVersionedFilename(fileName, 'csv', path=str(context['path']), outType = OutType.shortName, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for moduleClass in domain.moduleClasses:
 			for dp in moduleClass.data:
@@ -291,8 +317,8 @@ def printShortNames(context):
 
 
 	# Actions
-	fileName = templateSanitizeName(f'actions-{getTimeStamp()}', False)
-	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
+	fileName = sanitizeName(f'actions-{getTimeStamp()}', False)
+	fullFilename = getVersionedFilename(fileName, 'csv', path=str(context['path']), outType = OutType.shortName, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for moduleClass in domain.moduleClasses:
 			for ac in moduleClass.actions:
@@ -315,17 +341,17 @@ def printShortNames(context):
 #
 
 
-def renderComponentToFile(context, name=None, isModule=False, isEnum=False, isAction=False, isSubDevice=False, isExtras=False, namespaceprefix=None):
+def renderComponentToFile(context, name:str = None, outType:OutType = OutType.unknown, namespaceprefix:str = None):
 	""" Render a component. """
 	namespaceprefix = context['namespaceprefix'] if 'namespaceprefix' in context else None
 
-	if isSubDevice and context['object'].extend:
-		fileName = templateSanitizeName(context['object'].extend.entity, False)
-	elif isEnum:
-		fileName = templateSanitizeName(context['enumerationsFile'], False)
+	if outType == OutType.subDevice and context['object'].extend:
+		fileName = sanitizeName(context['object'].extend.entity, False)
+	elif outType == OutType.enumeration:
+		fileName = sanitizeName(context['enumerationsFile'], False)
 	else:
-		fileName = templateSanitizeName(context['object'].name if isModule or isEnum or isAction or isExtras else context['object'].id, False)
-	fullFilename = getVersionedFilename(fileName, context['extension'], name=name, path=str(context['path']), isModule=isModule, isEnum=isEnum, isAction=isAction, isSubDevice=isSubDevice, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
+		fileName = sanitizeName(context['object'].name if outType in [ OutType.moduleClass, OutType.enumeration, OutType.action, OutType.unknown ] else context['object'].id, False)
+	fullFilename = getVersionedFilename(fileName, context['extension'], name = name, path = str(context['path']), outType = outType, namespacePrefix = namespaceprefix)
 	#print('---' + fullFilename)
 	outputFile   = None
 	try:
@@ -333,17 +359,18 @@ def renderComponentToFile(context, name=None, isModule=False, isEnum=False, isAc
 			# print(fullFilename)
 			outputFile.write(render(context['templateFile'], context))
 	except IOError as err:
-		print(f'File not found: {str(err)}')
+		print(f'[red]File not found: {str(err)}')
 
 
 
-def templateSanitizeName(name, isClass, annc=False):
+def templateSanitizeName(name, isClass, annc = False, elementType:ElementType = None, occursIn:str = None):
 	""" Sanitize a (file)name. Also add it to the list of abbreviations. """
+
 	result = sanitizeName(name, isClass)
 	# If this name is an announced resource, add "Annc" Postfix to both the
 	# name as well as the abbreviation.
 	if ':' not in name:	# ignore, for example, type/enum definitions
-		abbr = abbreviate(result, optionArgs['abbreviationlength'])
+		abbr = abbreviate(result, optionArgs['abbreviationlength'], elementType, occursIn)
 		addAbbreviation(f'{result}{"Annc" if annc else ""}', f'{abbr}{"Annc" if annc else ""}')
 		# if annc:
 		# 	addAbbreviation(f'{result}Annc', f'{abbr}')
@@ -399,39 +426,49 @@ def countUnextend(lst) -> int:
 	return len(lst) - countExtend(lst)
 
 
-def shortname(name):
-	abbr = abbreviate(name, optionArgs['abbreviationlength'])
-	addAbbreviation(name, abbr)
-	return abbr
+# def shortname(name):
+# 	abbr = abbreviate(name, optionArgs['abbreviationlength'])
+# 	addAbbreviation(name, abbr)
+# 	return abbr
 
 
-def getNamespacePrefix(obj):
+def getNamespacePrefix(obj) -> str:
 	"""	Try to map the extended domain to a short name prefix.
 		Otherwise return the defined namespace prefix for this object.
 	"""
 	if obj.extend is not None:
 		domain = obj.extend.domain
-		for (k,v,d) in namespacePrefixMappings:
+		for (k,v,d, do) in namespacePrefixMappings:
 			if domain.startswith(v):
 				return k
+		print(f'[yellow]WARNING: No definition found for domain: {domain}')
 		return context['namespaceprefix']
 	return context['namespaceprefix']
 
-def getNamespaceFromPrefix(prfx):
+
+def getNamespaceFromPrefix(prfx:str) -> str:
 	"""	Try to find the full prefix from the short prefix.
 	"""
-	for (k,v,d) in namespacePrefixMappings:
+	for (k,v,d, do) in namespacePrefixMappings:
 		if k == prfx:
 			return v
+	print(f'[red]Namespace not found for prefix: {prfx}')
+	return None
+
+
+def getDomainFromPrefix(prfx:str) -> str:
+	for (k,v,d, do) in namespacePrefixMappings:
+		if k == prfx:
+			return do
+	print(f'[red]Namespace not found for prefix: {prfx}')
 	return None
 
 
 def getXMLNameSpaces():
 	result = ''
-	for (k,v,d) in namespacePrefixMappings:
+	for (k,v,d, do) in namespacePrefixMappings:
 		result += f'xmlns:{k}="{d}" '
 	return result
-# xmlns:agd="http://www.onem2m.org/xml/protocols/agriculturedomain"
 
 
 def componentName(obj):
@@ -494,6 +531,6 @@ def renderObject(context, object):
 	if isinstance(object, SDT4SubDevice):
 		if object.extend is None:	# Only when not extending
 			newContext['object'] = object
-			renderComponentToFile(newContext, isSubDevice=True)
+			renderComponentToFile(newContext, outType = OutType.subDevice)
 	return ''
 

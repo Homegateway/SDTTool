@@ -3,6 +3,8 @@
 #	Generate XSD for oneM2M
 
 import csv, datetime, os, pathlib, re, string
+
+from common.SDTHelper import OutType, getVersionedFilename
 from .SDT3Classes import *
 from common.SDTAbbreviate import *
 
@@ -119,7 +121,7 @@ def exportModuleClass(module, package, path, name=None):
 
 	moduleName   = sanitizeName(module.name, False)
 	fileName     = sanitizeName(module.name, False)
-	fullFilename = getVersionedFilename(fileName, name=name, path=str(path), isModule=True)
+	fullFilename = getVersionedFilename(fileName, name = name, path = str(path), outType = OutType.moduleClass)
 	outputFile   = None
 	try:
 		outputFile = open(fullFilename, 'w')
@@ -495,7 +497,7 @@ def exportActions(path):
 
 def exportAction(path, action):
 	name = sanitizeName(action.name, False)
-	fullFileName = getVersionedFilename(name, path=str(path), isAction=True)
+	fullFileName = getVersionedFilename(name, path=str(path), outType = OutType.action)
 	outputFile = None
 	try:
 		outputFile = open(fullFileName, 'w')
@@ -623,7 +625,7 @@ def exportDevice(device, package, path):
 	# export the module class itself
 
 	name 	     = sanitizeName(device.id, False)
-	fullFilename = getVersionedFilename(name, name=None, path=str(path))
+	fullFilename = getVersionedFilename(name, name = None, path = str(path), outType = OutType.device)
 	outputFile   = None
 
 	try:
@@ -690,12 +692,12 @@ def getDeviceSchemas(device):
 	for module in device.modules:
 		parentModuleClassName = module.extends.domain + '.' + module.extends.clazz
 		if module.name == module.extends.clazz:
-			name = getVersionedFilename(module.name, isModule=True)
+			name = getVersionedFilename(module.name, outType = OutType.moduleClass)
 			result += newLine() + '<xs:include schemaLocation="' + name + '" />'
 		else:
 			parentModuleClasses[module.name] = module
 			if parentModuleClassName not in parentModuleClassNames:
-				name = getVersionedFilename(module.extends.clazz, isModule=True)
+				name = getVersionedFilename(module.extends.clazz, outType = OutType.moduleClass)
 				result += newLine() + '<xs:include schemaLocation="' + name + '" />'
 				parentModuleClassNames.append(parentModuleClassName)
 
@@ -732,7 +734,7 @@ def getModuleClassSchemas(module):
 
 	# Referenced Actions
 	for action in module.actions:
-		name = getVersionedFilename(action.name, isAction=True)
+		name = getVersionedFilename(action.name, outType = OutType.action)
 		result += newLine() + '<xs:include schemaLocation="' + name + '" />'
 	return result
 
@@ -858,30 +860,30 @@ def sanitizePackage(package):
 
 # get a versioned filename
 
-def getVersionedFilename(fileName, name=None, path=None, isModule=False, isAction=False):
-	global modelVersion, namespacePrefix
+# def getVersionedFilename(fileName, name=None, path=None, isModule=False, isAction=False):
+# 	global modelVersion, namespacePrefix
 
-	prefix  = ''
-	postfix = ''
-	if name != None:
-		prefix += sanitizeName(name, False) + '_'
-	else:
-		if namespacePrefix != None:
-			prefix += namespacePrefix.upper() + '-'
-		if isAction:
-			prefix += 'act-'
-		if isModule:
-			prefix += 'mod-'
+# 	prefix  = ''
+# 	postfix = ''
+# 	if name != None:
+# 		prefix += sanitizeName(name, False) + '_'
+# 	else:
+# 		if namespacePrefix != None:
+# 			prefix += namespacePrefix.upper() + '-'
+# 		if isAction:
+# 			prefix += 'act-'
+# 		if isModule:
+# 			prefix += 'mod-'
 
-	if modelVersion != None:
-		postfix += '-v' + modelVersion.replace('.', '_')
+# 	if modelVersion != None:
+# 		postfix += '-v' + modelVersion.replace('.', '_')
 
-	fullFilename = ''
-	if path != None:
-		fullFilename = path + os.sep
-	fullFilename += prefix + sanitizeName(fileName, False) + postfix + '.xsd'
+# 	fullFilename = ''
+# 	if path != None:
+# 		fullFilename = path + os.sep
+# 	fullFilename += prefix + sanitizeName(fileName, False) + postfix + '.xsd'
 
-	return fullFilename
+# 	return fullFilename
 
 
 # Tabulator handling

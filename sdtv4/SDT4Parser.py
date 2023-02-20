@@ -2,7 +2,7 @@
 #
 #	Callback target class for the ElementTree parser to parse a SDT4
 
-from typing import List
+
 from enum import Enum
 from .SDT4Classes import *
 

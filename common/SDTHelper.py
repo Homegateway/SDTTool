@@ -2,10 +2,32 @@
 #
 #	Helpers
 #
+from enum import IntEnum, auto
 import os, pathlib, time, datetime, argparse, textwrap
 from pathlib import Path
 
 
+class OutType(IntEnum):
+	action			= auto()
+	device			= auto()
+	enumeration 	= auto()
+	moduleClass		= auto()
+	shortName 		= auto()
+	subDevice		= auto()
+	unknown			= auto()
+
+	def prefix(self) -> str:
+		return {
+			self.action: 'act-',
+			self.device: 'dev-',
+			self.enumeration: '',
+			self.moduleClass: 'mod-',
+			self.shortName: 'snm',
+			self.subDevice: 'sub-',
+			self.unknown: '',
+		}[self.value]
+
+	
 # Sanitize a name 
 def sanitizeName(name:str, isClass:bool) -> str:
 	if not name:
@@ -32,33 +54,28 @@ def sanitizePackage(package:str) -> str:
 	return  package.replace('/', '.')
 
 # get a versioned filename
-def getVersionedFilename(fileName, extension, name=None, path=None, isModule=False, isAction=False, isSubDevice=False, isEnum=False, isShortName=False, modelVersion=None, namespacePrefix=None):
+def getVersionedFilename(fileName:str, extension:str='', name:str = None, path:str = None, outType:OutType = OutType.device, modelVersion:str = None, namespacePrefix:str = None):
 
 	prefix  = ''
 	postfix = ''
 	if name is not None:
-		prefix += sanitizeName(name, False) + '_'
+		prefix += f'{sanitizeName(name, False)}_'
 	else:
 		if namespacePrefix:
 			prefix += namespacePrefix.upper() + '-'
 			if fileName.startswith(namespacePrefix+':'):
 				fileName = fileName[len(namespacePrefix)+1:]
-		if isAction:
-			prefix += 'act-'
-		if isModule:
-			prefix += 'mod-'
-		# if isEnum:
-		# 	prefix += 'enu-'
-		if isShortName:
-			prefix += 'snm-'
+		prefix += f'{outType.prefix()}'
 
 	if modelVersion:
-		postfix += '-v' + modelVersion.replace('.', '_')
+		postfix += f'-v{modelVersion.replace(".", "_")}'
 
 	fullFilename = ''
 	if path:
 		fullFilename = path + os.sep
-	fullFilename += prefix + sanitizeName(fileName, False) + postfix + '.' + extension
+	fullFilename += f'{prefix}{sanitizeName(fileName, False)}{postfix}'
+	if extension:
+		fullFilename += f'.{extension}'
 
 	return fullFilename
 
@@ -84,8 +101,8 @@ def getPackage(directory, domain):
 
 
 # Export the content for a ModuleClass or Device
-def exportArtifactToFile(name:str, path:str, extension:str, content, isModule:bool = True) -> None:
-	fileName = getVersionedFilename(name, extension, path=str(path), isModule=isModule)
+def exportArtifactToFile(name:str, path:str, extension:str, content, outType:OutType = OutType.moduleClass) -> None:
+	fileName = getVersionedFilename(name, extension, path = str(path), outType = outType)
 	outputFile = None
 	try:
 		with open(fileName, 'w') as outputFile:

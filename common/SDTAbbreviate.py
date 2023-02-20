@@ -4,24 +4,59 @@
 # 
 
 import csv
-from typing import Dict
+from typing import Dict, List, Tuple
+from rich import print, get_console
+from enum import IntEnum
+
 
 # Dictionary for abbreviations (name, abbr)
 abbreviations:Dict[str, str] = {}
 
+# Abbreviations that are newly created while processing
+newAbbreviation:Dict[str, str] = {}
+
 # Dicionary for existing abbreviations
 preDefinedAbbreviations:Dict[str, str] = {}
 
+# Dictionary for mapping of short names to places where used
+# shortname -> (longname, [ occursIn ])
+abbreviationOccursIn:Dict[str, Tuple[str, List[str]]] = {}
+
+class ElementType(IntEnum):
+	moduleClass = 1
+	deviceClass = 2
+	subDeviceClass = 3
+	action = 4
+	moduleClassAttribute = 5
+	deviceAttribute = 6
+	subDeviceAttribute = 7
+	actionAttribute = 8
+
+
 
 # experimental abreviation function. Move later
-def abbreviate(name:str, length:int=5) -> str:
+def abbreviate(name:str, length:int = 5, elementType:ElementType = None, occursIn:str = None) -> str:
 	global abbreviations
 	result = ''
 
+	# print(f'{elementType} - {name} - {occursIn}')
+
+	def addOccursIn(sn:str) -> str:
+		"""	Add occursIn to the list.
+		"""
+
+		if (a := abbreviationOccursIn.get(sn)) is None:
+			a = (name, [])
+		if occursIn not in a[1]:
+			a[1].append(occursIn)
+		abbreviationOccursIn[sn] = a
+		return sn
+
+
 	if name in abbreviations:			# return abbreviation if already in dictionary
-		return abbreviations[name]
+		return addOccursIn(abbreviations[name])
 	if name in preDefinedAbbreviations:	# return abbreviation if it exists in the predefined dictionary
-		return preDefinedAbbreviations[name]
+		return addOccursIn(preDefinedAbbreviations[name])
 
 	l = len(name)
 
@@ -69,8 +104,10 @@ def abbreviate(name:str, length:int=5) -> str:
 		pof = str(clashVal)
 		abbr = prf[:len(prf)-len(pof)] + pof
 		# print(f'resolution: {abbr}')
-	# print(f'{name} - {abbr}')
-	return abbr
+	#print(f'{name} - {abbr}')
+
+	newAbbreviation[name] = abbr
+	return addOccursIn(abbr)
 
 
 # Add a single abbreviation
@@ -81,6 +118,12 @@ def addAbbreviation(name, abbreviation):
 # Return abbreviations
 def getAbbreviations():
 	return abbreviations.copy()
+
+
+# Return new abbreviations
+def getNewAbbreviations():
+	return newAbbreviation.copy()
+
 
 
 # Return an abbreviation for a longName
@@ -101,42 +144,86 @@ def readAbbreviations(infile, predefined=True):
 		with open(infile) as csvfile:
 			reader = csv.reader(csvfile, delimiter=',', quotechar='\\')
 			for row in reader:
-				if len(row) == 2:
+				if not len(row):	# ignore empty rows
+					continue
+				elif len(row) == 2:
 					if predefined:
 						preDefinedAbbreviations[row[0]] = row[1]
 					else:
 						abbreviations[row[0]] = row[1]
 				else:
-					print('Unknwon row found (ignored): ' + ', '.join(row))
+					print('[yellow]Unknown row found (ignored): ' + ', '.join(row))
 	except FileNotFoundError as e:
-		print(f'WARNING: No such file or directory: "{infile}": abbreviation input file ignored')
+		print(f'[yellow]WARNING: No such file or directory: "{infile}": abbreviation input file ignored')
 	except Exception as e:
 		raise
 
 
 def exportAbbreviations(csvFile, mapFile, abbreviations):
 
+	if not abbreviations:
+		return
 	# Export as python map
-	outputFile = None
 	try:
-		outputFile = open(mapFile, 'w')
-		outputFile.write(str(abbreviations))
+		if mapFile:
+			with open(mapFile, 'w') as f:
+					f.write(str(abbreviations))
 	except IOError as err:
-		print(err)
-	finally:
-		if outputFile != None:
-			outputFile.close()
+		print(f'[red]{err}')
 
 	# Export as CSV
-	outputFile = None
 	try:
-		outputFile = open(csvFile, 'w', newline='')
-		writer = csv.writer(outputFile)
-		for key, value in abbreviations.items():
-			writer.writerow([key, value])
-	except IOError as err:
-		print(err)
-	finally:
-		if outputFile != None:
-			outputFile.close()
+		if csvFile:
+			with open(csvFile, 'w', newline='') as f:
+				writer = csv.writer(f)
+				for key in sorted(abbreviations.keys()):
+					writer.writerow([key, abbreviations[key]])
 
+	except IOError as err:
+		print(f'[red]{err}')
+	except Exception as err:
+		print(f'[red]{err}')
+
+
+def importOccursIn(occursInFile:str = 'occursIn.csv'):
+	try:
+		with open(occursInFile) as csvfile:
+			reader = csv.reader(csvfile, delimiter=',')
+			for row in reader:
+				if not len(row):	# ignore empty rows
+					continue
+				elif len(row) == 3:
+					abbreviationOccursIn[row[2]] = (row[0], [ s for s in row[1].split(', ') ]) 
+				else:
+					print(f'[yellow]Unknown row found (ignored) : {", ".join(row)} ({len(row)})')
+	except FileNotFoundError as e:
+		print(f'[yellow]WARNING: No such file or directory: "{occursInFile}": occursIn input file ignored')
+	except Exception as e:
+		print(f'[red]{e}')
+		raise
+
+
+def exportOccursIn(occursInFile:str = 'occursIn.csv'):
+	if not abbreviationOccursIn:
+		return
+	# Export as CSV
+	try:
+		if occursInFile:
+			with open(occursInFile, 'w', newline='') as f:
+				writer = csv.writer(f, delimiter=',')
+				for key in sorted(abbreviationOccursIn.keys()):
+					_n, _l = abbreviationOccursIn[key]
+					# clear up the reference list
+					_l = [	_t 
+							for _t in _l
+							if _t is not None and len(_t) and _t != _n
+						]
+					# if None in _l:
+					# 	_l = ['']
+					writer.writerow([ _n, ', '.join(_l), key ])
+	except IOError as err:
+		print(f'[red]{err}')
+		get_console().print_exception(show_locals = True)
+	except Exception as err:
+		print(f'[red]{err}')
+		get_console().print_exception(show_locals = True)

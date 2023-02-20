@@ -79,12 +79,12 @@ def renderMultiple(templateFile, context, domain, directory, extension):
 	# Export ModuleClasses
 	for module in domain.modules:
 		context['object'] = module
-		renderComponentToFile(context, isModule=True)
+		renderComponentToFile(context, outType = OutType.moduleClass)
 
 	# Export Devices
 	for device in domain.devices:
 		context['object'] = device
-		renderComponentToFile(context)
+		renderComponentToFile(context, outType = OutType.device)
 
 	# Export enum types
 	# TODO
@@ -95,7 +95,7 @@ def renderMultiple(templateFile, context, domain, directory, extension):
 	# Export found Actions
 	for action in actions:
 		context['object'] = action
-		renderComponentToFile(context, isAction=True)
+		renderComponentToFile(context, outType = OutType.action)
 
 	# Export extras
 	# commons = SDT3Commons('commonTypes-' + getTimeStamp())
@@ -183,7 +183,7 @@ def printShortNames(context):
 
 	# devices
 	fileName = templateSanitizeName('devices-' + getTimeStamp(), False)
-	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
+	fullFilename 	= getVersionedFilename(fileName, 'csv', path = str(context['path']), outType = OutType.shortName, modelVersion = context['modelversion'], namespacePrefix = namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for device in domain.devices:
 			outputFile.write(device.id + ',' + getAbbreviation(device.id) + '\n')
@@ -191,7 +191,7 @@ def printShortNames(context):
 
 	# sub.devices - Instances
 	fileName = templateSanitizeName('subDevicesInstances-' + getTimeStamp(), False)
-	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
+	fullFilename 	= getVersionedFilename(fileName, 'csv', path = str(context['path']), outType = OutType.shortName, modelVersion = context['modelversion'], namespacePrefix = namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for device in domain.devices:
 			for subDevice in device.subDevices:
@@ -200,7 +200,7 @@ def printShortNames(context):
 
 	# sub.devices
 	fileName = templateSanitizeName('subDevice-' + getTimeStamp(), False)
-	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
+	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), outType = OutType.shortName, modelVersion = context['modelversion'], namespacePrefix = namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for name in extendedSubDevicesExtends:
 			outputFile.write(name + ',' + getAbbreviation(name) + '\n')
@@ -208,7 +208,7 @@ def printShortNames(context):
 
 	# ModuleClasses
 	fileName = templateSanitizeName('moduleClasses-' + getTimeStamp(), False)
-	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
+	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), outType = OutType.shortName, modelVersion = context['modelversion'], namespacePrefix = namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for mc in domain.modules:
 			outputFile.write(mc.name + ',' + getAbbreviation(mc.name) + '\n')
@@ -222,7 +222,7 @@ def printShortNames(context):
 
 	# DataPoints
 	fileName = templateSanitizeName('dataPoints-' + getTimeStamp(), False)
-	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
+	fullFilename 	= getVersionedFilename(fileName, 'csv', path = str(context['path']), outType = OutType.shortName, modelVersion = context['modelversion'], namespacePrefix = namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for mc in domain.modules:
 			for dp in mc.data:
@@ -239,7 +239,7 @@ def printShortNames(context):
 
 	# Actions
 	fileName = templateSanitizeName('actions-' + getTimeStamp(), False)
-	fullFilename 	= getVersionedFilename(fileName, 'csv', path=str(context['path']), isShortName=True, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
+	fullFilename 	= getVersionedFilename(fileName, 'csv', path = str(context['path']), outType = OutType.shortName, modelVersion = context['modelversion'], namespacePrefix = namespaceprefix)
 	with open(fullFilename, 'w') as outputFile:
 		for mc in domain.modules:
 			for ac in mc.actions:
@@ -261,16 +261,16 @@ def printShortNames(context):
 #
 
 
-def renderComponentToFile(context, name=None, isModule=False, isEnum=False, isAction=False, isSubDevice=False, isExtras=False, namespaceprefix=None):
+def renderComponentToFile(context, name = None, outType:OutType = OutType.unknown, isExtras = False, namespaceprefix = None):
 	""" Render a component. """
 	namespaceprefix = context['namespaceprefix'] if 'namespaceprefix' in context else None
 
-	if isSubDevice and context['object'].extends:
+	if outType.subDevice and context['object'].extends:
 		fileName = templateSanitizeName(context['object'].extends.clazz, False)
 	else:
-		fileName = templateSanitizeName(context['object'].name if isModule or isEnum or isAction or isExtras else context['object'].id, False)
+		fileName = templateSanitizeName(context['object'].name if outType in [ OutType.moduleClass, OutType.enumeation, OutType.action] or isExtras else context['object'].id, False)
 	#print('---' + fileName)
-	fullFilename 	= getVersionedFilename(fileName, context['extension'], name=name, path=str(context['path']), isModule=isModule, isEnum=isEnum, isAction=isAction, isSubDevice=isSubDevice, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
+	fullFilename 	= getVersionedFilename(fileName, context['extension'], name = name, path = str(context['path']), outType = outType, modelVersion=context['modelversion'], namespacePrefix=namespaceprefix)
 	outputFile   	= None
 	try:
 		outputFile = open(fullFilename, 'w')
@@ -357,6 +357,6 @@ def renderObject(context, object):
 	newContext = {key: value for key, value in context.items()} # Copy the old context
 	if isinstance(object, SDT3SubDevice):
 		newContext['object'] = object
-		renderComponentToFile(newContext, isSubDevice=True)
+		renderComponentToFile(newContext, outType = OutType.subDevice)
 	return ''
 

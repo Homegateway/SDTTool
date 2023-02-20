@@ -1,12 +1,14 @@
 # Changelog
 
 ## Version 0.9
-xx.xx.2020
+xx.xx.2023
 
 - Added support for SDT version 4: Conversion from SDT3 to SDT4, markdown, and oneM2M XSD & SVG. 
 - Support for namespace prefix in markdown generation.
 - Added some short versions for command line arguments.
 - Small fixes and improvements. Code restructuring.
+- Added support for rich colour output.
+- Added new CSV table output of all names, short names, and where they occur in.
 
 ## Version 0.8
 15.05.2018
